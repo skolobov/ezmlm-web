@@ -1,0 +1,193 @@
+From matt@tnpi.biz Mon Nov 15 21:21:15 2004
+Return-Path: <matt@tnpi.biz>
+Delivered-To: guy@rucus.ru.ac.za
+Received: (qmail 48783 invoked by uid 1025); 15 Nov 2004 19:21:15 -0000
+Received: from matt@tnpi.biz by server.rucus.ru.ac.za by uid 82 with qmail-scanner-1.22 
+ (clamdscan: 0.75.1.  Clear:RC:0(207.89.154.94):. 
+ Processed in 2.727858 secs); 15 Nov 2004 19:21:15 -0000
+Received: from matt-serv2.cdlc.mi.core.com (HELO mail.cadillac.net) (207.89.154.94)
+  by server.rucus.ru.ac.za with SMTP; 15 Nov 2004 19:21:12 -0000
+Received: (qmail 5634 invoked by uid 89); 15 Nov 2004 19:21:06 -0000
+Received: from unknown (HELO ?10.0.1.218?) (matt@cadillac.net@10.0.1.218)
+  by matt-serv2.cdlc.mi.core.com with (RC4-SHA encrypted) SMTP; 15 Nov 2004 19:21:06 -0000
+Mime-Version: 1.0 (Apple Message framework v619)
+To: guy@rucus.ru.ac.za
+Message-Id: <7D5CC579-373B-11D9-A43C-000A95A797A8@tnpi.biz>
+Content-Type: multipart/mixed; boundary=Apple-Mail-5--167304881
+From: Matt Simerson <matt@tnpi.biz>
+Subject: Mail::Ezmlm patch submission
+Date: Mon, 15 Nov 2004 14:21:02 -0500
+X-Mailer: Apple Mail (2.619)
+Status: RO
+Content-Length: 6582
+
+
+--Apple-Mail-5--167304881
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=US-ASCII;
+	format=flowed
+
+Hey Guy,
+
+First, thanks a bunch for writing Mail::Ezmlm, it's quite useful. :-)
+
+I've used it to write a CGI interface to Ezmlm for a client. It's not a 
+very complex thing, it just creates a web page where the client logs in 
+and then has the choice to list the subscribers for a list, batch add a 
+list of subscribers, or mass delete a list.
+
+It's posted here if you're interested in seeing it: 
+https://mail.cadillac.net/ezmlm.cgi
+
+You can log in using the domain "example.com" and the password 
+"guyrucus".
+
+Anyhow, the only problem I've had with Mail::Ezmlm is that when I run 
+my script suid as the user that owns the mailing list, mod_perl whines 
+about the data because it's tainted.  So, I've made a few minor 
+alterations to untaint the data. My approach is rather basic and could 
+be improved upon but it works quite well and is slightly more secure 
+than what's being used at present.  I'd appreciate if you'd review the 
+patch and apply it or something similar which achieves the same result.
+
+The patch is against v 1.9 of Mail::Ezmlm.
+
+
+
+--Apple-Mail-5--167304881
+Content-Type: multipart/appledouble;
+	boundary=Apple-Mail-6--167304881
+Content-Disposition: attachment
+
+
+--Apple-Mail-6--167304881
+Content-Transfer-Encoding: base64
+Content-Type: application/applefile;
+	name="Ezmlm.pm.patch"
+Content-Disposition: attachment;
+	filename=Ezmlm.pm.patch
+
+AAUWBwACAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAJAAAAPgAAAAoAAAADAAAASAAAAA4AAAACAAAA
+VgAABq5URVhUUipjaAAARXptbG0ucG0ucGF0Y2gAAAEAAAAGaAAABWgAAABGAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAASAAJTW9uYWNvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAEAEIACgR0AooAQgAKBHQC
+ir2+Z3QAAAFTAAABUwAAAAABAAAABRhSKmNoAIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQdDb3VyaWVyAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAACgAAAAQJSGVsdmV0aWNhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADENvbmZpZGVudGlhbAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAQAAAQAAAQAAAIAAAACAAAAAgAAAAIAAAAAAAAABAQABAAEAAAAAAwBQ
+AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACW1hY2ludG9zaAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAQAAAAZoAAAFaAAAAEYAZdCMAlUAAAAcAEYAAU1QU1IAAAASQkJT
+VAAAAB4D7f//AAAAAAB/K8AAgP//AAAATAB/K9A=
+
+--Apple-Mail-6--167304881
+Content-Transfer-Encoding: 7bit
+Content-Type: application/text;
+	x-mac-type=54455854;
+	x-unix-mode=0644;
+	x-mac-creator=522A6368;
+	name="Ezmlm.pm.patch"
+Content-Disposition: attachment;
+	filename=Ezmlm.pm.patch
+
+--- Ezmlm.pm.orig	Sat Nov 13 13:38:59 2004
++++ Ezmlm.pm	Mon Nov 15 13:44:35 2004
+@@ -236,6 +236,16 @@
+    my($self, $part) = @_;
+    my(@subscribers);
+    ($self->_seterror(-1, 'must setlist() before returning subscribers()') && return undef) unless(defined($self->{'LIST_NAME'}));
++
++	# additions by matt simerson (matt@tnpi.biz) to pass mod_perl security (taint) checks
++	$ENV{"PATH"} = "";
++	if ( $self->{'LIST_NAME'} =~ /([\w\-\/.]*)/ ) {
++		$self->{'LIST_NAME'} = $1;
++	} else {
++		warn "TAINTED DATA IN LIST_NAME: $self->{'LIST_NAME'}\n";
++	};
++	# end additions
++
+    if(defined($part) && $part) {
+       ($self->_seterror(-1, "$part part of $self->{'LIST_NAME'} does not appear to exist in subscribers()") && return undef) unless(-e "$self->{'LIST_NAME'}/$part");
+       @subscribers = map { s/[\r\n]// && $_ } sort `$EZMLM_BASE/ezmlm-list $self->{'LIST_NAME'}/$part`;
+@@ -270,6 +280,19 @@
+    } else {
+       foreach $address (@addresses) {
+          next unless $self->_checkaddress($address);
++
++			# matt adds
++			$ENV{"PATH"} = "";   # taint checks
++
++			if ( $self->{'LIST_NAME'} =~ /([\w\-\/.]*)/ ) {
++				$self->{'LIST_NAME'} = $1;
++			} else {
++				warn "TAINTED DATA IN LIST_NAME: $self->{'LIST_NAME'}\n";
++			};
++
++			if ( $address =~ /(.*)/ ) { $address = $1 };
++			# end matt adds
++
+          system("$EZMLM_BASE/ezmlm-sub", $self->{'LIST_NAME'}, $address) == 0 ||
+             ($self->_seterror($?) && return undef);
+       }
+@@ -322,6 +345,16 @@
+    } else {
+       foreach $address (@addresses) {
+ 			$ENV{'SENDER'} = $address;
++
++			# matt adds
++			$ENV{"PATH"} = "";   # taint checks
++			if ( $self->{'LIST_NAME'} =~ /([\w\-\/.]*)/ ) {
++				$self->{'LIST_NAME'} = $1;
++			} else {
++				warn "TAINTED DATA IN LIST_NAME: $self->{'LIST_NAME'}\n";
++			};
++			# end matt adds
++
+          undef($issub) if ((system("$EZMLM_BASE/ezmlm-issubn", $self->{'LIST_NAME'}) / 256) != 0)
+       }   
+    }
+
+--Apple-Mail-6--167304881--
+
+--Apple-Mail-5--167304881
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=US-ASCII;
+	format=flowed
+
+
+
+Matt
+
+``````````````````````````````````````````````````````````````````
+   Matt Simerson                    http://matt.simerson.net
+   The Network People Inc.  http://www.tnpi.biz
+
+   The chief danger in life is that you may take too many precautions.
+- Alfred Adler
+``````````````````````````````````````````````````````````````````
+
+--Apple-Mail-5--167304881--
+
+

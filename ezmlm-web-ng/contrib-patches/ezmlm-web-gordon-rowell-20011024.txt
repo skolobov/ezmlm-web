@@ -1,0 +1,67 @@
+From gordonr@e-smith.com Wed Oct 24 08:10:56 2001
+Return-Path: <gordonr@e-smith.com>
+Delivered-To: guy-ezmlm@rucus.ru.ac.za
+Received: (qmail 18972 invoked from network); 24 Oct 2001 06:10:56 -0000
+Received: from terrapin.ru.ac.za (146.231.128.6)
+  by rucus.ru.ac.za with SMTP; 24 Oct 2001 06:10:56 -0000
+Received: from cpe-144-132-208-16.nsw.bigpond.net.au ([144.132.208.16] helo=icedvovo.sydney.e-smith.com)
+	by terrapin.ru.ac.za with smtp (Exim 3.32 #1)
+	id 15wHFE-000C6Z-00
+	for guy-ezmlm@rucus.ru.ac.za; Wed, 24 Oct 2001 08:10:29 +0200
+Received: (qmail 19833 invoked by uid 500); 24 Oct 2001 06:10:53 -0000
+MBOX-Line: From gordonr@e-smith.com  Wed Oct 24 16:10:53 2001
+Date: Wed, 24 Oct 2001 16:10:53 +1000
+From: Gordon Rowell <gordonr@e-smith.com>
+To: Guy Antony Halse <guy-ezmlm@rucus.ru.ac.za>
+Subject: ezmlm-web 2.1 patch - if you can't create lists, you can't delete them
+Message-ID: <20011024161053.U8219@e-smith.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+Organization: Mitel Networks Corporation
+Status: RO
+Content-Length: 1758
+Lines: 40
+
+Hi Guy,
+
+I'm in process of integrating ezmlm-web with our SME Server V5 product - see 
+www.e-smith.{com,org}. I did a quick and dirty proof of concept contrib to 
+integrate ezmlm, and am now revising it around ezmlm-web - great stuff.
+
+It fits in very well with our manager. I have a small shim to create
+and delete lists which ensures that the list is known to our account
+namespace. I wanted to ensure that people couldn't delete lists without
+our manager knowing about it. The patch below also disables list deletion
+if you have disabled list creation. You may want another switch, but 
+overloading opt_c seemed right to me.
+
+BTW: I am also making use of Mail::Ezmlm, which is great, so you're not the
+only one who thinks it's a good idea :-)
+
+Also, I'll be building an RPM out of ezmlm-web which I'll make available
+once I've done it.
+
+Gordon
+--
+  Gordon Rowell                        gordonr@e-smith.com
+  VP Engineering
+  Network Server Solutions Group       http://www.e-smith.com
+  Mitel Networks Corporation           http://www.mitel.com
+
+---CUT HERE------CUT HERE------CUT HERE------CUT HERE--- 
+[gordonr@sao]$ diff -u ezmlm-web.cgi.orig ezmlm-web.cgi
+--- ezmlm-web.cgi.orig	Tue Sep 26 06:58:08 2000
++++ ezmlm-web.cgi	Wed Oct 24 16:05:08 2001
+@@ -287,7 +287,7 @@
+ 
+    print $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), ' ' if (!defined($opt_c));
+    print $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), ' ' if(defined(@lists));
+-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]") if(defined(@lists));
++   print $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]") if ((!defined($opt_c)) && (defined(@lists)));
+    print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
+    print $q->endform;
+ }
+
+

@@ -1,0 +1,79 @@
+From ledjon@ledjon.com Fri Mar 12 00:03:27 2004
+Return-Path: <ledjon@ledjon.com>
+Delivered-To: guy-ezmlm@rucus.ru.ac.za
+Received: (qmail 56152 invoked by uid 1025); 11 Mar 2004 22:03:27 -0000
+Received: (qmail-scanner-1.20rc3 56151 invoked by uid 82); 11 Mar 2004 22:03:27 -0000
+Received: from 69-56-199-178.theplanet.com (HELO wylde.ledhosting.com) (69.56.199.178)
+  by server.rucus.ru.ac.za with SMTP; 11 Mar 2004 22:03:24 -0000
+Received: (qmail 25788 invoked from network); 11 Mar 2004 17:03:18 -0500
+Received: from atlnga1-ar3-4-64-009-109.atlnga1.dsl-verizon.net (HELO page) (4.64.9.109)
+  by 69-56-199-178.theplanet.com with SMTP; 11 Mar 2004 17:03:18 -0500
+From: "Jon Coulter" <ledjon@ledjon.com>
+To: <guy-ezmlm@rucus.ru.ac.za>
+Subject: Mail::Ezmlm Patch
+Date: Thu, 11 Mar 2004 17:03:24 -0500
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_000_0000_01C4078A.C44C42F0"
+X-Mailer: Microsoft Office Outlook, Build 11.0.5510
+Thread-Index: AcQHtKkecjFWE5llQ6aIAIPcXCJAog==
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
+X-Qmail-Scanner-Message-ID: <107904260763856141@server.rucus.ru.ac.za>
+Status: RO
+Content-Length: 1642
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0000_01C4078A.C44C42F0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Your (quite wonderful) Mail::Ezmlm perl module has a bug in that I patched
+some time ago for my own use, so I figured I'd go ahead and send it along to
+you.
+
+Basically it does something to the effect of 'return @array || undef' which
+forces a scalar return (making it return @array as the number of items in
+the array, rather then the items themselves)
+
+This just replaces it with a trinary operator.
+
+Feel free to use or ignore it at your own will. Thanks.
+
+Jon Coulter
+ledjon@ledjon.com 
+
+------=_NextPart_000_0000_01C4078A.C44C42F0
+Content-Type: application/octet-stream;
+	name="Ezmlm.pm.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+	filename="Ezmlm.pm.patch"
+
+*** /usr/lib/perl5/site_perl/5.8.0/Mail/Ezmlm.pm~	Wed Jul 16 00:44:01 =
+2003=0A=
+--- /usr/lib/perl5/site_perl/5.8.0/Mail/Ezmlm.pm	Wed Jul 16 00:54:22 2003=0A=
+***************=0A=
+*** 245,251 ****=0A=
+  =0A=
+     if($?) {=0A=
+        $self->_seterror($?, 'error during ezmlm-list in =
+subscribers()'); =0A=
+!       return @subscribers || undef;=0A=
+     } else {=0A=
+        $self->_seterror(undef);=0A=
+        return @subscribers;   =0A=
+--- 245,251 ----=0A=
+  =0A=
+     if($?) {=0A=
+        $self->_seterror($?, 'error during ezmlm-list in =
+subscribers()'); =0A=
+!       return (scalar @subscribers ? @subscribers : undef);=0A=
+     } else {=0A=
+        $self->_seterror(undef);=0A=
+        return @subscribers;   =0A=
+
+------=_NextPart_000_0000_01C4078A.C44C42F0--
+
+

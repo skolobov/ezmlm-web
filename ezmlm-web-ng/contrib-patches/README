@@ -1,0 +1,19 @@
+Source:
+http://rucus.ru.ac.za/~guy/ezmlm/contrib/
+
+all ezmlm-pm-patchs refer to Mail::Ezmlm -> ignored
+
+1) ezmlm-web-andrew-pam-20030520.txt
+ - tooltip texts -> this is already fixed
+ - xhtml-tags in lowercase -> fixed in rev 26
+
+2) ezmlm-web-andrew-pam-20040526.txt
+ - untaint mail-adresses -> better suited for Mail::Ezmlm -> ignored
+
+3) ezmlm-web-gordon-rowell-20011024.txt
+ - delete only allowd, if user may create lists -> ignored
+
+4) ezmlm-web-jose-celestino-20020208.txt
+ - support for newsletters -> ignored (for now)
+ - domain-based acl -> ignored
+ - filtered subscribers list for huge lists -> ignored (for now)
