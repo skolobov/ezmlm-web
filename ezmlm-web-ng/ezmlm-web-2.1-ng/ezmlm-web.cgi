@@ -89,6 +89,11 @@ if(defined($opt_d)) {
    $LIST_DIR = $1 if ($opt_d =~ /^([-\@\w.\/]+)$/);
 }
 
+# If WEBUSERS_FILE is not defined in ezmlmwebrc (as before version 2.2), then use former default value for compatibility
+if (!defined($WEBUSERS_FILE)) {
+   $WEBUSERS_FILE = $LIST_DIR . '/webusers'
+}
+
 # Work out default domain name from qmail (for David Summers)
 my($DEFAULT_HOST);
 open (GETHOST, "<$QMAIL_BASE/me") || open (GETHOST, "<$QMAIL_BASE/defaultdomain") || die "Unable to read $QMAIL_BASE/me: $!";
@@ -743,7 +748,7 @@ sub list_config {
    print '<p><big><strong>', $LANGUAGE{'headeradd'}, ':</big></strong> <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headeradd'}, '"><br>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70);
    print '<p><big><strong>', $LANGUAGE{'mimeremove'}, ':</big></strong> <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mimeremove'}, '"><br>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70) if defined($mimeremove);
    
-   if(open(WEBUSER, "<$$WEBUSERS_FILE")) {
+   if(open(WEBUSER, "<$WEBUSERS_FILE")) {
       my($webusers);
       while(<WEBUSER>) {
          last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
