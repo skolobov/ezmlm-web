@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link href="blasphemy.css" type="text/css" rel="stylesheet">
+	<meta name="description" content="ezmlm-web ezmlm web interface administration mailing lists mailinglists access control acl" />
+	<title>ezmlm-web - administration interface for ezmlm</title>
+
+</head>
+
+<body>
+
+<div id="container">
+
+<div id="oben">
+<h1 class="oben">ezmlm-web</h1>
+<div id="header">ezmlm-web was developed by <a href="http://rucus.ru.ac.za/~guy/ezmlm/">Guy Antony Halse</a></div>
+
+</div>
+
+
+<div id="mitte">
+
+<div id="nav-bar">
+
+<div class="nav-group">
+<div class="lid">ezmlm-web</div>
+<ul>
+<li><a href="http://rucus.ru.ac.za/~guy/ezmlm/download">download</a></li>
+<li><a href="http://rucus.ru.ac.za/~guy/ezmlm/">original project</a></li>
+</ul>
+</div>
+
+<div class="nav-group">
+<div class="lid">ezmlm</div>
+<ul>
+<li><a href="http://ezmlm.org">ezmlm website</a></li>
+<li><a href="http://www.de.ezmlm.org/ezmlm/archive/">ezmlm mailing list archive</a></li>
+</ul>
+</div>
+
+<div class="nav-group">
+<div class="lid">qmail</div>
+<ul>
+<li><a href="http://cr.yp.to/qmail.html">DJB's qmail</a></li>
+<li><a href="http://www.lifewithqmail.org/">life with qmail</a></li>
+</ul>
+</div>
+
+</div>
+
+
+<div id="content">
+<div id="info-title">a web interface for mailing lists' administration</div>
+
+<div id="news">
+
+<font class="title">02005/01/25 - <font class="ez">ezmlm-web</font> Version 2.2 released</font>
+<ul class="changes">
+	<li>german translation</li>
+	<li>security fixes</li>
+	<li>create-permissions per user</li>
+</ul>
+
+</div>
+
+<div class="push">
+<h2>Overview</h2>
+
+<p><font class="ez">ezmlm-web</font> is a web interface for the administration of <a href="http://ezmlm.org">ezmlm</a> mailing lists. It allows complete control over their configuration by using a web browser. User-based access control relieves administrators from the burden of managing all their mailing lists on their own.</p>
+</div>
+
+<div class="push">
+<h2>History</h2>
+The original author of <font class="ez">ezmlm-web</font> is Guy Antony Halse. He maintained it up to version 2.1. By then it was functionally complete and convenient.</p>
+<p>Since September 02000 no new releases were published.</p>
+<p>In January 02005 Guy allowed me to continue the project. I will try to incorporate the suggestions that were send to Guy so far. Additional security improvements and translations will be integrated.</p>
+<p>Your suggestions are welcome and will improve <font class="ez">ezmlm-web</font> whenever possible.</p>
+</div>
+
+
+<div class="push">
+<h2>How can <font class="ez">ezmlm-web</font> help you?</h2>
+<p><font class="ez"><a href="http://www.ezmlm.org">ezmlm</a></font> uses a mainly
+command line interface for the creation and maintainence
+of mailing lists. While this is very convenient for the average systems 
+administrator who is used to such interfaces, it proves to be very complicated
+and not particularly intuative to those with a windows sort of backround.</p>
+
+<p>Unfortunatly, this is often a large percentage of any organisation's
+subscriber base - and thus there is a definate need to hide these
+complexities.</p>
+
+<p><font class="ez">ezmlm-web</font> is an attempt to hide the complexities of managing a mailing list
+behind and intuative, easy to use web based interface. The idea behind this
+is threefold. Firstly just about everyone these days can use a web browser,
+or can learn very quickly. Secondly it provides almost complete platform
+independence on the client side - there are GUI web browsers available for 
+every major modern operating system. Thirdly, and perhaps more importantly,
+it makes easy remote administration a real possibility.</p>
+
+<p><font class="ez">ezmlm-web</font> allows the user to easily add and remove
+mailing list subscribers, create and delete mailing lists as well as alter
+the configuration of existing mailing lists. Almost every aspect of the 
+mailing list is controlable through the web front end, allowing the list
+user to do most things without the assistance of the systems administrators.</p>
+</div>
+
+
+<div class="push">
+<h2>Features</h2>
+Some of the important features that <font class="ez">ezmlm-web</font> offers are;
+<ul>
+<li><font class="feature">Full Virtual Host Support</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> hides the complexities of setting up virtually hosted mailing lists from your users.</font></li>
+
+<li><font class="feature">Multi-Level Access</font>
+- <font class="hint">You can control who has access to different mailing lists.</font></li>
+
+<li><font class="feature">Name Association</font>
+- <font class="hint">You can enter any RFC 822 email address, and it will display the nice name while refering to the email address.</font></li>
+
+<li><font class="feature">Configurable Interface</font>
+- <font class="hint">Most of the &quot;look & feel&quot; of <font class="ez">ezmlm-web</font> is configured through templates, allowing you to easily co-ordinate it with your existing website.</font></li>
+
+<li><font class="feature">Language Independence</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> can be easily reconfigured for different locales and languages.</font></li>
+
+<li><font class="feature">Context Sensitive Help</font>
+- <font class="hint">Context sensitive help is provided throughout <font class="ez">ezmlm-web</font> in the form of image <tt>TITLE</tt> tags, which serve as tooltips.</font></li>
+
+<li><font class="feature">Full support for all command line options</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> has been updated to take advantage of all the command line features of ezmlm-idx 0.40. And should be compatible with any further releases :-)</font></li>
+
+<li><font class="feature">Browser Independence</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> has been tested with <a href="http://mozilla.org">Mozilla</a> 1.73, <a href="http://mozilla.org">Firefox</a> 1.0, <a href="http://www.netscape.com/">Netscape Navigator</a> 4.7, <a href="http://lynx.browser.org/">Lynx</a> 2.8.3, <a href="http://ei5nazha.yz.yamagata-u.ac.jp/~aito/w3m/eng">w3m</a> 0.1.11-pre and <a href="http://www.microsoft.com">Internet Explorer</a> 5.0</font></li>
+
+<li><font class="feature">Platform Independence</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> should run on any platform that can run <a href="http://www.ezmlm.org/">ezmlm</a> and <a href="http://www.perl.org/">Perl</a></font></li>
+
+<li><font class="feature">Multiple Subscribes/Unsubscribes</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> supports file uploads for bulk subscription of email addresses, and multiple selects for bulk deletes.</font> <img src="new.gif" alt="New!"></li>
+
+</ul>
+</div>
+
+
+<div class="push">
+<h2>Requirements</h2>
+<p> A full list of requirements is available in the <A HREF="http://rucus.ru.ac.za/~guy/ezmlm/ezmlm-web-2.1/README">README</A>
+file in the distribution.</p>
+
+<p>Basically, however, you require the following on your
+system: 
+<ul>
+<li><a href="http://www.qmail.org">Qmail</a></li>
+
+<li><a href="http://www.ezmlm.org">ezmlm</a</li>
+
+<li><a href="http://www.perl.org">Perl 5</a></li>
+
+<li>+ a few <a href="http://www.cpan.org">perl modules</a> <font class="hint">(including the <a href="http://rucus.ru.ac.za/~guy/ezmlm/#Mail::Ezmlm">Mail::Ezmlm</A> module from the author of <font class="ez">ezmlm-web</font>)</font</li>
+
+<li>and a webserver such as <a href="http://www.apache.org">Apache</a> 
+</ul></p>
+</div>
+
+</div> <!-- content -->
+
+</div>
+
+</div>
+
+</body>
+</html>
