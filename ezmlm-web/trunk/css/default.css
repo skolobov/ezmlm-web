@@ -19,43 +19,8 @@ a:visited {
 	color: #8888ff;
 	}
 
-strong.big {
-	font-size: large;
-	}
 
-font.helper {
-	font-size: -1;
-	}
-
-.center {
-	text-align: center;
-	}
-
-table	{
-	margin-left: auto;
-	margin-right: auto;
-	}
-
-table.left {
-	margin-left: 0px;
-	}
-
-table hr {
-	text-align: center;
-	width: 25%;
-	}
-
-table.big-pad td {
-	padding: 10px;
-	}
-
-
-table.small-pad td {
-	padding: 5px;
-	}
-
-
-/*********************** general **************************/
+/*********************** general **************************
 
 used classes for containers:
 	title		- heading of most pages (except main)
@@ -86,18 +51,30 @@ div.container {
 div.add_remove span.button {
 	width: auto;
 	margin-top: 0px;
+	margin-right: auto;
 	}
 
 div.add_remove span.formfield {
 	width: auto;
 	margin: 0px;
+	margin-right: auto;
 	padding: 0px;
 	}
 
+div.add_remove span.formfield:before {
+	content: attr("<br>");
+	}
+
 div.list {
-	padding: 10px;
+	margin: 1%;
+	margin-right: 3%;
 	text-align: center;
 	float: left;
+	margin-bottom: auto;
+	}
+
+div.question {
+	text-align: center;
 	}
 
 p.warning {
@@ -107,7 +84,16 @@ p.warning {
 	}
 
 span.help {
-	font-size: -1;
+	font-size: small;
+	}
+
+span.button {
+	margin-left: 3px;
+	margin-right: 3px;
+	}
+
+span.formfield {
+	margin-right: auto;
 	}
 
 /************************ main page ***********************
@@ -152,8 +138,8 @@ available classes:	title input question
 ***********************************************************/
 
 #create div.input span.formfield {
-	text-weight: bold;
-	text-size: large;
+	font-weight: bold;
+	font-size: large;
 	margin-left: 0px;
 	margin-right: auto;
 	}
@@ -166,12 +152,12 @@ available classes:	title info input question
 ***********************************************************/
 
 #config div.info {
-	text-size: large;
-	text-weight: bold;
+	font-size: large;
+	font-weight: bold;
 	}
 
 #config div.input span.formfield {
-	text-weight: bold;
+	font-weight: bold;
 	margin-left: 0px;
 	margin-right: auto;
 	}

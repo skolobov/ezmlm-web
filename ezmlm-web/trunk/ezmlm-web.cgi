@@ -317,7 +317,7 @@ sub confirm_delete {
    print $q->hidden(-name=>'state', -default=>'confirm_delete');
    print $q->hidden(-name=>'list', -default=>$q->param('list'));
 
-   print '<div class="title">";
+   print '<div class="title">';
    print '<h2>', $LANGUAGE{'confirmdelete'}, ' ', $q->param('list'), '</h2>';
    print '</div>';	# end of delete->title
 
@@ -368,10 +368,10 @@ sub display_list {
    print '</div>';	# end of edit->list
    
    print '<div class="add_remove">';
-   print ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'} if defined(@subscribers);
+   print '<p>', ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'}, '</p>' if defined(@subscribers);
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
-   print '<span class="button">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
-   print '<span class="button">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
+   print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
+   print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
    print '</div>';	# end of edit->add_remove
 
@@ -609,7 +609,7 @@ sub part_subscribers {
       $divclass = ($remotepath)? 'warning' : 'ok';
       $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'remoteadmin'}]" if($list->isremote);
       $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually">' if ($remotepath);
-      $moderated .= '</p> if ($list->isremote);
+      $moderated .= '</p> if ($list->isremote)';
      
    }
 
@@ -622,7 +622,7 @@ sub part_subscribers {
    # Keep selection box a resonable size - suggested by Sebastian Andersson 
    $scrollsize = 25 if(($scrollsize = $#subscribers + 1) > 25);
 
-   # container for the content
+   # Begin of content
    print '<div id="parts" class="container">';
    
    # Print out a form of options ...
@@ -630,7 +630,7 @@ sub part_subscribers {
 
    print '<div class="title">';
    print "<h2>$type $LANGUAGE{'for'} $listaddress</h2>";
-   print '<hr>':
+   print '<hr>';
    print '</div>';	# end of parts_title
 
    print '<div class="info">', "$moderated", '</div>' if(defined($moderated));
@@ -641,7 +641,7 @@ sub part_subscribers {
 
    print '<div class="list">', $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -multiple=>'true', -labels=>&pretty_names), '</div>' if defined(@subscribers);
 
-   print '<div class="add_remove">':
+   print '<div class="add_remove">';
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
    print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
    print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
@@ -683,7 +683,7 @@ sub allow_create_list {
 
    print '<div class="title">';
    print '<h2>', $LANGUAGE{'createnew'}, '</h2>';
-   print '<hr'>;
+   print '<hr>';
    print '</div>';	# end of create->title
 
    print $q->startform;
@@ -691,7 +691,7 @@ sub allow_create_list {
 
    print '<div class="input">';
    print '<span class="formfield">', $LANGUAGE{'listname'}, ': ', $q->textfield(-name=>'list', -size=>'20'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listname'}, '"></span>';
-   print '<span class="formfield">', $LANGUAGE{'listaddress'}, ': ', $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10')';
+   print '<span class="formfield">', $LANGUAGE{'listaddress'}, ': ', $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10');
    print ' @ ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listadd'}, '"></span>';
    
    print '<span class="formfield">', $LANGUAGE{'listoptions'}, ':</span>';
@@ -741,7 +741,7 @@ sub create_list {
    # Sanity Checks ...
    return 1 if ($listname eq '' || $qmail eq '');
    if(-e ("$LIST_DIR/$listname/lock") || -e ("$HOME_DIR/.qmail-$qmail")) {
-      print "<h1 class="warning">List '$listname' already exists :(</h1>";
+      print '<h1 class="warning">', "List '$listname' already exists :(</h1>";
       return 1;
    }
   
@@ -798,7 +798,7 @@ sub list_config {
    $listaddress = &this_listaddress;
 
    # Begin of content
-   print '<div id="config">';
+   print '<div id="config" class="container">';
     
    # Print a form of options ...
    $q->delete_all;
@@ -953,7 +953,7 @@ sub list_text {
    closedir DIR;
 
    # Begin of content
-   print '<div id="textfiles">';
+   print '<div id="textfiles" class="container">';
 
    # Print a form ...
    $q->delete('state');
@@ -961,7 +961,7 @@ sub list_text {
    print $q->hidden(-name=>'state', -default=>'list_text');
    print $q->hidden(-name=>'list', -default=>$q->param('list'));
 
-   print '<div class="list">;
+   print '<div class="list">';
    print $q->scrolling_list(-name=>'file', -values=>\@files);
    print '</div>';	# end of textfiles->list
 
@@ -990,7 +990,7 @@ sub edit_text {
    $content = $list->getpart("text/$Q::file");
 
    # Begin of content
-   print '<div id="edittext">';
+   print '<div id="edittext" class="container">';
 
    # Print a form ...
    $q->delete('state');
@@ -1086,7 +1086,7 @@ sub display_options {
    print '<p>';
    foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
       if ($opts =~ /^\w*$i\w*\s*/) {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1')';
+         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
       } else {
          print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
