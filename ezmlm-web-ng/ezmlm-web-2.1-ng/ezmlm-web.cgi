@@ -266,13 +266,7 @@ sub select_list {
    # Check that they actually are lists ...
    foreach $i (0 .. $#files) {
       if (-e "$LIST_DIR/$files[$i]/lock") {
-         if (-e "$WEBUSERS_FILE") {
-            if (&webauth($files[$i]) == 0) {
-               $lists[$#lists + 1] = $files[$i];
-            }
-         } else {
-            $lists[$#lists + 1] = $files[$i];
-         }
+         $lists[$#lists + 1] = $files[$i] if (&webauth($files[$i]) == 0);
       }
    }
 
@@ -918,10 +912,13 @@ sub save_text {
 
 sub webauth {
    
+   # Check if webusers file exists - if not, then access is granted
+   return 0 if (! -e "$WEBUSERS_FILE");
+
    # Read authentication level from webusers file. Format of this file is
    # somewhat similar to the unix groups file
    my($listname) = @_;
-   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file: $!";
+   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file ($WEBUSERS_FILE): $!";
    while(<USERS>) {
       if (/^($listname|ALL)\:/i) {
          if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
@@ -937,9 +934,12 @@ sub webauth {
 
 sub webauth_create_allowed {
 
+   # Check if webusers file exists - if not, then access is granted
+   return 0 if (! -e "$WEBUSERS_FILE");
+
    # Read create-permission from webusers file.
    # the special listname "ALLOW_CREATE" controls, who is allowed to do it
-   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file: $!";
+   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file ($WEBUSERS_FILE): $!";
    while(<USERS>) {
       if (/^ALLOW_CREATE:/i) {
          if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
