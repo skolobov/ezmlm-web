@@ -1,1 +1,0 @@
-check permission before actions like "change", "create" or "delete" - the command could be arbitrarily injected into GET

@@ -18,7 +18,7 @@
       d => ['Zusammenfassungen',
             'Erstelle eine Mailing-Liste, an die regelmäßige Zusammenfassungen versandt werden'], 
 #     e => edit. Also implicity called, so not defined here
-      f => ['Präfix in Betreff einfügen',
+      f => ['Listenname als Präfix in Betreff einfügen',
             'In die versandten Mails wird in der Betreff-Zeile ein Präfix eingefügt'],
       g => ['Archiv nur für Mitglieder',
             'Nur TeilnehmerInnen der Liste erhalten Zugriff zum Archiv'],

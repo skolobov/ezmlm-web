@@ -1,7 +1,7 @@
 This repository contains the original 2.1-release of ezmlm-web and a 
-customized version (ezmlm-web-2.1-ng) that will implement the following features:
-- more security by preventing to create a list, if it should be forbidden ("-c" command line flag)
+customized version (ezmlm-web-2.1-ng) that implements the following features:
 - german translation
 - per-user setting of the "create-allowed"-flag in the "webusers"-file
+- security check to prevent forbidden actions through manipulated GET-requests
 
 send questions and recommondations to lars@sumpfralle.de
