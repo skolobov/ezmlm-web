@@ -1,7 +1,7 @@
 $Id: README,v 1.2 2000/09/25 17:57:21 guy Exp $
 
 =================
-| ezmlm-web-2.1 |
+| ezmlm-web-2.2 |
 =================
 
 If you only want to know how to install ezmlm-web, then you should
@@ -23,7 +23,7 @@ VIII.   Bugs && Bug Reports
 
 I. Copyright Stuff - essentially the FreeBSD licence ...
 ==================
-ezmlm-web - version 2.1 - 25/09/2000
+ezmlm-web - version 2.2 - 26/01/02005
 
 Copyright (C) 1998, Guy Antony Halse, All Rights Reserved.
 Please send bug reports and comments to guy-ezmlm@rucus.ru.ac.za
