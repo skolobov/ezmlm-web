@@ -162,7 +162,7 @@
    confirmdelete         => 'Bestätige die Löschung von ', # list name
    subscribersto         => 'Abonnenten von', # list name
    subscribers           => 'Abonnenten',
-   additionalparts       => 'Weitere Listen-Bestandteile',
+   additionalparts       => 'Weitere Optionen',
    posting               => 'Einsendungen',
    subscription          => 'Einschreibung',
    remoteadmin           => 'Entfernte AdministratorIn',
