@@ -1,7 +1,6 @@
 body {
 	margin: 0;
 	padding: 0;
-	background-color: #2f4860;
 	font: normal 100% sans-serif;
 	color: #606760;
 	}
@@ -21,17 +20,16 @@ font.feature {
 	}
 
 #nav-bar {
-	position: absolute;
-	left: 0px;
+	float: left;
 	width: 14%;
-	padding: 2px;
+	margin: 0.5%;
+	padding-bottom: 1%;
 	background-color: #c0c0b0;
 }
 
 .nav-group {
-	position: relative;
-	top: 5px;
-	padding-bottom: 15px;
+	margin-top: 1%;
+	padding-bottom: 1%;
 	}
 
 #nav-bar ul {
@@ -62,7 +60,7 @@ font.feature {
 	color: #000000;
 	margin: 1%;
 	padding: 5px;
-	width: 35%;
+	width: 40%;
 	float: right;
 	font-size: 80%;
 	}
@@ -77,11 +75,10 @@ font.feature {
 	margin-top: 0px;
 	}
 
-#titel-zeile {
-	position: fixed;
-	top: 0px;
+#oben {
+	background-color: #2f4860;
 	}
-
+	
 h1.oben {
 	text-align: left;
 	border-bottom: solid 2px #ffffff;
@@ -93,10 +90,7 @@ h1.oben {
 	}
 
 #perm-nav {
-	position: absolute;
-	top: 0;
-	right: 0;
-	text-align: right;
+	float: right;
 	padding-right: 5px;
 	font-size: 100%;
 	color: #006760;
@@ -128,9 +122,9 @@ h1.oben {
 	}
 
 #content {
-	position: absolute;
-	right: 0px;
-	width: 85%;
+#	position: absolute;
+#	right: 0px;
+#	width: 85%;
 	font: normal 82% sans-serif;
 	background-color: #ffffff;
 	padding: 2px;
@@ -154,22 +148,26 @@ h1.oben {
 	}
 
 #info-title {
+	text-align: center;
 	background-color: #c0c0b0;
-	margin: 0;
-	padding: 2px;
-	padding-left: 5px;
+	margin: 0.5%;
 	color: #ffffff;
 	font-size: 105%;
-	font-weight: bold;
+	#font-weight: bold;
 	}
 
 #header {
-	position: absolute;
-	top: 5px;
-	right: 5px;
 	text-align: right;
 	background-color: #2f4860;
 	font-size: 90%;
+	color: #ffffff;
+	margin: 0;
+	}
+
+#footer {
+	text-align: right;
+	background-color: #2f4860;
+	font-size: 80%;
 	color: #ffffff;
 	margin: 0;
 	}
