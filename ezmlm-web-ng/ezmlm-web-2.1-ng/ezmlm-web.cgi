@@ -689,12 +689,26 @@ sub create_list {
          die 'SQL table creation failed: ', $list->errmsg(); 
       }
    }
+
+   &set_webusers_permission;
+
+   return 0;
+}
+
+# ------------------------------------------------------------------------
+
+sub set_webusers_permission {
    
    # Handle authentication stuff
+   my ($contents, $old_contents);
    if ($Q::webusers) {
-      open(WEBUSER, ">>$LIST_DIR/webusers") || die "Unable to open webusers: $!"; 
-      print WEBUSER "$Q::list: $Q::webusers\n";
-      close WEBUSER;   
+      # remove old line
+      open(WEBUSER, ">$LIST_DIR/webusers") || die "Unable to open webusers: $!"; 
+      @old_contents = <WEBUSERS>;
+      @contents = (grep { ! /^$Q::list:/ } @old_contents);
+      push(@contents,"$Q::list: $Q::webusers\n");
+      print WEBUSER (@contents);
+      close WEBUSER;
    }
 
    return 0;
