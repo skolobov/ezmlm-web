@@ -82,3 +82,10 @@ Version 2.1 - 25/09/00
 * Fixed the '_' in list names problem
 * Added support for file uploads of email addresses (multiple subscribe)
 * Made error handling more friendly
+
+Version 2.2 - 26/01/02005
+* German translation of the web interface - more translations can be added easily
+* changed "ALT"-tags to "TITLE" - most browsers will display the tooltip texts now
+* fixed security problems (permissions were not thoroughly check)
+* user-based permission for creating lists (can be set in webusersrc)
+* the location of the webusers file is now an option in ezmlmwebrc

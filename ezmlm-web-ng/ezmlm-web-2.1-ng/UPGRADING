@@ -7,7 +7,7 @@ of a commandline switch for ezmlm-web.cgi.
 
 necessary changes:
  - optional: remove switch "-c" when calling ezmlm-web.cgi (take a look at index.c)
- - required: add a line like "ALLOW_CREATE: john, myra" to the webusers file - otherwise no one is allowed to create lists
+ - optional: add a line like "ALLOW_CREATE: john, myra" to the webusers file
 
 2) The location of the webusers file is now defined in ezmlmwebrc. (default: $LIST_DIR/webusers)
 

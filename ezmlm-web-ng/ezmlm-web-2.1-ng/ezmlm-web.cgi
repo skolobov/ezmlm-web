@@ -53,8 +53,8 @@ use CGI::Carp qw(fatalsToBrowser set_message);
 
 my $q = new CGI;
 $q->import_names('Q');
-use vars qw[$opt_d $opt_C];
-getopts('d:C:');
+use vars qw[$opt_c $opt_d $opt_C];
+getopts('cd:C:');
 
 # Suid stuff requires a secure path.
 $ENV{'PATH'} = '/bin';
@@ -287,7 +287,7 @@ sub select_list {
  
    print '</td><td align="left" valign="top">', $LANGUAGE{'chooselistinfo'};
 
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), ' ' if (&webauth_create_allowed == 0);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), ' ' if ((&webauth_create_allowed == 0) || (!defined($opt_c)));
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), ' ' if(defined(@lists));
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]") if(defined(@lists));
    print '</td></tr><tr><td> </td></tr></table></center>';
