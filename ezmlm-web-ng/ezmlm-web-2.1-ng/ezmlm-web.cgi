@@ -53,8 +53,8 @@ use CGI::Carp qw(fatalsToBrowser set_message);
 
 my $q = new CGI;
 $q->import_names('Q');
-use vars qw[$opt_c $opt_d $opt_C];
-getopts('cd:C:');
+use vars qw[$opt_d $opt_C];
+getopts('d:C:');
 
 # Suid stuff requires a secure path.
 $ENV{'PATH'} = '/bin';
@@ -105,7 +105,7 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
 }
 
 # Print header on every page ...
-print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d' '-Content-Type'=>'text/html; charset=utf-8');
+print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d', '-Content-Type'=>'text/html; charset=utf-8');
 print $q->start_html(-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -BGCOLOR=>$HTML_BGCOLOR, -LINK=>$HTML_LINK, -VLINK=>$HTML_VLINK, -TEXT=>$HTML_TEXT, -expires=>'-1d');
 print $HTML_HEADER;
 
@@ -285,7 +285,7 @@ sub select_list {
  
    print '</TD><TD ALIGN="left" VALIGN="top">', $LANGUAGE{'chooselistinfo'};
 
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), ' ' if (!defined($opt_c));
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), ' ' if (&webauth_create_allowed == 0);
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), ' ' if(defined(@lists));
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]") if(defined(@lists));
    print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
@@ -336,17 +336,17 @@ sub display_list {
    print '</TD><TD VALIGN="top" ALIGN="left">';
    print ' ', ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'}, '<BR>' if defined(@subscribers);
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '<P>' if defined(@subscribers);
-   print $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddress'}, '"><BR>';
-   print $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddressfile'}, '"><br>' if ($FILE_UPLOAD);
+   print $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'addaddress'}, '"><BR>';
+   print $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'addaddressfile'}, '"><br>' if ($FILE_UPLOAD);
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '<P>';
    print '<STRONG>', $LANGUAGE{'additionalparts'}, ':</STRONG><BR>' if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'moderators'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'moderator'}, '"> ' if ($list->ismodpost || $list->ismodsub || $list->isremote);
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'denylist'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'deny'}, '"> ' if ($list->isdeny);
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'allowlist'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'allow'}, '"> ' if ($list->isallow);
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'digestsubscribers'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'digest'}, '"> ' if ($list->isdigest);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'moderators'}]"), '<IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'moderator'}, '"> ' if ($list->ismodpost || $list->ismodsub || $list->isremote);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'denylist'}]"), '<IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'deny'}, '"> ' if ($list->isdeny);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'allowlist'}]"), '<IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'allow'}, '"> ' if ($list->isallow);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'digestsubscribers'}]"), '<IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'digest'}, '"> ' if ($list->isdigest);
    print '<P>';
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'webarchive'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'webarch'}, '">  ' if(&ezmlmcgirc);
-   print $q->submit(-name=>'action', -value=>"[$BUTTON{'configuration'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'config'}, '">&nbsp;&nbsp;&nbsp;';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'webarchive'}]"), '<IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'webarch'}, '">  ' if(&ezmlmcgirc);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'configuration'}]"), '<IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'config'}, '">&nbsp;&nbsp;&nbsp;';
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'selectlist'}]");
    print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
    print $q->endform; 
@@ -536,13 +536,13 @@ sub part_subscribers {
       
       $moderated = '<BLINK><FONT COLOR=#ff0000>' if ($postpath);
       $moderated .= "[$LANGUAGE{'posting'}]" if ($list->ismodpost);
-      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" ALT="Posting Moderators are stored in a non-standard location (' . $postpath . '). You will have to edit them manually."></BLINK>' if ($postpath);
+      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" TITLE="Posting Moderators are stored in a non-standard location (' . $postpath . '). You will have to edit them manually."></BLINK>' if ($postpath);
       $moderated .= '<BLINK><FONT COLOR=#ff0000>' if ($subpath);
       $moderated .= " [$LANGUAGE{'subscription'}]" if($list->ismodsub);
-      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" ALT="Subscriber Moderators are stored in a non-standard location (' . $subpath . '). You will have to edit them manually"></BLINK>' if ($subpath);
+      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" TITLE="Subscriber Moderators are stored in a non-standard location (' . $subpath . '). You will have to edit them manually"></BLINK>' if ($subpath);
       $moderated .= '<BLINK><FONT COLOR=#ff0000>' if ($remotepath);
       $moderated .= " [$LANGUAGE{'remoteadmin'}]" if($list->isremote);
-      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" ALT="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually"></BLINK>' if ($remotepath);
+      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" TITLE="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually"></BLINK>' if ($remotepath);
      
    }
 
@@ -566,8 +566,8 @@ sub part_subscribers {
    print $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -multiple=>'true', -labels=>&pretty_names) if defined(@subscribers);
    print '</TD></TR><TR><TD VALIGN="top" ALIGN="left">';
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '<P>' if defined(@subscribers);
-   print $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddress'}, '"><BR>';
-   print $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddressfile'}, '"><br>' if ($FILE_UPLOAD);
+   print $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'addaddress'}, '"><BR>';
+   print $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'addaddressfile'}, '"><br>' if ($FILE_UPLOAD);
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '<P>';
    print $q->submit(-name=>'action', -value=>"[$BUTTON{'subscribers'}]");
    print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
@@ -601,10 +601,10 @@ sub allow_create_list {
    print '<H2 ALIGN=CENTER>', $LANGUAGE{'createnew'}, '</H2><HR ALIGN=center WIDTH=25%>';
    print $q->startform;
    print $q->hidden(-name=>'state', -value=>'create');
-   print '<BIG><STRONG>', $LANGUAGE{'listname'}, ': </STRONG></BIG>', $q->textfield(-name=>'list', -size=>'20'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'listname'}, '"><P>';
+   print '<BIG><STRONG>', $LANGUAGE{'listname'}, ': </STRONG></BIG>', $q->textfield(-name=>'list', -size=>'20'), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'listname'}, '"><P>';
    print '<BIG><STRONG>', $LANGUAGE{'listaddress'}, ': </STRONG></BIG>';
    print $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10');
-   print ' <BIG><STRONG>@</STRONG></BIG> ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'listadd'}, '"><P>';
+   print ' <BIG><STRONG>@</STRONG></BIG> ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'listadd'}, '"><P>';
    
    print '<P><BIG><STRONG>', $LANGUAGE{'listoptions'}, ':</STRONG></BIG>';
    &display_options($DEFAULT_OPTIONS);
@@ -612,12 +612,12 @@ sub allow_create_list {
    # Allow creation of mysql table if the module allows it
    if($Mail::Ezmlm::MYSQL_BASE) {
       print '<P> ', $q->checkbox(-name=>'sql', -label=>$LANGUAGE{'mysqlcreate'}, -on=>1);
-      print ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'mysqlcreate'}, '">';
+      print ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'mysqlcreate'}, '">';
 
    }
    
    print '<P><BIG><STRONG>', $LANGUAGE{'allowedtoedit'}, ': </STRONG></BIG>', 
-      $q->textfield(-name=>'webusers', -value=>$ENV{'REMOTE_USER'}||'ALL', -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'webusers'}, '">',
+      $q->textfield(-name=>'webusers', -value=>$ENV{'REMOTE_USER'}||'ALL', -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'webusers'}, '">',
       '<BR><FONT SIZE="-1">', $HELPER{'allowedit'}, '</FONT>'
    if(-e "$LIST_DIR/webusers");
    
@@ -727,10 +727,10 @@ sub list_config {
    $mimeremove = $list->getpart('mimeremove');
    $prefix = $list->getpart('prefix'); 
 
-   print '<P><BIG><STRONG>', $LANGUAGE{'prefix'}, ': </STRONG></BIG>', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>12), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'prefix'}, '">' if defined($prefix);
-   print '<P><BIG><STRONG>', $LANGUAGE{'headerremove'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'headerremove'}, '"><BR>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70);
-   print '<P><BIG><STRONG>', $LANGUAGE{'headeradd'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'headeradd'}, '"><BR>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70);
-   print '<P><BIG><STRONG>', $LANGUAGE{'mimeremove'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'mimeremove'}, '"><BR>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70) if defined($mimeremove);
+   print '<P><BIG><STRONG>', $LANGUAGE{'prefix'}, ': </STRONG></BIG>', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>12), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'prefix'}, '">' if defined($prefix);
+   print '<P><BIG><STRONG>', $LANGUAGE{'headerremove'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'headerremove'}, '"><BR>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70);
+   print '<P><BIG><STRONG>', $LANGUAGE{'headeradd'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'headeradd'}, '"><BR>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70);
+   print '<P><BIG><STRONG>', $LANGUAGE{'mimeremove'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'mimeremove'}, '"><BR>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70) if defined($mimeremove);
    
    if(open(WEBUSER, "<$LIST_DIR/webusers")) {
       my($webusers);
@@ -741,7 +741,7 @@ sub list_config {
       $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
 
       print '<P><BIG><STRONG>', $LANGUAGE{'allowedtoedit'}, ': </STRONG></BIG>', 
-         $q->textfield(-name=>'webusers', -value=>$webusers, -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'webusers'}, '">',
+         $q->textfield(-name=>'webusers', -value=>$webusers, -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" TITLE="', $HELPER{'webusers'}, '">',
          '<BR><FONT SIZE="-1">', $HELPER{'allowedit'}, '</FONT>';
       
    }
@@ -908,6 +908,25 @@ sub webauth {
    return 1;
 }
 
+
+# ---------------------------------------------------------------------------
+
+sub webauth_create_allowed {
+
+   # Read create-permission from webusers file.
+   # the special listname "ALLOW_CREATE" controls, who is allowed to do it
+   open (USERS, "<$LIST_DIR/webusers") || die "Unable to read webusers file: $!";
+   while(<USERS>) {
+      if (/^ALLOW_CREATE:/i) {
+         if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
+            close USERS; return 0;
+         }
+      }   
+   }
+   close USERS;
+   return 1;
+}
+
 # ---------------------------------------------------------------------------
 
 sub display_options {
@@ -922,7 +941,7 @@ sub display_options {
       } else {
          print $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
-      print '<IMG SRC="', $HELP_ICON_URL, '" BORDER="0" ALT="', $EZMLM_LABELS{$i}[1] , '">';
+      print '<IMG SRC="', $HELP_ICON_URL, '" BORDER="0" TITLE="', $EZMLM_LABELS{$i}[1] , '">';
       print '</TD>'; $j++;
       if ($j >= 3) {
          $j = 0; print '</TR><TR>';
@@ -939,7 +958,7 @@ sub display_options {
       } else {
          print $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
-      print '<IMG SRC="', $HELP_ICON_URL, '" BORDER="0" ALT="', $EZMLM_LABELS{$i}[1] , '">';
+      print '<IMG SRC="', $HELP_ICON_URL, '" BORDER="0" TITLE="', $EZMLM_LABELS{$i}[1] , '">';
       print '</TD><TD>';
       print $q->textfield(-name=>"$i-value", -value=>$1||$EZMLM_LABELS{$i}[2], -size=>30);
       print '</TD></TR>';

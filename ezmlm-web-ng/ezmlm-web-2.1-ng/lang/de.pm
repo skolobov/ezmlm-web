@@ -97,16 +97,16 @@
 %HELPER = (
 
    # These should be self explainitory
-   addaddress       => 'Hier ist eine Mail-Adresse erforderlich. Auch Eingaben in der Form "Max Meier <max@meier.de>"',
-   addaddressfile   => 'alternativ ist auch die Angabe einer Datei mit jeweils einer Mailadresse pro Zeile möglich',
+   addaddress       => 'Eine Mail-Adresse - auch in der Form \'Max Meier <max@meier.de>\'',
+   addaddressfile   => 'alternativ ist auch eine Datei mit je einer Adresse pro Zeile möglich',
    moderator        => 'ModeratorInnen kontrollen, welche Mails weitegeleitet und welche AbonnentInnen akzeptiert werden',
    deny             => 'Ausschluss: die Mail-Adressen, die NIE an die Liste schreiben dürfen',
-   allow            => 'Zulassung: die Mail-Adressen, die trotz anderweitiger Einschränkungen immer an die Liste schreiben dürfen',
+   allow            => 'Zulassung: die Mail-Adressen, die immer an die Liste schreiben dürfen',
    digest           => 'Zusammenfassung: diese Leute werden regeläßige Zusammenfassungen der Mailingliste erhalten',
    webarch          => 'Gehe zum Web-Archiv der Mailingliste',
    config           => 'Einstellungen zur Mailingliste',
    listname         => 'Dies ist der eindeutige Name der Mailingliste',
-   listadd          => 'Die Adresse der Mailingliste - der Standardwert wird durch qmail festgelegt - nur der lokale Teil der Adresse sollte geändert werden',
+   listadd          => 'Die Adresse der Mailingliste - nur der lokale Teil kann geändert werden',
    webusers         => 'unfertig: derzeit können Listen-Administratoren nur manuell festgelegt werden',
    prefix           => 'Präfix der Betreffzeile',
    headerremove     => 'Diese Kopfzeilen werden aus den ausgehenden Mails entfernt',
