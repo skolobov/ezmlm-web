@@ -105,7 +105,7 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
 }
 
 # Print header on every page ...
-print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d');
+print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d' '-Content-Type'=>'text/html; charset=utf-8');
 print $q->start_html(-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -BGCOLOR=>$HTML_BGCOLOR, -LINK=>$HTML_LINK, -VLINK=>$HTML_VLINK, -TEXT=>$HTML_TEXT, -expires=>'-1d');
 print $HTML_HEADER;
 
