@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl 
 #===========================================================================
 # ezmlm-web.cgi - version 2.2 - 26/01/02005
 # $Id: ezmlm-web.cgi,v 1.3 2000/09/25 19:58:07 guy Exp $
@@ -501,31 +501,37 @@ sub add_address {
    my ($address, $list, @addresses, $count); my ($listname, $part) = @_;
    $list = new Mail::Ezmlm($listname);
 
-   if($q->param('addfile')) {
+   if (($q->param('addfile')) && ($FILE_UPLOAD)) {
 
       # Sanity check
       die "File upload must be of type text/*" unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/});
 
       # Handle file uploads of addresses
-      my($fh) = $q->upload('addfile');
+      my($fh) = $q->param('addfile');
       return unless (defined($fh));
       while (<$fh>) {
-         next if (/^\s*$/ or /^#/); # blank, comments
-         next unless (/\@/); # email address ...
-         chomp();
-         push @addresses, $_;
+	next if (/^\s*$/ or /^#/); # blank, comments
+	next unless ( /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/ ); # email address ...
+	chomp();
+	push @addresses, "$_";
       }
 
-   } else {
-      
-      # User typed in an address
-      return if ($q->param('addsubscriber') eq '');
-
-      $address = $q->param('addsubscriber');
-      $address .= $DEFAULT_HOST if ($q->param('addsubscriber') =~ /\@$/);
-      push @addresses, $address;
-   
    }
+      
+	# User typed in an address
+	if ($q->param('addsubscriber') ne '') {
+
+		$address = $q->param('addsubscriber');
+		$address .= $DEFAULT_HOST if ($q->param('addsubscriber') =~ /\@$/);
+
+		# untaint
+		if ($address =~ /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/) {
+			push @addresses, "$1\@$2";
+		  } else {
+			warn "this address ($address) is not valid!";
+		  }
+
+	}
    
    foreach $address (@addresses) {
 
