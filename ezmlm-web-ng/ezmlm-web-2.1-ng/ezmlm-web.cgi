@@ -432,7 +432,7 @@ sub untaint {
    } 
    $q->import_names('Q');
 
-   webauth($Q::list) == 0 || die 'Error: you are not allowed to do this!';
+   &webauth($Q::list) == 0 || die 'Error: you are not allowed to do this!';
 
 }
 
@@ -635,6 +635,8 @@ sub allow_create_list {
 
 sub create_list {
    # Create a list acording to user selections ...
+
+   &webauth_create_allowed == 0 || die 'ERROR: you are not allowed to create a new list!';
    
    # Check the list directory exists and create if necessary ...
    if(!-e $LIST_DIR) {
