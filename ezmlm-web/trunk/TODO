@@ -2,9 +2,12 @@ $Id: TODO,v 1.3 2000/09/25 19:58:02 guy Exp $
 
 TODO - ezmlm-web 2.2
 
--  More Documentation
--  Some nice install method. But then I use FreeBSD and ported it
-   so that might just count as my nice install method :)
+-  mention in INSTALL, that a missing webusers-file deactivates access control
+-  webusers is not mentioned in INSTALL
+-  change ./lang/ to /usr/local/share/ezmlm-web/lang
+-  more documentation
+-  some nice install method
 -  Option for a css-stylesheet
  - migrate header and footer in ezmlmwebrc to css
  - improve css-design
+- move unknown.gif to systemausfall.org
