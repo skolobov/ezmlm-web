@@ -254,7 +254,7 @@ of constraints come into place.
   Otherwise the user is politely told to go away ;-)
 
 If list creation is allowed and the webusers file exists, then the person who
-creates the list is the default owner. As of yet there is no way to add users
+creates the list is the default owner. As of yet there is no way to create users
 through the web interface, but I intend to do this eventually.
 
 The format of a webusers file is as follows;
@@ -269,14 +269,10 @@ ignored but each list must appear on a new line.
 Once this file exists, the ezmlm-web script will allow the list users to
 configure their access lists along with any other options.
 
-You can allow some users to create lists by adding a line similar to the 
-following  to your webusers file:
+You can permit some users to create lists by adding a line similar to the 
+following to your webusers file:
 
 ALLOW_CREATE: user2, user3
-
-For now you have to manually add a new line to webusers after creating a list,
-if the user is not allowed to edit ALL lists. Otherwise he won't be able to
-change the configuration of the new list.
 
 If there is no line starting with "ALLOW_CREATE:" in the webusers file, then
 no one will be allowed to create lists. (this behaviour is new for ezmlm-web
@@ -289,7 +285,7 @@ language independant (okay, not quite, but is 99% of the way there). Most of
 the fixed strings, help, etc is defined in the files of lang directory.
 Of course you can change them or create a new translation.
 
-The language can be configured in ezmlmwebrc with the "HTML_LANGUAGE" option.
+The language can be selected in ezmlmwebrc with the "HTML_LANGUAGE" option.
 
 If anyone gets round to writing full templates for languages I would
 appreciate it if you would do two things;

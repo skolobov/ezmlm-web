@@ -440,7 +440,7 @@ sub untaint {
 
 sub check_permission_for_action {
    # test if the user is allowed to modify the choosen list or to create an new one
-   # the user would still be allowed to fill out the create-form (however he got ther),
+   # the user would still be allowed to fill out the create-form (however he got there),
    # but the final creation is omitted
 
    my $ret;
@@ -707,12 +707,7 @@ sub create_list {
       }
    }
    
-   # Handle authentication stuff
-   if ($Q::webusers) {
-      open(WEBUSER, ">>$LIST_DIR/webusers") || die "Unable to open webusers: $!"; 
-      print WEBUSER "$Q::list: $Q::webusers\n";
-      close WEBUSER;   
-   }
+   &update_webusers();
 
    return 0;
 }
@@ -809,6 +804,14 @@ sub update_config {
    $list->setpart('headerremove', $q->param('headerremove'));
    $list->setpart('mimeremove', $q->param('mimeremove')) if defined($q->param('mimeremove'));
    $list->setpart('prefix', $q->param('prefix')) if defined($q->param('prefix'));
+
+   &update_webusers();
+}
+
+# ------------------------------------------------------------------------
+
+sub update_webusers {
+   # replace existing webusers-line or add a new one
 
    if($Q::webusers) {
       # Back up web users file

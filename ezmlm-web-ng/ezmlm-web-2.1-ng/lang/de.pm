@@ -112,7 +112,7 @@
    headerremove     => 'Diese Kopfzeilen werden aus den ausgehenden Mails entfernt',
    headeradd        => 'Diese Kopfzeilen werden zu jeder ausgehenden Mail hinzugefügt',
    mimeremove       => 'Alle Mails, die die genannten Anhangs-Typen beinhalten, werden abgewiesen',
-   allowedit        => 'unfertig: Komma-getrennte Liste von Nutzern oder <CODE>ALL</CODE> die diese Liste konfigurieren dürfen',
+   allowedit        => 'Komma-getrennte Liste von (existierenden) Nutzern oder <CODE>ALL</CODE>',
    mysqlcreate      => 'Anlegen der konfigurierten MySQL-Datenbank'
 
 );
