@@ -60,7 +60,7 @@ font.feature {
 	color: #000000;
 	margin: 1%;
 	padding: 5px;
-	width: 40%;
+	width: 30%;
 	float: right;
 	font-size: 80%;
 	}
@@ -73,6 +73,10 @@ font.feature {
 #news ul.changes {
 	font-size: 90%;
 	margin-top: 0px;
+	}
+
+a:visited {
+	color: #005040;
 	}
 
 #oben {
@@ -132,6 +136,7 @@ h1.oben {
 
 #content h2 {
 	margin: 5px;
+	margin-top: 10px;
 	margin-left: 0;
 	font-weight: normal;
 	letter-spacing: -1px;
@@ -167,7 +172,15 @@ h1.oben {
 #footer {
 	text-align: right;
 	background-color: #2f4860;
-	font-size: 80%;
+	font-size: 90%;
 	color: #ffffff;
 	margin: 0;
+	}
+#footer a:visited {
+	color: #a0d0b0;
+	}
+
+.mail {
+	font-style: italic;
+	color: #2f4860;
 	}
