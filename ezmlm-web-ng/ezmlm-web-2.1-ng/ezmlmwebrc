@@ -13,6 +13,9 @@
 # This directory will automatically be created if needed.
 $LIST_DIR = "$HOME_DIR/lists";
 
+# Where is the webusers file for access-permissions
+$WEBUSERS_FILE = "$LIST_DIR/webusers";
+
 # Safe list deletion? 
 # 0 = move list to .list and the .qmails to deleted.qmail/. Recoverable :)
 # 1 = allow user to delete list completely. No backup, therefore no recovery.

@@ -69,7 +69,7 @@ use vars qw[$HOME_DIR]; $HOME_DIR=$tmp[7];
 use vars qw[$DEFAULT_OPTIONS %EZMLM_LABELS $UNSAFE_RM $ALIAS_USER $LIST_DIR];
 use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES];
 use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
-use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD];
+use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
 
 # Get user configuration stuff
 if(defined($opt_C)) {
@@ -266,7 +266,7 @@ sub select_list {
    # Check that they actually are lists ...
    foreach $i (0 .. $#files) {
       if (-e "$LIST_DIR/$files[$i]/lock") {
-         if (-e "$LIST_DIR/webusers") {
+         if (-e "$WEBUSERS_FILE") {
             if (&webauth($files[$i]) == 0) {
                $lists[$#lists + 1] = $files[$i];
             }
@@ -641,7 +641,7 @@ sub allow_create_list {
    print '<p><big><strong>', $LANGUAGE{'allowedtoedit'}, ': </strong></big>', 
       $q->textfield(-name=>'webusers', -value=>$ENV{'REMOTE_USER'}||'ALL', -size=>'30'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '">',
       '<br><font size="-1">', $HELPER{'allowedit'}, '</font>'
-   if(-e "$LIST_DIR/webusers");
+   if(-e "$WEBUSERS_FILE");
    
    print '<p>', $q->submit(-name=>'action', -value=>"[$BUTTON{'createlist'}]"), ' ';
    print $q->reset(-value=>"[$BUTTON{'resetform'}]"), ' ';
@@ -749,7 +749,7 @@ sub list_config {
    print '<p><big><strong>', $LANGUAGE{'headeradd'}, ':</big></strong> <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headeradd'}, '"><br>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70);
    print '<p><big><strong>', $LANGUAGE{'mimeremove'}, ':</big></strong> <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mimeremove'}, '"><br>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70) if defined($mimeremove);
    
-   if(open(WEBUSER, "<$LIST_DIR/webusers")) {
+   if(open(WEBUSER, "<$$WEBUSERS_FILE")) {
       my($webusers);
       while(<WEBUSER>) {
          last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
@@ -816,12 +816,12 @@ sub update_webusers {
    if($Q::webusers) {
       # Back up web users file
       open(TMP, ">/tmp/ezmlm-web.$$");
-      open(WU, "<$LIST_DIR/webusers");
+      open(WU, "<$WEBUSERS_FILE");
       while(<WU>) { print TMP; }
       close TMP; close WU;
       
       open(TMP, "</tmp/ezmlm-web.$$");
-      open(WU, ">$LIST_DIR/webusers");
+      open(WU, ">$WEBUSERS_FILE");
       while(<TMP>) {
          if(/^$Q::list\s*:/) {
             print WU "$Q::list\: $Q::webusers\n";
@@ -921,7 +921,7 @@ sub webauth {
    # Read authentication level from webusers file. Format of this file is
    # somewhat similar to the unix groups file
    my($listname) = @_;
-   open (USERS, "<$LIST_DIR/webusers") || die "Unable to read webusers file: $!";
+   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file: $!";
    while(<USERS>) {
       if (/^($listname|ALL)\:/i) {
          if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
@@ -939,7 +939,7 @@ sub webauth_create_allowed {
 
    # Read create-permission from webusers file.
    # the special listname "ALLOW_CREATE" controls, who is allowed to do it
-   open (USERS, "<$LIST_DIR/webusers") || die "Unable to read webusers file: $!";
+   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file: $!";
    while(<USERS>) {
       if (/^ALLOW_CREATE:/i) {
          if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
