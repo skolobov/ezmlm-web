@@ -620,7 +620,7 @@ sub allow_create_list {
                                     
    # Print a form of options ...
    $q->delete_all;
-   print '<h2 align="CENTER">', $LANGUAGE{'createnew'}, '</h2><hr align="center" width="25%">';
+   print '<h2 align="center">', $LANGUAGE{'createnew'}, '</h2><hr align="center" width="25%">';
    print $q->startform;
    print $q->hidden(-name=>'state', -value=>'create');
    print '<big><strong>', $LANGUAGE{'listname'}, ': </strong></big>', $q->textfield(-name=>'list', -size=>'20'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listname'}, '"><p>';
