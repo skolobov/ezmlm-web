@@ -1,0 +1,6 @@
+this modified version of ezmlm-web-2.1 aims at implementing the following features:
+- more security by preventing to create a list, if it should be forbidden ("-c" command line flag)
+- german translation
+- per-user setting of the "create-allowed"-flag in the "webusers"-file
+
+send questions and recommondations to lars@sumpfralle.de
