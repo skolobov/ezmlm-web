@@ -296,7 +296,7 @@ sub select_list {
 
 sub confirm_delete {
    # Make sure that the user really does want to delete the list!
-   
+
    # Print a form ...
    $q->delete('state');
    print $q->startform;
@@ -431,6 +431,9 @@ sub untaint {
       }
    } 
    $q->import_names('Q');
+
+   webauth($Q::list) == 0 || die 'Error: you are not allowed to do this!';
+
 }
 
 # ------------------------------------------------------------------------
@@ -907,7 +910,6 @@ sub webauth {
    close USERS;
    return 1;
 }
-
 
 # ---------------------------------------------------------------------------
 
