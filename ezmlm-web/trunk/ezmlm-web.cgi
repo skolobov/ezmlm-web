@@ -294,7 +294,7 @@ sub select_list {
    print '<div class="info">', $LANGUAGE{'chooselistinfo'}, '</div>';		# explanation of options
 
    print '<div class="add_remove">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), '</span>' if ((&webauth_create_allowed == 0) || (!defined($opt_c)));
+   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), '</span>' if (&webauth_create_allowed == 0);
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), '</span>' if(defined(@lists));
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]"), '</span>' if(defined(@lists));
    print '</div>';	# end of main_buttons
@@ -1061,6 +1061,9 @@ sub webauth {
 # ---------------------------------------------------------------------------
 
 sub webauth_create_allowed {
+
+   # Check if we were called with the deprecated argument "-c" (allow to create lists)
+   return 0 if (defined($opt_c));
 
    # Check if webusers file exists - if not, then access is granted
    return 0 if (! -e "$WEBUSERS_FILE");
