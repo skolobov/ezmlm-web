@@ -66,7 +66,7 @@
 #     1 => not used
 #     2 => not used
       3 => ['From Address',
-            'Replace the "From:" header of the message with "From: fromarg"',
+            'Replace the &quot;From:&quot; header of the message with &quot;From: fromarg&quot;',
             'fromarg'],
       4 => ['Digest Options',
             'Switches for ezmlm-tstdig(1)',
@@ -179,7 +179,7 @@
    mimeremove            =>   'Mime types to strip from all outgoing mail',
    edittextinfo          => "The box on the left contains a list of files available in the<BR>DIR/text directory. These files are sent out in response to specfic user request, or as part of all outgoing messages<P>To edit a file, select its name from the box. Then click on the [$BUTTON{'editfile'}] button.<P>Press [$BUTTON{'cancel'}] when you have finished editing.",
    editingfile           => 'Editing File',
-   editfileinfo          => '<BIG><STRONG>ezmlm-manage</STRONG></BIG><BR><TT><STRONG><#l#></STRONG></TT> The list name<BR><TT><STRONG><#A#></STRONG></TT> The subscription address<BR><TT><STRONG><#R#></STRONG></TT> The address a subscriber must reply to<P><BIG><STRONG>ezmlm-store</STRONG></BIG><BR><TT><STRONG><#l#></STRONG></TT> The list name<BR><TT><STRONG><#A#></STRONG></TT> The acceptance address<BR><TT><STRONG><#R#></STRONG></TT> The rejection address</UL>',
+   editfileinfo          => '<BIG><STRONG>ezmlm-manage</STRONG></BIG><BR><TT><STRONG>&lt;#l#&gt;</STRONG></TT> The list name<BR><TT><STRONG>&lt;#A#&gt;</STRONG></TT> The subscription address<BR><TT><STRONG>&lt;#R#&gt;</STRONG></TT> The address a subscriber must reply to<P><BIG><STRONG>ezmlm-store</STRONG></BIG><BR><TT><STRONG>&lt;#l#&gt;</STRONG></TT> The list name<BR><TT><STRONG>&lt;#A#&gt;</STRONG></TT> The acceptance address<BR><TT><STRONG>&lt;#R#&gt;</STRONG></TT> The rejection address</UL>',
    mysqlcreate           => 'Create the MySQL database tables if necessary',
 
 );

@@ -66,7 +66,7 @@
 #     1 => not used
 #     2 => not used
       3 => ['Absender',
-            'Ersetze den Absender der ausgehenden Mails durch diesen Text',
+            'Ersetze den Absender der ausgehenden Mails durch diese Adresse',
             'Absender'],
       4 => ['Zusammenfassungseinstellungen',
             'Einstellungen for ezmlm-tstdig (nach "t" Stunden oder "m" Nachrichten oder "k" Kilobyte',
@@ -179,7 +179,7 @@
    mimeremove            => 'abzuweisende Anhangs-Typen',
    edittextinfo          => "Das Auswahlfeld links enthält die Dateien des <BR>Verzeichnisses DIR/text/. Diese Dateien werden als Antwort auf spezifische Nutzer-Anfragen oder als Teil aller ausgehenden Nachrichten versandt.<P>Um diese Dateien zu verändern, wähle ihren Namen im Auswahlfeld an. Anschlißend klicke auf den [$BUTTON{'editfile'}] Schalter.<P>Betätige [$BUTTON{'cancel'}] um die Veränderung abzubrechen.",
    editingfile           => 'Bearbeite Datei',
-   editfileinfo          => '<BIG><STRONG>ezmlm-manage</STRONG></BIG><BR><TT><STRONG><#l#></STRONG></TT> Der Name der Liste<BR><TT><STRONG><#A#></STRONG></TT> Die Anmeldungs-Adresse<BR><TT><STRONG><#R#></STRONG></TT> Die Bestätigungs-Adresse<P><BIG><STRONG>ezmlm-store</STRONG></BIG><BR><TT><STRONG><#l#></STRONG></TT> Der Name der Liste<BR><TT><STRONG><#A#></STRONG></TT> Die Zusage-Adresse<BR><TT><STRONG><#R#></STRONG></TT> Die Ablehungs-Adresse</UL>',
+   editfileinfo          => '<BIG><STRONG>ezmlm-manage</STRONG></BIG><BR><TT><STRONG>&lt;#l#&gt;</STRONG></TT> Der Name der Liste<BR><TT><STRONG>&lt;#A#&gt;</STRONG></TT> Die Anmeldungs-Adresse<BR><TT><STRONG>&lt;#R#&gt;</STRONG></TT> Die Bestätigungs-Adresse<P><BIG><STRONG>ezmlm-store</STRONG></BIG><BR><TT><STRONG>&lt;#l#&gt</STRONG></TT> Der Name der Liste<BR><TT><STRONG>&lt;#A#&gt;</STRONG></TT> Die Zusage-Adresse<BR><TT><STRONG>&lt;#R#&gt;</STRONG></TT> Die Ablehungs-Adresse</UL>',
    mysqlcreate           => 'Lege die MySQL-Datenbank an, falls erforderlich',
 
 );
