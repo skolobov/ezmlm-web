@@ -3,5 +3,6 @@ customized version (ezmlm-web-2.1-ng) that implements the following features:
 - german translation
 - per-user setting of the "create-allowed"-flag in the "webusers"-file
 - security check to prevent forbidden actions through manipulated GET-requests
+- tooltip texts for browsers that use "TITLE" instead of "ALT" (standard compliant)
 
 send questions and recommondations to lars@sumpfralle.de
