@@ -109,6 +109,9 @@ print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-
 print $q->start_html(-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -BGCOLOR=>$HTML_BGCOLOR, -LINK=>$HTML_LINK, -VLINK=>$HTML_VLINK, -TEXT=>$HTML_TEXT, -expires=>'-1d');
 print $HTML_HEADER;
 
+# check permissions
+&check_permission_for_action == 0 || die 'Error: you are not allowed to do this!';
+
 # This is where we decide what to do, depending on the form state and the
 # users chosen course of action ...
 unless (defined($q->param('state'))) {
@@ -116,7 +119,7 @@ unless (defined($q->param('state'))) {
    &select_list; 
 
 } elsif ($Q::state eq 'select') {
-   # User selects an action to perorm on a list ...
+   # User selects an action to perform on a list ...
    
    if ($Q::action eq "[$BUTTON{'create'}]") { # Create a new list ...
       &allow_create_list;
@@ -431,8 +434,24 @@ sub untaint {
       }
    } 
    $q->import_names('Q');
+}
 
-   &webauth($Q::list) == 0 || die 'Error: you are not allowed to do this!';
+# ------------------------------------------------------------------------
+
+sub check_permission_for_action {
+   # test if the user is allowed to modify the choosen list or to create an new one
+   # the user would still be allowed to fill out the create-form (however he got ther),
+   # but the final creation is omitted
+
+   my $ret;
+   if ($Q::state eq 'create') {
+	$ret = &webauth_create_allowed();
+   } elsif (defined($Q::list)) {
+	$ret = &webauth($Q::list);
+   } else {
+	$ret = 0;
+   }
+   return $ret;
 
 }
 
@@ -636,8 +655,6 @@ sub allow_create_list {
 sub create_list {
    # Create a list acording to user selections ...
 
-   &webauth_create_allowed == 0 || die 'ERROR: you are not allowed to create a new list!';
-   
    # Check the list directory exists and create if necessary ...
    if(!-e $LIST_DIR) {
       die "Unable to create directory ($LIST_DIR): $!" unless mkdir $LIST_DIR, 0700;
