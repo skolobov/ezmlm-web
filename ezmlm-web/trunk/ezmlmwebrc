@@ -61,20 +61,15 @@ $HTML_FOOTER = '</TD></TR></TABLE>';
 $HTML_FOOTER .= '<TABLE BORDER="0" CELLPADDING="5" CELLSPACING="5" ALIGN="CENTER" WIDTH="99%"><TR><TD BGCOLOR="#e0e0ff">';
 $HTML_FOOTER .= '<FONT SIZE="-1"><A HREF="https://systemausfall.org/toolforge/ezmlm-web" TARGET="_blank">ezmlm-web</A> (v2.2) A web interface to <A HREF="http://www.ezmlm.org/" TARGET="_blank">ezmlm</A></FONT></TD></TR></TABLE>';
 
-# What colour do we want the background to be?
-$HTML_BGCOLOR = '#000080'; 
-
-# What colour do we want text?
-$HTML_TEXT = '#000000';
-
-# What color do we want links?
-$HTML_LINK = '#3333ff';
-
-# What color to we want visited links?
-$HTML_VLINK = '#8888ff';
+# NEW:
+# html properties (e.g. color, background-color) can be defined in a
+# stylesheet (see HTML_CSS_FILE) since version 2.3
 
 # What is the title of this document?
 $HTML_TITLE = 'E Z Mailing List Manager';
+
+# Optional: use a cascading style sheet (css)
+$HTML_CSS_FILE = "css/default.css";
 
 # choose a language (en|de)
 $HTML_LANGUAGE = 'en';

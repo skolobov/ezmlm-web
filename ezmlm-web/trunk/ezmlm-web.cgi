@@ -70,6 +70,7 @@ use vars qw[$DEFAULT_OPTIONS %EZMLM_LABELS $UNSAFE_RM $ALIAS_USER $LIST_DIR];
 use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES];
 use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
 use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
+use vars qw[$HTML_CSS_FILE];
 
 # Get user configuration stuff
 if(defined($opt_C)) {
@@ -111,7 +112,7 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
 
 # Print header on every page ...
 print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d', '-Content-Type'=>'text/html; charset=utf-8');
-print $q->start_html(-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -BGCOLOR=>$HTML_BGCOLOR, -LINK=>$HTML_LINK, -VLINK=>$HTML_VLINK, -TEXT=>$HTML_TEXT, -expires=>'-1d');
+print $q->start_html(-style=>{'src'=>"$HTML_CSS_FILE"},-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -expires=>'-1d');
 print $HTML_HEADER;
 
 # check permissions
