@@ -3,10 +3,77 @@ body	{
 	color: #000000;
 	}
 
+h1	{
+	text-align: center;
+	}
+
+h2	{
+	text-align: center;
+	}
+
 a	{
 	color: #3333ff;
 	}
 
 a:visited {
 	color: #8888ff;
+	}
+
+#warning	{
+	text-decoration: blink;
+	color: #ff0000;
+	float: left;
+	}
+
+table.error {
+	width: 99%;
+	}
+
+table.error td {
+	padding: 5px;
+	text-align: center;
+	background-color: #e0e0ff;
+	}
+
+table.error h2 {
+	color: #ff0000;
+	}
+
+table.error p.msg {
+	font-weight: bold;
+	}
+
+strong.big {
+	font-size: large;
+	}
+
+font.helper {
+	font-size: -1;
+	}
+
+.center {
+	text-align: center;
+	}
+
+table	{
+	margin-left: auto;
+	margin-right: auto;
+	}
+
+table.left {
+	margin-left: 0px;
+	}
+
+table hr {
+	text-align: center;
+	width: 25%;
+	}
+
+table.big-pad td {
+	padding: 10px;
+	}
+
+
+table.small-pad td {
+	padding: 5px;
 	}
