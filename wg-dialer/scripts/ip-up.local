@@ -1,2 +1,1 @@
 sudo -u wgdialer /home/WGDialer/scripts/WGDialer.sh ip-up
-/home/scripts/dnsQ.sh &

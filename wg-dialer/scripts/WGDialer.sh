@@ -2,14 +2,14 @@
 
 
 # Beginn des Scripts
-HOMEDIR="/home/WGDialer/"
+HOMEDIR=/home/WGDialer/
 PIDDatei=${HOMEDIR}data/WGDialer.pid
 WarteSekunden=2
 WarteSchleifen=10
 OUTDEV="ippp0"
 ScriptLog=${HOMEDIR}data/WGDialer.log
-WGET="/usr/bin/wget --spider http://www.freenet.de &>${HOMEDIR}data/wget.log &"
-IPTABLES="/usr/sbin/iptables"
+WGET="/usr/bin/wget --spider http://www.freenet.de &>${HOMEDIR}data/wget.log"
+IPTABLES="sudo /sbin/iptables"
 DialerModem="/usr/bin/wvdial"
 DialerISDN="/usr/sbin/isdnctrl"
 DialPIDDatei=${HOMEDIR}data/dialer.pid
@@ -45,7 +45,7 @@ function istDialerGestartet()
 	if test $OUTDEV = "ppp0"; then
 		if test -e "$DialPIDDatei"; then
 			local dialPID=`cat $DialPIDDatei`
-			local t=`ps -p $dialPID -h -o cmd|cut -f 1 -d " "`
+			local t=`ps -p $dialPID -o cmd|tail -1 | cut -f 1 -d " "`
 			if test "$DialerModem" != "$t"; then
 				AdminFehler "Dial-PID-Datei enthaelt fehlerhaften Verweis"
 				rm $DialPIDDatei
@@ -53,7 +53,8 @@ function istDialerGestartet()
 		  fi
 		test -e "$DialPIDDatei"	&& istGestartet="wahr"
 	  else
-		test -n `${DialerISDN} status $OUTDEV | grep "not connected"` && istGestartet="wahr"
+		local ctlStatus=`${DialerISDN} status $OUTDEV | grep "not connected"`
+		test -z "$ctlStatus" && istGestartet="wahr"
 	  fi
 	test $istGestartet = "wahr"
 }
@@ -134,8 +135,10 @@ function aktiviereSkriptLog()
 	exec 2>>$ScriptLog
 	echo -e "\n\nSitzungsbeginn:" `date` >> ${HOMEDIR}data/WGDialer.log
 
-	set -xu
-	#set -u
+	#set -xu
+	# jede Zeile ausgeben
+	set -u
+	# Fehler nr bei undeklarierten Variablen melden
 }
 
 function AdminNachricht()	# Para: Text
@@ -273,7 +276,8 @@ function holeProviderInfo()  # gewuenschte Information
 	local name
 	case $prov in
 		0 ) preis=99; name="FreeNet-Super";;
-		1 ) preis=145; name="FreeNet-Super";;
+#		1 ) preis=145; name="FreeNet-Super";;
+		1 ) preis=99; name="FreeNet-Super";;
 		2 ) preis=0; name="FreeNet-XXL";;
 	  esac
 	if test "$1" = "Preis"; then ERG=$preis
@@ -412,9 +416,9 @@ function holeNutzerDerIP()	# Para: IP
 	local tIP
 	for nutzer in $a5Nutzer; do
 		if test -z "$tName"; then
-			tName="`echo $nutzer|cut -f 1`"
+			tName="`echo \"$nutzer\"|cut -f 1`"
 		  else
-			tIP="`echo $nutzer|cut -f 1`"
+			tIP="`echo \"$nutzer\"|cut -f 1`"
 			test "$1" = "$tIP" && name=$tName
 			tName=
 		  fi
@@ -594,9 +598,15 @@ function aktualisiereWeiterleitungen()
 	local alle=$ERG
 	local n
 	$IPTABLES -F FORWARD	# die Forward-Regeln loeschen
+	$IPTABLES -F JAP
+	#iptables -A FORWARD -o eth0 --protocol udp --dport 2074  -j ACCEPT
+		# gspeakfreely fuer staub
 	if test -n "$alle"; then
 		for n in $alle; do
-			holeIPdesNutzers $n && $IPTABLES -A FORWARD -i $OUTDEV -o eth0 -d $ERG -m state --state ESTABLISHED,RELATED -j ACCEPT && $IPTABLES -A FORWARD -i eth0 -o $OUTDEV -s $ERG -j ACCEPT
+			holeIPdesNutzers $n && \
+				$IPTABLES -A FORWARD -i $OUTDEV -o eth0 -d $ERG -m state --state ESTABLISHED,RELATED -j ACCEPT && \
+				$IPTABLES -A FORWARD -i eth0 -o $OUTDEV -s $ERG -j ACCEPT
+				$IPTABLES -A JAP -i eth0 -s $ERG --protocol tcp --dport 4001 -j ACCEPT
 		  done
 	  fi
 }
@@ -619,7 +629,7 @@ function entschaerfeProvider()
 {
 	$IPTABLES -A OUTPUT -o $OUTDEV --protocol tcp --dport 80 -j ACCEPT
 	$IPTABLES -A INPUT -i $OUTDEV --protocol tcp --sport 80 -m state --state ESTABLISHED,RELATED -j ACCEPT
-	$WGET
+	$WGET &
 	sleep 3
 	kill $!
 	  # beende WGET, damit keine Firewall-Logs auftauchen
@@ -696,6 +706,10 @@ case "$1" in
 			then	echo "kein aktiver Nutzer"
 			else	echo $ERG
 		  fi
+		;;
+	anzahl-aktiver-nutzer ) # Anzahl der verbundenen Nutzer
+		holeAnzahlNutzer
+		echo "$ERG";
 		;;
 	status ) # Gesamtuebersicht
 		pruefeStatus
@@ -806,6 +820,7 @@ case "$1" in
 		echo -e "\t status-nutzer X\t- Ausgabe der Info"
 		echo -e "\t alle-nutzer\t\t- Ausgabe aller Nutzernamen"
 		echo -e "\t alle-aktiven-nutzer\t- Ausgabe der derzeit verbundenen Nutzer"
+		echo -e "\t anzahl-aktiver-nutzer\t- Ausgabe der Anzahl der derzeit verbundenen Nutzer"
 		echo -e "\t ip2nutzer X\t\t- liefert den Nutzernamen fuer eine IP"
 		echo -e "\t nutzer2ip X\t\t- liefert die IP des Nutzers"
 		echo -e "\t kosten X Y Z\t\t- Kosten fuer X von Y bis Z (z.B.: 20041231)"

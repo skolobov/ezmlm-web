@@ -1,0 +1,29 @@
+Es gibt bisher keine Doku zur Installation - die folgenden Notizen helfen dir
+aber hoffentlich etwas weiter.
+
+notwendige Software:
+- webserver mit php
+- iptables
+- sudo
+- wvdial (analog) oder eine isdn-control-Software
+
+Installation:
+- das Archiv in einem Verzeichnis entpacken (fortan wird es $INSTALL_VERZEICHNIS genannt)
+- in scripts/WGdialer.sh dieses Verzeichnis als "HOMEDIR" angeben
+- einen Nutzer "wgdialer" anlegen
+- 'chown -R wgdialer $INSTALL_VERZEICHNIS'
+- die Webseite in den Webserver einbinden (z.B. apache: "Alias /einwahl /$INSTALL_VERZEICHNIS")
+- die Eintraege der doku/sudo.example-Datei in die /etc/sudoers einfuegen
+
+Einrichtung:
+- unter $INSTALL_VERZEICHNIS/data/nutzer.liste die Nutzer und ihre IPs eintragen (per Tabulator trennen)
+- in der scripts/WGdialer.sh die Funktion "holeProviderInfo" mit den Preisen der gewuenschten Verbindungen anpassen
+- in der scripts/waehleISDN-Tarif.sh die Telefonnummern und Preise eintragen
+
+Nachbesserungen:
+[das Ganze laeuft sicherlich nicht beim ersten Versuch]
+- unter data/ findest du log-Dateien
+- einen (uebertrieben) ausfuehrlicheren log-output erhaelst du, wenn du die Zeile "set -x" in der scripts/WGdialer.sh aktivierst
+
+
+Hinweise an lars@sumpfralle.de
