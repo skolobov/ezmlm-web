@@ -185,7 +185,7 @@ unless (defined($q->param('state'))) {
       $part = 'digest'; 
    }
    
-   if ($Q::action eq '[Delete Address]') { # Delete a subscriber ...
+   if ($Q::action eq "[$BUTTON{'deleteaddress'}]") { # Delete a subscriber ...
       &delete_address("$LIST_DIR/$Q::list", $part);
       &part_subscribers($part);
 
@@ -920,12 +920,9 @@ sub update_webusers {
       open(TMP, "</tmp/ezmlm-web.$$");
       open(WU, ">$WEBUSERS_FILE");
       while(<TMP>) {
-         if(/^$Q::list\s*:/) {
-            print WU "$Q::list\: $Q::webusers\n";
-         } else {
-            print WU;
-         }
-      }
+		print WU unless (/^$Q::list\s*:/);
+	}
+	print WU "$Q::list\: $Q::webusers\n";
       close TMP; close WU;
       unlink "/tmp/ezmlm-web.$$";
    }

@@ -95,3 +95,5 @@ Version 2.3 - ??/04/02005
 * permission check for upload of files fixed
 * removed some taint errors
 * file upload typo fixed
+* update of webusers file fixed
+* moderator unsubscribe fixed

@@ -11,6 +11,7 @@ ORG:
 - change ./lang/ to /usr/local/share/ezmlm-web/lang
 - move unknown.gif to systemausfall.org
 - some nice install method
+- easy-mode? - maybe with typical profiles - or: separation basic / expert
 
 CODE:
 - check and improve DEFAULT_HOST
@@ -20,7 +21,7 @@ CODE:
 - line 472 - replace "return" by "if"-construct
 
 LAYOUT:
-- Option for a css-stylesheet
+- option for a css-stylesheet
 - migrate header and footer in ezmlmwebrc to css
 - improve css-design
 - "prefix"-option should be next to its text field (as with all paths)
