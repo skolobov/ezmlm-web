@@ -1,4 +1,4 @@
-Source:
+Source of most patches:
 http://rucus.ru.ac.za/~guy/ezmlm/contrib/
 
 all ezmlm-pm-patchs refer to Mail::Ezmlm -> ignored
@@ -17,3 +17,11 @@ all ezmlm-pm-patchs refer to Mail::Ezmlm -> ignored
  - support for newsletters -> ignored (for now)
  - domain-based acl -> ignored
  - filtered subscribers list for huge lists -> ignored (for now)
+
+
+
+-----------------------------------------------
+############ directory Policy #################
+* done		- patches that were incorporated
+* ignored	- patches, that were ignored
+* open		- these patches are not yet implemented/examined
