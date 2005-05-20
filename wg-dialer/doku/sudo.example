@@ -1,8 +1,0 @@
-www-data        ALL = (wgdialer) NOPASSWD: /home/WGDialer/scripts/WGDialer.sh
-# damit alle Aktionen des Skripts als Nutzer "wgdialer" ablaufen
-
-www-data        ALL = (root) NOPASSWD: /home/WGDialer/scripts/waehleISDN-Tarif.sh
-# die Konfiguration der isdn-Verbindung kann nur als root erfolgen
-
-wgdialer        ALL = NOPASSWD: /sbin/iptables
-# damit werden die aktiven Nutzer weitergeleitet
