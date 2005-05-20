@@ -1,11 +1,8 @@
 $Id: README,v 1.2 2000/09/25 17:57:21 guy Exp $
 
 =================
-| ezmlm-web-2.2 |
+| ezmlm-web-2.1 |
 =================
-
-If you only want to know how to install ezmlm-web, then you should
-read INSTALL.
 
 Contents
 ========
@@ -13,17 +10,18 @@ Contents
   II.   Some Background
  III.   Requirements
   IV.   Files
-   V.   Notes
-  VI.   Multi-level list access
- VII.   Language Portability
-VIII.   Bugs && Bug Reports
-  XI.   Acknowledgements
-   X.   Availability
+   V.   Installation
+  VI.   Notes
+ VII.   Multi-level list access
+VIII.   Language Portability
+  IX.   Bugs && Bug Reports
+   X.   Acknowledgements
+  XI.   Availability
 
 
 I. Copyright Stuff - essentially the FreeBSD licence ...
 ==================
-ezmlm-web - version 2.2 - 26/01/02005
+ezmlm-web - version 2.1 - 25/09/2000
 
 Copyright (C) 1998, Guy Antony Halse, All Rights Reserved.
 Please send bug reports and comments to guy-ezmlm@rucus.ru.ac.za
@@ -78,16 +76,12 @@ file or in the access.conf file. ApacheWeek have a good article on doing
 this at http://www.apacheweek.com/features/userauth. I also give examples
 later in this document.
 
-This version of ezmlm-web is based to a large extent on previous
+This version of ezmlm-web (2.0) is based to a large extent on previous
 versions that I have developed. It has however been totally re-written to
 make use of the Mail::Ezmlm perl module I wrote. At the same time it was
 updated and extended to include the new features of ezmlm-idx. It includes 
 many new features that have been suggested to me over the last few months,
 and hopefully is now useful to a much larger group of people.
-
-Since 02005 ezmlm-web is maintained by Lars Kruse (ezmlm-web@sumpfralle.de).
-Only minor improvements had to be implemented to keep the already fully
-functional ezmlm-web up to date.
 
 III. Requirements
 =================
@@ -114,15 +108,14 @@ IV. Files
 =========
 In this distribution you should find 8 files;
 
-README            This file. Provides some background information.
-		  Not needed to run ezmlm-web.
-
-INSTALL		  Notes on installation. Not needed to run ezmlm-web.
+README            This file. Provides some background information, notes on
+                  installation, etc. Not needed to run ezmlm-web.
 
 CHANGES           The change history. Not needed to run ezmlm-web
 
 TODO              This file is a list of things I intend doing in future
-                  versions of ezmlm-web. Not needed to run ezmlm-web.
+                  versions of ezmlm-web. That is if there are any future
+                  versions :) Not needed to run ezmlm-web.
 
 ezmlm-web.cgi     The ezmlm-web script proper. This program requires that
                   you have perl5 installed on your machine and that your web
@@ -134,20 +127,95 @@ index.c           A C wrapper to allow ezmlm-web.cgi to run suid. Not
                   be edited and compiled to suit your system. Not needed to
                   run ezmlm-web.
 
-ezmlmwebrc	  This is the configuration file for ezmlm-web. All options
-		  are explained in this example file. You will need this
-		  file to run ezmlm-web.
-
 htaccess.sample   A sample Apache .htaccess file for controlling access to
                   the mailing lists. If you use another web server, you will
                   have to work this bit out for yourself.
 
 webusers.sample   A sample webusers file for multi-level access control.
 
-The directory "lang" contains the language files. You will need at least the 
-one, that you have choosen in "ezmlmwebrc" by the option "HTML_LANGUAGE".
+V. Installation
+===============
+1.   Copy ezmlm-web.cgi to some publically readable directory. It does not
+     have to be in a path accessible to your web server, but any user with a
+     mailing list must be able to run it (Check the read and execute rights
+     on both the file and directory). We put our copy in
+     /usr/local/bin ...
 
-V. Notes
+3.   Edit the ezmlmwebrc file and alter the variables at the top to suit
+     your particular system. In particular, you will probably have to change
+     the $ENV{'PATH'} variable. Be particularly careful about what you set
+     as the path. Too much is a security risk and too little will cause the
+     script to malfunction. Version 2.0 requires that the following programs
+     be accessible in your path; mv, rm
+
+     Also be careful about the $LIST_DIR variable. This script assumes that
+     all users store their mailing lists in the same sub directory of the
+     home directory (eg ~/lists). You can override this for an individual
+     user by recompiling the C wrapper to call ezmlm-web.cgi with a -d
+     option.
+
+     Other configurable options are documented in the ezmlmwebrc file
+     itself. I have tried to keep the amount of information that you need to
+     supply to a minimum and also make reasonable guesses about default
+     values.
+
+4.   Edit the index.c file and change the path to the path of your copy
+     of ezmlm-web.cgi. Then compile this file. You can do this by issuing
+     the command; gcc -o index.cgi index.c
+
+5.   For every user/virtual host that needs to manage mailing lists, you
+     need to create a SUID (user not root!!) copy of index.cgi (see
+     chmod(1) for details). These need to reside somewhere accessible by 
+     the web server. I suggest that you put them in a sub directory (see 
+     about security) of each user/virtual host's home directory (eg
+     /home/luser/public_html/ezmlm for Apache on Redhat). 
+
+     The copies don't actually have to be called index.cgi, but it is nice
+     for web servers that can resolve a cgi script as an index page (see the
+     srm.conf file in Apache). It is important to make sure that whichever
+     directory you choose to put them can i: Execute CGI Scripts and ii: Be
+     access controlled (here I mean both web and user access) by some method
+     (eg .htaccess, access.conf for Apache).
+
+6.   Install some method of securing access to the page. The following
+     information is applicable to Apache web servers ... Detailed
+     information on user authentication can be obtained from the Apache
+     documentation (http://www.apache.org) and ApacheWeek
+     (http://www.apacheweek.com/features/userauth)
+
+6.1  Ensure that your Apache setup will allow .htaccess file to control
+     access in the directory that contains. This is controlled by the
+     AllowOverride tag in access.conf. (Also ensure you have the
+     necessary Apache modules installed)
+
+6.2  Create a htpasswd file. This is done using the htpasswd command that
+     comes with Apache. Its command line syntax is;
+     htpasswd [-c] passwordfile username
+   
+     You need to put the passwordfile somewhere that is not accessible by
+     people through the web, and create an entry for each user you want
+     to have access ... See the ApacheWeek article for more details.
+
+6.3  Create a .htaccess file in the directory that contains index.cgi.
+     Note that using Apache's built in access control, you can only control
+     access to directories, not individual files, hence the need for a
+     sub-directory in step 5.
+
+     The format of the .htaccess file should be along the lines of this;
+
+       AuthName EZ Mailing List Manager
+       AuthType Basic
+       AuthUserFile /path/to/passwordfile
+       require valid-user      # or require user username
+
+     Again, see the ApacheWeek article for details.
+
+7.   Test the installation through the web. You should be asked for a
+     username and password (supplied in 6.2) and then be presented with a
+     screen entitled EZ Mailing List Manger. You can then try to create and
+     edit mailing lists ... Have Fun :)
+
+VI. Notes
 =========
 * There is a function to delete mailing lists, but I really don't like the
   idea. The only reason I put it in is that bvi@rucus asked for it.
@@ -165,7 +233,7 @@ V. Notes
 
 * Please see the section on languages below.
 
-VI. Multi-Level Access
+VII. Multi-Level Access
 =======================
 Ezmlm-web has a multi-level access system. This depends on a file called
 webusers being present in $LIST_DIR. If the file is not present, then any
@@ -180,7 +248,7 @@ of constraints come into place.
   Otherwise the user is politely told to go away ;-)
 
 If list creation is allowed and the webusers file exists, then the person who
-creates the list is the default owner. As of yet there is no way to create users
+creates the list is the default owner. As of yet there is no way to add users
 through the web interface, but I intend to do this eventually.
 
 The format of a webusers file is as follows;
@@ -195,26 +263,16 @@ ignored but each list must appear on a new line.
 Once this file exists, the ezmlm-web script will allow the list users to
 configure their access lists along with any other options.
 
-You can permit some users to create lists by adding a line similar to the 
-following to your webusers file:
+Oh, and BTW, list creation through the web can now be disabled. The way to do
+this is to compile the wrapper calling ezmlm-web.cgi with a -c switch. See the
+example index.c file for more details.
 
-ALLOW_CREATE: user2, user3
-
-If there is no line starting with "ALLOW_CREATE:" in the webusers file, then
-no one will be allowed to create lists. This behaviour is new for ezmlm-web
-since version 2.2. To stay compatible to old installations, the commandline
-option "-c" for ezmlm-web.cgi will still allow everyone to create lists. The
-use of this option is deprecated, since the line "ALLOW_CREATE: ALL" provides
-the same effect in a cleaner way.
-
-VII. Language Portablity
+VIII. Language Portablity
 =========================
 One of the great new features of version 2.0 is that it is essentially
 language independant (okay, not quite, but is 99% of the way there). Most of
-the fixed strings, help, etc is defined in the files of lang directory.
-Of course you can change them or create a new translation.
-
-The language can be selected in ezmlmwebrc with the "HTML_LANGUAGE" option.
+the fixed strings, help, etc is defined in the RC file and thus can be
+altered to suite a particular locale, language or even your own taste.
 
 If anyone gets round to writing full templates for languages I would
 appreciate it if you would do two things;
@@ -222,11 +280,11 @@ appreciate it if you would do two things;
 Firstly, make them public and announce them on the ezmlm@lists.cr.yp.to
 mailing list so that others may benefit.
 
-Secondly, please mail me a copy (ezmlm-web@sumpfralle.de) so that I may use
+Secondly, please mail me a copy (guy-ezmlm@rucus.ru.ac.za) so that I may use
 them in any future releases of ezmlm-web.
 
 
-VIII. Bugs && Bug Reports
+IX. Bugs && Bug Reports
 =======================
 I don't know of any bugs, but then this is a rewrite and a first release. It
 has been tested reasonably well, but not exhaustively. I know it works on
@@ -235,12 +293,10 @@ an Apache web server, but I would be interested to know whether it works on
 other OSs and with other web servers. This version is far less dependent on
 the OS than previous versions so I don't see any reason why it shouldn't.
 
-Please mail bug reports and comments to ezmlm-web@sumpfralle.de.
+Please mail bug reports and comments to guy-ezmlm@rucus.ru.ac.za
 
-IX. Acknowledgements
+X. Acknowledgements
 ===================
-*  Guy Antony Halse (guy-ezmlm@rucus.ru.ac.za) - He created ezmlm-web,
-   maintained it till 02005 and wrote nearly every line of code!
 *  Keith Burdis (keith@rucus.ru.ac.za) - For constantly bugging me and
    ensuring that I actually got round to writing some code :)
 *  Bryan Kilian (bryan@rucus.ru.ac.za) and the administrators of the
@@ -258,13 +314,10 @@ IX. Acknowledgements
    mailing list, suggestions, help, etc
 *  Galen Johnson (gjohnson@totalsports.net) - For some ideas on bugfixes.
 
-X. Availability
+XI. Availability
 =================
-More information on ezmlm-web and developments to ezmlm-web can be found at:
-https://systemausfall.org/toolforge/ezmlm-web
-
-The website of Guy Antony Halse (the author of ezmlm-web) is still at:
-http://rucus.ru.ac.za/~guy/ezmlm/
-
-The old ftp-archive of ezmlm-web is still available on:
+The latest version of ezmlm-web will always be available on;
 ftp://rucus.ru.ac.za/pub/mail/ezmlm/
+
+More information on ezmlm-web and developments to ezmlm-web can be found at;
+http://rucus.ru.ac.za/~guy/ezmlm/

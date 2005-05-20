@@ -1,6 +1,6 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl -T
 #===========================================================================
-# ezmlm-web.cgi - version 2.2 - 26/01/02005
+# ezmlm-web.cgi - version 2.1 - 25/09/2000
 # $Id: ezmlm-web.cgi,v 1.3 2000/09/25 19:58:07 guy Exp $
 #
 # Copyright (C) 1999/2000, Guy Antony Halse, All Rights Reserved.
@@ -69,8 +69,7 @@ use vars qw[$HOME_DIR]; $HOME_DIR=$tmp[7];
 use vars qw[$DEFAULT_OPTIONS %EZMLM_LABELS $UNSAFE_RM $ALIAS_USER $LIST_DIR];
 use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES];
 use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
-use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
-use vars qw[$HTML_CSS_FILE];
+use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD];
 
 # Get user configuration stuff
 if(defined($opt_C)) {
@@ -90,11 +89,6 @@ if(defined($opt_d)) {
    $LIST_DIR = $1 if ($opt_d =~ /^([-\@\w.\/]+)$/);
 }
 
-# If WEBUSERS_FILE is not defined in ezmlmwebrc (as before version 2.2), then use former default value for compatibility
-if (!defined($WEBUSERS_FILE)) {
-   $WEBUSERS_FILE = $LIST_DIR . '/webusers'
-}
-
 # Work out default domain name from qmail (for David Summers)
 my($DEFAULT_HOST);
 open (GETHOST, "<$QMAIL_BASE/me") || open (GETHOST, "<$QMAIL_BASE/defaultdomain") || die "Unable to read $QMAIL_BASE/me: $!";
@@ -111,12 +105,9 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
 }
 
 # Print header on every page ...
-print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d', '-Content-Type'=>'text/html; charset=utf-8');
-print $q->start_html(-style=>{'src'=>"$HTML_CSS_FILE"},-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -expires=>'-1d');
+print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d');
+print $q->start_html(-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -BGCOLOR=>$HTML_BGCOLOR, -LINK=>$HTML_LINK, -VLINK=>$HTML_VLINK, -TEXT=>$HTML_TEXT, -expires=>'-1d');
 print $HTML_HEADER;
-
-# check permissions
-&check_permission_for_action == 0 || die 'Error: you are not allowed to do this!';
 
 # This is where we decide what to do, depending on the form state and the
 # users chosen course of action ...
@@ -125,7 +116,7 @@ unless (defined($q->param('state'))) {
    &select_list; 
 
 } elsif ($Q::state eq 'select') {
-   # User selects an action to perform on a list ...
+   # User selects an action to perorm on a list ...
    
    if ($Q::action eq "[$BUTTON{'create'}]") { # Create a new list ...
       &allow_create_list;
@@ -185,7 +176,7 @@ unless (defined($q->param('state'))) {
       $part = 'digest'; 
    }
    
-   if ($Q::action eq "[$BUTTON{'deleteaddress'}]") { # Delete a subscriber ...
+   if ($Q::action eq '[Delete Address]') { # Delete a subscriber ...
       &delete_address("$LIST_DIR/$Q::list", $part);
       &part_subscribers($part);
 
@@ -248,7 +239,7 @@ unless (defined($q->param('state'))) {
    &list_text;
    
 } else {
-   print "<h1>$Q::action</h1><h2>$LANGUAGE{'nop'}</h2><hr>";
+   print "<H1 ALIGN=CENTER>$Q::action</H1><H2 ALIGN=CENTER>$LANGUAGE{'nop'}</H2><HR ALIGN=center WIDTH=25%>";
 } 
 
 # Print HTML footer and exit :) ...
@@ -272,61 +263,48 @@ sub select_list {
    # Check that they actually are lists ...
    foreach $i (0 .. $#files) {
       if (-e "$LIST_DIR/$files[$i]/lock") {
-         $lists[$#lists + 1] = $files[$i] if (&webauth($files[$i]) == 0);
+         if (-e "$LIST_DIR/webusers") {
+            if (&webauth($files[$i]) == 0) {
+               $lists[$#lists + 1] = $files[$i];
+            }
+         } else {
+            $lists[$#lists + 1] = $files[$i];
+         }
       }
    }
 
    # Keep selection box a resonable size - suggested by Sebastian Andersson 
    $scrollsize = 25 if(($scrollsize = $#lists + 1) > 25);
 
-   # Begin of content
-   print '<div id="main" class="container">';
-
    # Print a form
    $q->delete_all;
    print $q->startform;
    print $q->hidden(-name=>'state', -default=>'select');
-
-   print '<div class="list">';
+   print '<CENTER><TABLE BORDER="0" CELLPADDING="10"><TR><TD ALIGN="center" VALIGN="top" ROWSPAN="2">';
    print $q->scrolling_list(-name=>'list', -size=>$scrollsize, -values=>\@lists) if defined(@lists);
-   print '</div>';	# end of main_mainlinglists_list
  
-   print '<div class="info">', $LANGUAGE{'chooselistinfo'}, '</div>';		# explanation of options
+   print '</TD><TD ALIGN="left" VALIGN="top">', $LANGUAGE{'chooselistinfo'};
 
-   print '<div class="add_remove">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), '</span>' if (&webauth_create_allowed == 0);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), '</span>' if(defined(@lists));
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]"), '</span>' if(defined(@lists));
-   print '</div>';	# end of main_buttons
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), ' ' if (!defined($opt_c));
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), ' ' if(defined(@lists));
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]") if(defined(@lists));
+   print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
    print $q->endform;
-
-   print '</div>';	# end of content
 }
 
 # ------------------------------------------------------------------------
 
 sub confirm_delete {
    # Make sure that the user really does want to delete the list!
-
-   # Begin of content
-   print '<div id="delete" class="container">';
-
+   
    # Print a form ...
    $q->delete('state');
    print $q->startform;
    print $q->hidden(-name=>'state', -default=>'confirm_delete');
    print $q->hidden(-name=>'list', -default=>$q->param('list'));
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'confirmdelete'}, ' ', $q->param('list'), '</h2>';
-   print '</div>';	# end of delete->title
-
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'confirm', -value=>"[$BUTTON{'no'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'confirm', -value=>"[$BUTTON{'yes'}]"), '</span>';
-   print '</div>';	# end of delete->question
-
-   print '</div>';	# enf of delete
+   print '<H2 ALIGN="center">', $LANGUAGE{'confirmdelete'}, ' ', $q->param('list'), '</H3><BR><CENTER>';
+   print $q->submit(-name=>'confirm', -value=>"[$BUTTON{'no'}]"), ' ';
+   print $q->submit(-name=>'confirm', -value=>"[$BUTTON{'yes'}]"), '</CENTER>';
 }
 
 # ------------------------------------------------------------------------
@@ -349,48 +327,29 @@ sub display_list {
 
    # Print out a form of options ...
    $q->delete('state');                     
-
-   # Begin of content
-   print '<div id="edit" class="container">';
-
-   print '<div class="title">';
-   print "<h2>$LANGUAGE{'subscribersto'} $Q::list</h2>";
-   print "<h3>($listaddress)</h3>";
-   print '<hr>';
-   print '</div>';	# end of edit->title
-
+   print "<H2 ALIGN=center>$LANGUAGE{'subscribersto'} $Q::list ($listaddress)</H2><HR ALIGN=center WIDTH=25%>";
    print $q->start_multipart_form;
+   print '<CENTER><TABLE ALIGN="center" CELLPADDING="10"><TR><TD ROWSPAN="2" VALIGN="top" ALIGN="center">';
    print $q->hidden(-name=>'state', -default=>'edit');
    print $q->hidden(-name=>'list', -default=>$Q::list);
-
-   print '<div class="list">';
    print $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -labels=>&pretty_names, -multiple=>'true') if defined(@subscribers);
-   print '</div>';	# end of edit->list
-   
-   print '<div class="add_remove">';
-   print '<p>', ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'}, '</p>' if defined(@subscribers);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
-   print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
-   print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
-   print '</div>';	# end of edit->add_remove
-
-   print '<div class="options">';
-   print '<h3>', $LANGUAGE{'additionalparts'}, ':</h3>' if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
-   print '<p>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'moderators'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'moderator'}, '"> </span>' if ($list->ismodpost || $list->ismodsub || $list->isremote);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'denylist'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'deny'}, '"> </span>' if ($list->isdeny);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'allowlist'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'allow'}, '"> </span>' if ($list->isallow);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'digestsubscribers'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'digest'}, '"> </span>' if ($list->isdigest);
-   print '</p><p>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'webarchive'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'webarch'}, '">  </span>' if(&ezmlmcgirc);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'configuration'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'config'}, '"> </span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'selectlist'}]"), '</span>';
-   print '</p>';
-   print '</div>';	# end of edit->options
+   print '</TD><TD VALIGN="top" ALIGN="left">';
+   print ' ', ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'}, '<BR>' if defined(@subscribers);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '<P>' if defined(@subscribers);
+   print $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddress'}, '"><BR>';
+   print $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddressfile'}, '"><br>' if ($FILE_UPLOAD);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '<P>';
+   print '<STRONG>', $LANGUAGE{'additionalparts'}, ':</STRONG><BR>' if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'moderators'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'moderator'}, '"> ' if ($list->ismodpost || $list->ismodsub || $list->isremote);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'denylist'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'deny'}, '"> ' if ($list->isdeny);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'allowlist'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'allow'}, '"> ' if ($list->isallow);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'digestsubscribers'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'digest'}, '"> ' if ($list->isdigest);
+   print '<P>';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'webarchive'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'webarch'}, '">  ' if(&ezmlmcgirc);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'configuration'}]"), '<IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'config'}, '">&nbsp;&nbsp;&nbsp;';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'selectlist'}]");
+   print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
    print $q->endform; 
-
-   print '</div>';	# end of edit
 
 }
 
@@ -476,62 +435,37 @@ sub untaint {
 
 # ------------------------------------------------------------------------
 
-sub check_permission_for_action {
-   # test if the user is allowed to modify the choosen list or to create an new one
-   # the user would still be allowed to fill out the create-form (however he got there),
-   # but the final creation is omitted
-
-   my $ret;
-   if ($Q::state eq 'create') {
-	$ret = &webauth_create_allowed();
-   } elsif (defined($Q::list)) {
-	$ret = &webauth($Q::list);
-   } else {
-	$ret = 0;
-   }
-   return $ret;
-
-}
-
-# ------------------------------------------------------------------------
-
 sub add_address {
    # Add an address to a list ..
 
    my ($address, $list, @addresses, $count); my ($listname, $part) = @_;
    $list = new Mail::Ezmlm($listname);
 
-   if (($q->param('addfile')) && ($FILE_UPLOAD)) {
+   if($q->param('addfile')) {
 
       # Sanity check
       die "File upload must be of type text/*" unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/});
 
       # Handle file uploads of addresses
-      my($fh) = $q->param('addfile');
+      my($fh) = $q->upload('addfile');
       return unless (defined($fh));
       while (<$fh>) {
-	next if (/^\s*$/ or /^#/); # blank, comments
-	next unless ( /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/ ); # email address ...
-	chomp();
-	push @addresses, "$_";
+         next if (/^\s*$/ or /^#/); # blank, comments
+         next unless (/\@/); # email address ...
+         chomp();
+         push @addresses, $_;
       }
 
-   }
+   } else {
       
-	# User typed in an address
-	if ($q->param('addsubscriber') ne '') {
+      # User typed in an address
+      return if ($q->param('addsubscriber') eq '');
 
-		$address = $q->param('addsubscriber');
-		$address .= $DEFAULT_HOST if ($q->param('addsubscriber') =~ /\@$/);
-
-		# untaint
-		if ($address =~ /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/) {
-			push @addresses, "$1\@$2";
-		  } else {
-			warn "this address ($address) is not valid!";
-		  }
-
-	}
+      $address = $q->param('addsubscriber');
+      $address .= $DEFAULT_HOST if ($q->param('addsubscriber') =~ /\@$/);
+      push @addresses, $address;
+   
+   }
    
    foreach $address (@addresses) {
 
@@ -600,22 +534,15 @@ sub part_subscribers {
       my($subpath) = $config =~ m{8\s*'([^']+)'};
       my($remotepath) = $config =~ m{9\s*'([^']+)'};
       
-      my($divclass);
-
-      $divclass = ($postpath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'posting'}]" if ($list->ismodpost);
-      $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Posting Moderators are stored in a non-standard location (' . $postpath . '). You will have to edit them manually.">' if ($postpath);
-      $moderated .= '</p>' if ($list->ismodpost);
-
-      $divclass = ($subpath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'subscription'}]" if($list->ismodsub);
-      $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Subscriber Moderators are stored in a non-standard location (' . $subpath . '). You will have to edit them manually">' if ($subpath);
-      $moderated .= '</p>' if ($list->ismodsub);
-
-      $divclass = ($remotepath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'remoteadmin'}]" if($list->isremote);
-      $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually">' if ($remotepath);
-      $moderated .= '</p> if ($list->isremote)';
+      $moderated = '<BLINK><FONT COLOR=#ff0000>' if ($postpath);
+      $moderated .= "[$LANGUAGE{'posting'}]" if ($list->ismodpost);
+      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" ALT="Posting Moderators are stored in a non-standard location (' . $postpath . '). You will have to edit them manually."></BLINK>' if ($postpath);
+      $moderated .= '<BLINK><FONT COLOR=#ff0000>' if ($subpath);
+      $moderated .= " [$LANGUAGE{'subscription'}]" if($list->ismodsub);
+      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" ALT="Subscriber Moderators are stored in a non-standard location (' . $subpath . '). You will have to edit them manually"></BLINK>' if ($subpath);
+      $moderated .= '<BLINK><FONT COLOR=#ff0000>' if ($remotepath);
+      $moderated .= " [$LANGUAGE{'remoteadmin'}]" if($list->isremote);
+      $moderated .= '</FONT><IMG SRC="' . $HELP_ICON_URL . '" ALT="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually"></BLINK>' if ($remotepath);
      
    }
 
@@ -627,37 +554,24 @@ sub part_subscribers {
 
    # Keep selection box a resonable size - suggested by Sebastian Andersson 
    $scrollsize = 25 if(($scrollsize = $#subscribers + 1) > 25);
-
-   # Begin of content
-   print '<div id="parts" class="container">';
    
    # Print out a form of options ...
    $q->delete('state');                     
-
-   print '<div class="title">';
-   print "<h2>$type $LANGUAGE{'for'} $listaddress</h2>";
-   print '<hr>';
-   print '</div>';	# end of parts_title
-
-   print '<div class="info">', "$moderated", '</div>' if(defined($moderated));
-
+   print "<H2 ALIGN=center>$type $LANGUAGE{'for'} $listaddress</H2><HR ALIGN=center WIDTH=25%>";
+   print "<CENTER>$moderated</CENTER><P>" if(defined($moderated));
    print $q->start_multipart_form;
+   print '<CENTER><TABLE ALIGN="center" CELLPADDING="10"><TR><TD ROWSPAN="2" VALIGN="top" ALIGN="center">';
    print $q->hidden(-name=>'state', -default=>$part);
    print $q->hidden(-name=>'list', -default=>$Q::list), "\n";
-
-   print '<div class="list">', $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -multiple=>'true', -labels=>&pretty_names), '</div>' if defined(@subscribers);
-
-   print '<div class="add_remove">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
-   print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
-   print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'subscribers'}]"), '</span>';
-   print '</div>';	# end of parts_subscribers_actions
-
+   print $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -multiple=>'true', -labels=>&pretty_names) if defined(@subscribers);
+   print '</TD></TR><TR><TD VALIGN="top" ALIGN="left">';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '<P>' if defined(@subscribers);
+   print $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddress'}, '"><BR>';
+   print $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'addaddressfile'}, '"><br>' if ($FILE_UPLOAD);
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '<P>';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'subscribers'}]");
+   print '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
    print $q->endform;          
-
-   print '</div>';	# end of parts
 
 }
 
@@ -681,50 +595,36 @@ sub allow_create_list {
       $username = "$USER-" if ($USER ne $ALIAS_USER);
       $hostname = $DEFAULT_HOST;
    }
-
-   print '<div id="create" class="container">';
-
+                                    
    # Print a form of options ...
    $q->delete_all;
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'createnew'}, '</h2>';
-   print '<hr>';
-   print '</div>';	# end of create->title
-
+   print '<H2 ALIGN=CENTER>', $LANGUAGE{'createnew'}, '</H2><HR ALIGN=center WIDTH=25%>';
    print $q->startform;
    print $q->hidden(-name=>'state', -value=>'create');
-
-   print '<div class="input">';
-   print '<span class="formfield">', $LANGUAGE{'listname'}, ': ', $q->textfield(-name=>'list', -size=>'20'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listname'}, '"></span>';
-   print '<span class="formfield">', $LANGUAGE{'listaddress'}, ': ', $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10');
-   print ' @ ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listadd'}, '"></span>';
+   print '<BIG><STRONG>', $LANGUAGE{'listname'}, ': </STRONG></BIG>', $q->textfield(-name=>'list', -size=>'20'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'listname'}, '"><P>';
+   print '<BIG><STRONG>', $LANGUAGE{'listaddress'}, ': </STRONG></BIG>';
+   print $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10');
+   print ' <BIG><STRONG>@</STRONG></BIG> ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'listadd'}, '"><P>';
    
-   print '<span class="formfield">', $LANGUAGE{'listoptions'}, ':</span>';
+   print '<P><BIG><STRONG>', $LANGUAGE{'listoptions'}, ':</STRONG></BIG>';
    &display_options($DEFAULT_OPTIONS);
 
    # Allow creation of mysql table if the module allows it
    if($Mail::Ezmlm::MYSQL_BASE) {
-	print '<span class="formfield">', $q->checkbox(-name=>'sql', -label=>$LANGUAGE{'mysqlcreate'}, -on=>1);
-	print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mysqlcreate'}, '"></span>';
-   }
-   
-   if(-e "$WEBUSERS_FILE") {
-	print '<span class="formfield">', $LANGUAGE{'allowedtoedit'}, ': '; 
-	print $q->textfield(-name=>'webusers', -value=>$ENV{'REMOTE_USER'}||'ALL', -size=>'30');
-	print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '"></span>';
-	print '<span class="help">', $HELPER{'allowedit'}, '</span>';
-   }
-   print '</div>';	# end of create->input
-   
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'createlist'}]"), '</span>';
-   print '<span class="button">', $q->reset(-value=>"[$BUTTON{'resetform'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>';
-   print '</div>';	# end of create->question
-   print $q->endform;  
+      print '<P> ', $q->checkbox(-name=>'sql', -label=>$LANGUAGE{'mysqlcreate'}, -on=>1);
+      print ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'mysqlcreate'}, '">';
 
-   print '</div>';	# end of create
+   }
+   
+   print '<P><BIG><STRONG>', $LANGUAGE{'allowedtoedit'}, ': </STRONG></BIG>', 
+      $q->textfield(-name=>'webusers', -value=>$ENV{'REMOTE_USER'}||'ALL', -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'webusers'}, '">',
+      '<BR><FONT SIZE="-1">', $HELPER{'allowedit'}, '</FONT>'
+   if(-e "$LIST_DIR/webusers");
+   
+   print '<P>', $q->submit(-name=>'action', -value=>"[$BUTTON{'createlist'}]"), ' ';
+   print $q->reset(-value=>"[$BUTTON{'resetform'}]"), ' ';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]");
+   print $q->endform;  
    
 }
 
@@ -732,7 +632,7 @@ sub allow_create_list {
 
 sub create_list {
    # Create a list acording to user selections ...
-
+   
    # Check the list directory exists and create if necessary ...
    if(!-e $LIST_DIR) {
       die "Unable to create directory ($LIST_DIR): $!" unless mkdir $LIST_DIR, 0700;
@@ -747,7 +647,7 @@ sub create_list {
    # Sanity Checks ...
    return 1 if ($listname eq '' || $qmail eq '');
    if(-e ("$LIST_DIR/$listname/lock") || -e ("$HOME_DIR/.qmail-$qmail")) {
-      print '<h1 class="warning">', "List '$listname' already exists :(</h1>";
+      print "<H1 ALIGN=CENTER>List '$listname' already exists :(</H1>";
       return 1;
    }
   
@@ -785,7 +685,12 @@ sub create_list {
       }
    }
    
-   &update_webusers();
+   # Handle authentication stuff
+   if ($Q::webusers) {
+      open(WEBUSER, ">>$LIST_DIR/webusers") || die "Unable to open webusers: $!"; 
+      print WEBUSER "$Q::list: $Q::webusers\n";
+      close WEBUSER;   
+   }
 
    return 0;
 }
@@ -802,29 +707,16 @@ sub list_config {
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $listname = $q->param('list');
    $listaddress = &this_listaddress;
-
-   # Begin of content
-   print '<div id="config" class="container">';
-    
+                                   
    # Print a form of options ...
    $q->delete_all;
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'editconfiguration'}, '</h2>';
-   print '<hr>';
-   print '</div>';	# end of config->title
-
+   print '<H2 ALIGN="center">', $LANGUAGE{'editconfiguration'}, '</H2><HR ALIGN=center WIDTH=25%>';
    print $q->startform;
    print $q->hidden(-name=>'state', -value=>'configuration');
    print $q->hidden(-name=>'list', -value=>$listname);
-
-   print '<div class="info">';
-   print '<p>', $LANGUAGE{'listname'}, ": <em>$listname</em></p>";
-   print '<p>', "$LANGUAGE{'listaddress'}: <em>$listaddress</em></p>";
-   print '</div>';	# end of config->info
-
-   print '<div class="input">';
-   print '<h2>', $LANGUAGE{'listoptions'}, ':</h2>';
+   print '<BIG><STRONG>', $LANGUAGE{'listname'}, ": <EM>$listname</EM><BR>";
+   print "$LANGUAGE{'listaddress'}: <EM>$listaddress</EM></STRONG></BIG><P>";
+   print '<BIG><STRONG>', $LANGUAGE{'listoptions'}, ':</BIG></STRONG><BR>';
 
    # Print a list of options, selecting the ones that apply to this list ...
    &display_options($list->getconfig);
@@ -835,12 +727,12 @@ sub list_config {
    $mimeremove = $list->getpart('mimeremove');
    $prefix = $list->getpart('prefix'); 
 
-   print '<span class="formfield">', $LANGUAGE{'prefix'}, ': ', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>12), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'prefix'}, '"></span>' if defined($prefix);
-   print '<p class="formfield">', $LANGUAGE{'headerremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headerremove'}, '"><br>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70), '</span>';
-   print '<span class="formfield">', $LANGUAGE{'headeradd'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headeradd'}, '"><br>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70), '</div>';
-   print '<span class="formfield">', $LANGUAGE{'mimeremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mimeremove'}, '"><br>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70), '</span>' if defined($mimeremove);
+   print '<P><BIG><STRONG>', $LANGUAGE{'prefix'}, ': </STRONG></BIG>', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>12), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'prefix'}, '">' if defined($prefix);
+   print '<P><BIG><STRONG>', $LANGUAGE{'headerremove'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'headerremove'}, '"><BR>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70);
+   print '<P><BIG><STRONG>', $LANGUAGE{'headeradd'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'headeradd'}, '"><BR>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70);
+   print '<P><BIG><STRONG>', $LANGUAGE{'mimeremove'}, ':</BIG></STRONG> <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'mimeremove'}, '"><BR>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70) if defined($mimeremove);
    
-   if(open(WEBUSER, "<$WEBUSERS_FILE")) {
+   if(open(WEBUSER, "<$LIST_DIR/webusers")) {
       my($webusers);
       while(<WEBUSER>) {
          last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
@@ -848,24 +740,18 @@ sub list_config {
       close WEBUSER;
       $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
 
-      print '<span class="formfield">', $LANGUAGE{'allowedtoedit'}, ': ';
-      print $q->textfield(-name=>'webusers', -value=>$webusers, -size=>'30');
-      print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '"></span>',
-      print '<span class="help">', $HELPER{'allowedit'}, '</span>';
+      print '<P><BIG><STRONG>', $LANGUAGE{'allowedtoedit'}, ': </STRONG></BIG>', 
+         $q->textfield(-name=>'webusers', -value=>$webusers, -size=>'30'), ' <IMG SRC="', $HELP_ICON_URL, '" ALT="', $HELPER{'webusers'}, '">',
+         '<BR><FONT SIZE="-1">', $HELPER{'allowedit'}, '</FONT>';
       
    }
-   print '</div>';	# end of config->input
    
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'updateconfiguration'}]"), '</span>';
-   print '<span class="button">', $q->reset(-value=>"[$BUTTON{'resetform'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>'; 
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'edittexts'}]"), '</span>';
-   print '</div>';	# end of config->question
-   
+   print '<P>', $q->submit(-name=>'action', -value=>"[$BUTTON{'updateconfiguration'}]"), ' ';
+   print $q->reset(-value=>"[$BUTTON{'resetform'}]"), ' ';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), ' ';   
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'edittexts'}]");
    print $q->endform;  
 
-   print '</div>';	# end of config
 }
 
 # ------------------------------------------------------------------------
@@ -902,27 +788,22 @@ sub update_config {
    $list->setpart('mimeremove', $q->param('mimeremove')) if defined($q->param('mimeremove'));
    $list->setpart('prefix', $q->param('prefix')) if defined($q->param('prefix'));
 
-   &update_webusers();
-}
-
-# ------------------------------------------------------------------------
-
-sub update_webusers {
-   # replace existing webusers-line or add a new one
-
    if($Q::webusers) {
       # Back up web users file
       open(TMP, ">/tmp/ezmlm-web.$$");
-      open(WU, "<$WEBUSERS_FILE");
+      open(WU, "<$LIST_DIR/webusers");
       while(<WU>) { print TMP; }
       close TMP; close WU;
       
       open(TMP, "</tmp/ezmlm-web.$$");
-      open(WU, ">$WEBUSERS_FILE");
+      open(WU, ">$LIST_DIR/webusers");
       while(<TMP>) {
-		print WU unless (/^$Q::list\s*:/);
-	}
-	print WU "$Q::list\: $Q::webusers\n";
+         if(/^$Q::list\s*:/) {
+            print WU "$Q::list\: $Q::webusers\n";
+         } else {
+            print WU;
+         }
+      }
       close TMP; close WU;
       unlink "/tmp/ezmlm-web.$$";
    }
@@ -955,31 +836,18 @@ sub list_text {
    @files = grep !/^\./, readdir DIR; 
    closedir DIR;
 
-   # Begin of content
-   print '<div id="textfiles" class="container">';
-
    # Print a form ...
    $q->delete('state');
    print $q->startform;
    print $q->hidden(-name=>'state', -default=>'list_text');
    print $q->hidden(-name=>'list', -default=>$q->param('list'));
-
-   print '<div class="list">';
+   print '<CENTER><TABLE BORDER="0" CELLPADDING="10" ALIGN="center"><TR><TD ALIGN="center" VALIGN="top" ROWSPAN="2">';
    print $q->scrolling_list(-name=>'file', -values=>\@files);
-   print '</div>';	# end of textfiles->list
-
-   print '<div class="info">';
-   print $LANGUAGE{'edittextinfo'};
-   print '</div>';	# end of textfiles->info
-
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'editfile'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>';
-   print '</div>';	# end of textfiles->question
-
+   print '</TD><TD ALIGN="center" VALIGN="top">';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'editfile'}]"), ' ';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]");
+   print '<P>', $LANGUAGE{'edittextinfo'}, '</TD></TR><TR><TD> </TD></TR></TABLE></CENTER>';
    print $q->endform;
-
-   print '</div>';
    
 }
 
@@ -992,38 +860,23 @@ sub edit_text {
    my($list) = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $content = $list->getpart("text/$Q::file");
 
-   # Begin of content
-   print '<div id="edittext" class="container">';
-
    # Print a form ...
    $q->delete('state');
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'editingfile'}, ': ', $Q::file, '</h2>';
-   print '</div>';	# end of edittext->title
-
+   print '<H2 ALIGN="CENTER">', $LANGUAGE{'editingfile'}, ': ', $Q::file, '</H2>';
+   print '<CENTER><TABLE ALIGN="center" CELLPADDING="5"><TR><TD VALIGN="top" ROWSPAN="2">';
    print $q->startform;
    print $q->hidden(-name=>'state', -default=>'edit_text');
    print $q->hidden(-name=>'list', -default=>$q->param('list'));
    print $q->hidden(-name=>'file', -default=>$q->param('file'));
-
-   print '<div class="input">';
-   print '<span class="formfield">', $q->textarea(-name=>'content', -default=>$content, -rows=>'25', -columns=>'72'), '</span>';
-   print '</div>';	# end of edittext->input
-
-   print '<id class="info">';
-   print $LANGUAGE{'editfileinfo'};
-   print '</div>';	# end of edittext->info
-
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'savefile'}]"), '</span>';
-   print '<span class="button">', $q->reset(-value=>"[$BUTTON{'resetform'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>';
-   print '</div>';	# end of edittext->question
-
+   print $q->textarea(-name=>'content', -default=>$content, -rows=>'25', -columns=>'72');
+   print '</TD><TD VALIGN="top" ALIGN="left">';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'savefile'}]"), ' ';
+   print $q->reset(-value=>"[$BUTTON{'resetform'}]"), ' ';
+   print $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]");
+   print '<P>', $LANGUAGE{'editfileinfo'};
    print $q->endform;
+   print '</TD></TR><TR><TD> <TD></TR></TABLE><CENTER>'
 
-   print '</div>';	# end of edittext
 }
    
 # ------------------------------------------------------------------------
@@ -1040,39 +893,12 @@ sub save_text {
 
 sub webauth {
    
-   # Check if webusers file exists - if not, then access is granted
-   return 0 if (! -e "$WEBUSERS_FILE");
-
    # Read authentication level from webusers file. Format of this file is
    # somewhat similar to the unix groups file
    my($listname) = @_;
-   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file ($WEBUSERS_FILE): $!";
+   open (USERS, "<$LIST_DIR/webusers") || die "Unable to read webusers file: $!";
    while(<USERS>) {
       if (/^($listname|ALL)\:/i) {
-         if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
-            close USERS; return 0;
-         }
-      }   
-   }
-   close USERS;
-   return 1;
-}
-
-# ---------------------------------------------------------------------------
-
-sub webauth_create_allowed {
-
-   # Check if we were called with the deprecated argument "-c" (allow to create lists)
-   return 0 if (defined($opt_c));
-
-   # Check if webusers file exists - if not, then access is granted
-   return 0 if (! -e "$WEBUSERS_FILE");
-
-   # Read create-permission from webusers file.
-   # the special listname "ALLOW_CREATE" controls, who is allowed to do it
-   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file ($WEBUSERS_FILE): $!";
-   while(<USERS>) {
-      if (/^ALLOW_CREATE:/i) {
          if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
             close USERS; return 0;
          }
@@ -1089,32 +915,37 @@ sub display_options {
    my($i, $j);
  
    print "<!-- $opts -->";  
-   print '<p>';
+   print '<TABLE BORDER="0" CELLPADDING="3"><TR><TD>';
    foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
       if ($opts =~ /^\w*$i\w*\s*/) {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
+         print $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
       } else {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
+         print $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
-      print '<img src="', $HELP_ICON_URL, '" border="0" title="', $EZMLM_LABELS{$i}[1] , '"></span>';
-      print '</td>'; $j++;
+      print '<IMG SRC="', $HELP_ICON_URL, '" BORDER="0" ALT="', $EZMLM_LABELS{$i}[1] , '">';
+      print '</TD>'; $j++;
       if ($j >= 3) {
-         $j = 0; print '</p><p>';
+         $j = 0; print '</TR><TR>';
       }
+      print '<TD>';
    }
-   print '</p>';
+   print '</TD></TR></TABLE>';
 
+   print '<TABLE BORDER="0" CELPADDING="3">';
    foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-      print '<p>';
+      print '<TR><TD>';
       if ($opts =~ /$i (?:'(.+?)')/) {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
+         print $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
       } else {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
+         print $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
-      print '<img src="', $HELP_ICON_URL, '" border="0" title="', $EZMLM_LABELS{$i}[1] , '"></span>';
-      print '<span class="formfield">', $q->textfield(-name=>"$i-value", -value=>$1||$EZMLM_LABELS{$i}[2], -size=>30), '</span>';
-      print '</p>';
+      print '<IMG SRC="', $HELP_ICON_URL, '" BORDER="0" ALT="', $EZMLM_LABELS{$i}[1] , '">';
+      print '</TD><TD>';
+      print $q->textfield(-name=>"$i-value", -value=>$1||$EZMLM_LABELS{$i}[2], -size=>30);
+      print '</TD></TR>';
+
    }
+   print '</TABLE>';
    
 }
 
@@ -1169,16 +1000,17 @@ BEGIN {
    sub handle_errors {
       my $msg = shift;
       print << "EOM";
-         </div><div class="error">
-         <h2>A fatal error has occoured</h2>
-         <p>Something you did caused this script to bail out. The error
-         message we got was</p>
-         <p class="msg">$msg</p>
-         <p>Please try what you were doing again, checking everything you entered.<br>
+         </table><table width="99%" cellpadding="5" cellspacing="5" align="center"><tr>
+         <td align="center" bgcolor="#e0e0ff">
+         <h2><font color="red">A fatal error has occoured</font></h2>
+         Something you did caused this script to bail out. The error
+         message we got was<p>
+         <tt>$msg</tt><p>
+         Please try what you were doing again, checking everything you entered.<br>
          If you still find yourself getting this error, please
          contact the <a href="mailto:webmaster\@$DEFAULT_HOST">site administrator</a>
-         quoting the error message above.</p>
-         </</div>
+         quoting the error message above.
+         </td></tr></table>
 EOM
 
    }
@@ -1186,7 +1018,7 @@ EOM
 }
                                                                                                                  
 # ------------------------------------------------------------------------
-# End of ezmlm-web.cgi v2.2
+# End of ezmlm-web.cgi v2.1
 # ------------------------------------------------------------------------
 __END__
 
@@ -1201,6 +1033,8 @@ ezmlm-web [B<-c>] [B<-C> E<lt>F<config file>E<gt>] [B<-d> E<lt>F<list directory>
 =head1 DESCRIPTION
 
 =over 4
+
+=item B<-c> Disable list configuration
 
 =item B<-C> Specify an alternate configuration file given as F<config file>
 If not specified, ezmlm-web checks first in the users home directory, then in
@@ -1245,7 +1079,6 @@ F<./ezmlmwebrc>
  
  ezmlm(5), ezmlm-cgi(1), Mail::Ezmlm(3)
    
- https://systemausfall.org/toolforge/ezmlm-web
  http://rucus.ru.ac.za/~guy/ezmlm/
  http://www.ezmlm.org/
  http://www.qmail.org/
