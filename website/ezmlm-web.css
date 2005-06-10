@@ -22,8 +22,12 @@ font.feature {
 #nav-bar {
 	float: left;
 	width: 14%;
-	margin: 0.5%;
-	padding-bottom: 1%;
+	margin-right: 1%;
+	margin-bottom: 1%;
+	margin-left: 0.5%;
+	margin-top: 0.5%;
+	padding-right: 0.5%;
+	padding-bottom: 0.5%;
 	background-color: #c0c0b0;
 }
 
