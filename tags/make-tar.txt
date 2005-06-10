@@ -1,0 +1,3 @@
+to create the tar archive:
+
+tar czf ezmlm-web-2.x.tar.gz --owner=0 --group=0 --exclude=.svn ezmlm-web-2.x
