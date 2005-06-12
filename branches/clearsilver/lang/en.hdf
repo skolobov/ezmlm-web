@@ -1,0 +1,25 @@
+Language = en
+
+PageTitle = ezmlm-web - a mailinglists' administration interface
+
+
+Lang {
+    Buttons {
+
+	Create		= Create List
+	Edit		= Edit
+	Delete		= Delete
+      }
+
+    Hints {
+      }
+
+    Misc {
+	ListSelectDescription {
+		1	= choose a mailing list from the selection box or click on [Create List]
+		2	= click on the [Edit] button if you want to edit the selected list
+		3	= click on the [Delete] button if you want to delete the selected list
+	  }
+	UnknownAction	= Action not yet implemented
+      }
+}

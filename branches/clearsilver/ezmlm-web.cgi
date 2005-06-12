@@ -40,11 +40,12 @@
 # Modules to include
 use strict;
 use Getopt::Std;
+use ClearSilver;
 use Mail::Ezmlm;
 use Mail::Address;
 use DB_File;
 use CGI;
-use CGI::Carp qw(fatalsToBrowser set_message);
+#use CGI::Carp qw(fatalsToBrowser set_message);
 
 # These two are actually included later and are put here so we remember them.
 #use File::Find if ($UNSAFE_RM == 1);
@@ -70,6 +71,8 @@ use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES
 use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
 use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
 use vars qw[$HTML_CSS_FILE];
+
+use vars qw[$pagedata $pagename];
 
 # Get user configuration stuff
 if(defined($opt_C)) {
@@ -109,13 +112,11 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
    exit;
 }
 
-# Print header on every page ...
-print $q->header(-pragma=>'no-cache', '-cache-control'=>'no-cache', -expires=>'-1d', '-Content-Type'=>'text/html; charset=utf-8');
-print $q->start_html(-style=>{'src'=>"$HTML_CSS_FILE"},-title=>$HTML_TITLE, -author=>'guy-ezmlm@rucus.ru.ac.za', -expires=>'-1d');
-print $HTML_HEADER;
+my $pagedata = load_hdf();
+
 
 # check permissions
-&check_permission_for_action == 0 || die 'Error: you are not allowed to do this!';
+&check_permission_for_action == 0 || &error_die('Error: you are not allowed to do this!');
 
 # This is where we decide what to do, depending on the form state and the
 # users chosen course of action ...
@@ -247,14 +248,44 @@ unless (defined($q->param('state'))) {
    &list_text;
    
 } else {
-   print "<h1>$Q::action</h1><h2>$LANGUAGE{'nop'}</h2><hr>";
+   $pagedata->setValue("Data.Action", $Q::action);
+   $pagedata->setValue("Data.Status", "unknown action");
+   $pagename = 'start';
 } 
 
-# Print HTML footer and exit :) ...
-print $HTML_FOOTER, $q->end_html;
+# Print page and exit :) ...
+&output_page;
 exit;
 
+
 # =========================================================================
+
+sub load_hdf {
+	# initialize the data for clearsilver
+	my $hdf = ClearSilver::HDF->new();
+
+	# TODO: respect LANGUAGE_DIR and LANGUAGE
+	$hdf->readFile("/usr/lib/cgi-bin/en.hdf");
+	$hdf->setValue("Stylesheet",$HTML_CSS_FILE);
+
+	return $hdf;
+}
+
+
+sub output_page {
+	# Print the page
+
+	# print http header
+	print "Content-Type: text/html\n\n";
+
+	my $cs = ClearSilver::CS->new($pagedata);
+	$cs->parseFile('/usr/lib/cgi-bin/' . 'header' . '.cs');
+	$cs->parseFile('/usr/lib/cgi-bin/' . $pagename . '.cs');
+	$cs->parseFile('/usr/lib/cgi-bin/' . 'footer' . '.cs');
+
+	print $cs->render();
+}
+
 
 sub select_list {
    # List all mailing lists (sub directories) in the list directory.
@@ -263,43 +294,26 @@ sub select_list {
 
    my (@lists, @files, $i, $scrollsize);
 
+   $pagename = 'start';
+
    # Read the list directory for mailing lists.
-   opendir DIR, $LIST_DIR || die "Unable to read $LIST_DIR: $!";
+   opendir DIR, $LIST_DIR || &error_die("Unable to read $LIST_DIR: $!");
    @files = grep !/^\./, readdir DIR; 
    closedir DIR;
 
    # Check that they actually are lists ...
+   my $num = 0;
    foreach $i (0 .. $#files) {
-      if (-e "$LIST_DIR/$files[$i]/lock") {
-         $lists[$#lists + 1] = $files[$i] if (&webauth($files[$i]) == 0);
+      if ((-e "$LIST_DIR/$files[$i]/lock") && (&webauth($files[$i]) == 0)) {
+         $num++;
+         $pagedata->setValue("Data.Lists." . $num, $files[$i]);
       }
    }
+   $pagedata->setValue("Data.ListsCount", $num);
 
-   # Keep selection box a resonable size - suggested by Sebastian Andersson 
-   $scrollsize = 25 if(($scrollsize = $#lists + 1) > 25);
-
-   # Begin of content
-   print '<div id="main" class="container">';
-
-   # Print a form
-   $q->delete_all;
-   print $q->startform;
-   print $q->hidden(-name=>'state', -default=>'select');
-
-   print '<div class="list">';
-   print $q->scrolling_list(-name=>'list', -size=>$scrollsize, -values=>\@lists) if defined(@lists);
-   print '</div>';	# end of main_mainlinglists_list
+   # TODO: ACL an einer Stelle zentral bestimmen lassen
+   $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
  
-   print '<div class="info">', $LANGUAGE{'chooselistinfo'}, '</div>';		# explanation of options
-
-   print '<div class="add_remove">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'create'}]"), '</span>' if (&webauth_create_allowed == 0);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'edit'}]"), '</span>' if(defined(@lists));
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'delete'}]"), '</span>' if(defined(@lists));
-   print '</div>';	# end of main_buttons
-   print $q->endform;
-
-   print '</div>';	# end of content
 }
 
 # ------------------------------------------------------------------------
@@ -1179,9 +1193,17 @@ BEGIN {
          quoting the error message above.</p>
          </</div>
 EOM
-
    }
-   set_message(\&handle_errors);
+   sub set_message(\&handle_errors);
+
+	sub error_die {
+		my $msg = @_;
+		$pagedata->setValue("Data.ErrorMessage", $msg);
+		$pagename = 'error';
+		&output_page;
+		die;
+	}
+
 }
                                                                                                                  
 # ------------------------------------------------------------------------
