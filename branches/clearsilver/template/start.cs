@@ -11,7 +11,7 @@
 
     <div id="main" class="container">
 	<!-- TODO: die URL des cgi ersetzen - DRINGEND! -->
-	<form method="post" action="/admin/ezmlm-web" enctype="application/x-www-form-urlencoded">
+	<form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
 	    <input type="hidden" name="state" value="select">
 
 	    <?cs if:(Data.ListsCount > 0) ?>
@@ -45,14 +45,14 @@
 		<?cs if:(Data.Permissions.Create == 1) ?>
 	    	<!-- button "create" -->
 		    <span class="button"><input type="submit" tabindex="2" name="action"
-			value="[<?cs var:Lang.Buttons.Create ?>]" /></span>
+			value="<?cs var:Lang.Buttons.Create ?>" /></span>
 		<?cs /if ?>
 		<?cs if:(Data.ListsCount > 0) ?>
 		<!-- buttons: "edit" and "delete" -->
 		    <span class="button"><input type="submit" tabindex="3" name="action"
-			value="[<?cs var:Lang.Buttons.Edit ?>]" /></span>
+			value="<?cs var:Lang.Buttons.Edit ?>" /></span>
 		    <span class="button"><input type="submit" tabindex="4" name="action"
-			value="[<?cs var:Lang.Buttons.Delete ?>]" /></span>
+			value="<?cs var:Lang.Buttons.Delete ?>" /></span>
 		<?cs /if ?>
 	    </div>
 	</form>

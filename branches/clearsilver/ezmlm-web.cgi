@@ -45,7 +45,6 @@ use Mail::Ezmlm;
 use Mail::Address;
 use DB_File;
 use CGI;
-#use CGI::Carp qw(fatalsToBrowser set_message);
 
 # These two are actually included later and are put here so we remember them.
 #use File::Find if ($UNSAFE_RM == 1);
@@ -72,6 +71,8 @@ use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LI
 use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
 use vars qw[$HTML_CSS_FILE];
 
+# pagedata contains the hdf tree for clearsilver
+# pagename refers to the template file that should be used
 use vars qw[$pagedata $pagename];
 
 # Get user configuration stuff
@@ -127,12 +128,12 @@ unless (defined($q->param('state'))) {
 } elsif ($Q::state eq 'select') {
    # User selects an action to perform on a list ...
    
-   if ($Q::action eq "[$BUTTON{'create'}]") { # Create a new list ...
+   if ($Q::action eq $pagedata->getValue("Lang.Buttons.Create","unknown button")) { # Create a new list ...
       &allow_create_list;
    } elsif (defined($Q::list)) {
-      if ($Q::action eq "[$BUTTON{'edit'}]") { # Edit an existing list ...
+      if ($Q::action eq $pagedata->getValue("Lang.Buttons.Edit","unknown button")) { # Edit an existing list ...
          &display_list;
-      } elsif ($Q::action eq "[$BUTTON{'delete'}]") { # Delete a list ...
+      } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.Delete","unknown button")) { # Delete a list ...
          &confirm_delete;
       }
    } else {
@@ -143,27 +144,27 @@ unless (defined($q->param('state'))) {
    # User chooses to edit a list
    
    my($list); $list = $LIST_DIR . '/' . $q->param('list'); 
-   if ($Q::action eq "[$BUTTON{'deleteaddress'}]") { # Delete a subscriber ...
+   if ($Q::action eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
       &delete_address($list);
       &display_list;
    
-   } elsif ($Q::action eq "[$BUTTON{'addaddress'}]") { # Add a subscriber ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
       &add_address($list);
       &display_list;
    
-   } elsif ($Q::action eq "[$BUTTON{'moderators'}]") { # Edit the moderators ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.Moderators","unknown button")) { # Edit the moderators ...
       &part_subscribers('mod');
 
-   } elsif ($Q::action eq "[$BUTTON{'denylist'}]") { # Edit the deny list ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.DenyList","unknown button")) { # Edit the deny list ...
       &part_subscribers('deny');
 
-   } elsif ($Q::action eq "[$BUTTON{'allowlist'}]") { # edit the allow list ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.AllowList","unknown button")) { # edit the allow list ...
       &part_subscribers('allow');   
 
-   } elsif ($Q::action eq "[$BUTTON{'digestsubscribers'}]") { # Edit the digest subscribers ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.DigestSubscribers","unknown button")) { # Edit the digest subscribers ...
       &part_subscribers('digest');
       
-   } elsif ($Q::action eq "[$BUTTON{'configuration'}]") { # Edit the config ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.Configuration","unknown button")) { # Edit the config ...
       &list_config;
 
    } else { # Cancel - Return a screen ...
@@ -185,11 +186,11 @@ unless (defined($q->param('state'))) {
       $part = 'digest'; 
    }
    
-   if ($Q::action eq "[$BUTTON{'deleteaddress'}]") { # Delete a subscriber ...
+   if ($Q::action eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
       &delete_address("$LIST_DIR/$Q::list", $part);
       &part_subscribers($part);
 
-   } elsif ($Q::action eq "[$BUTTON{'addaddress'}]") { # Add a subscriber ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
       &add_address("$LIST_DIR/$Q::list", $part);
       &part_subscribers($part);
 
@@ -200,14 +201,14 @@ unless (defined($q->param('state'))) {
 } elsif ($Q::state eq 'confirm_delete') {
    # User wants to delete a list ...
    
-   &delete_list if($q->param('confirm') eq "[$BUTTON{'yes'}]"); # Do it ...
+   &delete_list if($q->param('confirm') eq $pagedata->getValue("Lang.Buttons.Yes","unknown button")); # Do it ...
    $q->delete_all;
    &select_list;
 
 } elsif ($Q::state eq 'create') {
    # User wants to create a list ...
 
-   if ($Q::action eq "[$BUTTON{'createlist'}]") {
+   if ($Q::action eq $pagedata->getValue("Lang.Buttons.CreateList","unknown button")) {
       if (&create_list) { # Return if list creation is unsuccessful ...
          &allow_create_list;
       } else {
@@ -221,11 +222,11 @@ unless (defined($q->param('state'))) {
 } elsif ($Q::state eq 'configuration') {
    # User updates configuration ...
    
-   if ($Q::action eq "[$BUTTON{'updateconfiguration'}]") { # Save current settings ...
+   if ($Q::action eq $pagedata->getValue("Lang.Buttons.UpdateConfiguration","unknown button")) { # Save current settings ...
       &update_config;
       &display_list;
       
-   } elsif ($Q::action eq "[$BUTTON{'edittexts'}]") { # Edit DIR/text ...
+   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.EditTexts","unknown button")) { # Edit DIR/text ...
       &list_text;
    
    } else { # Cancel - Return to list editing screen ...
@@ -235,7 +236,7 @@ unless (defined($q->param('state'))) {
 } elsif ($Q::state eq 'list_text') {
    # User wants to edit texts associated with the list ...
    
-   if ($Q::action eq "[$BUTTON{'editfile'}]") {
+   if ($Q::action eq $pagedata->getValue("Lang.Buttons.EditFile","unknown button")) {
       &edit_text;  
    } else {
       &list_config; # Cancel ...
@@ -244,7 +245,7 @@ unless (defined($q->param('state'))) {
 } elsif ($Q::state eq 'edit_text') {   
    # User wants to save a new version of something in DIR/text ...
    
-   &save_text if ($Q::action eq "[$BUTTON{'savefile'}]");
+   &save_text if ($Q::action eq $pagedata->getValue("Lang.Buttons.SaveFile","unknown button"));
    &list_text;
    
 } else {
@@ -266,7 +267,10 @@ sub load_hdf {
 
 	# TODO: respect LANGUAGE_DIR and LANGUAGE
 	$hdf->readFile("/usr/lib/cgi-bin/en.hdf");
-	$hdf->setValue("Stylesheet",$HTML_CSS_FILE);
+
+	$hdf->setValue("Stylesheet", $HTML_CSS_FILE);
+	$hdf->setValue("ScriptURL", "/ezmlm-web");
+	$hdf->setValue("HelpIconURL", $HELP_ICON_URL);
 
 	return $hdf;
 }
@@ -279,6 +283,7 @@ sub output_page {
 	print "Content-Type: text/html\n\n";
 
 	my $cs = ClearSilver::CS->new($pagedata);
+	$cs->parseFile('/usr/lib/cgi-bin/' . 'macros.cs');
 	$cs->parseFile('/usr/lib/cgi-bin/' . 'header' . '.cs');
 	$cs->parseFile('/usr/lib/cgi-bin/' . $pagename . '.cs');
 	$cs->parseFile('/usr/lib/cgi-bin/' . 'footer' . '.cs');
@@ -321,25 +326,8 @@ sub select_list {
 sub confirm_delete {
    # Make sure that the user really does want to delete the list!
 
-   # Begin of content
-   print '<div id="delete" class="container">';
-
-   # Print a form ...
-   $q->delete('state');
-   print $q->startform;
-   print $q->hidden(-name=>'state', -default=>'confirm_delete');
-   print $q->hidden(-name=>'list', -default=>$q->param('list'));
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'confirmdelete'}, ' ', $q->param('list'), '</h2>';
-   print '</div>';	# end of delete->title
-
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'confirm', -value=>"[$BUTTON{'no'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'confirm', -value=>"[$BUTTON{'yes'}]"), '</span>';
-   print '</div>';	# end of delete->question
-
-   print '</div>';	# enf of delete
+   $pagedata->setValue("Data.ListName", $q->param('list'));
+   $pagename = 'confirm_delete';
 }
 
 # ------------------------------------------------------------------------
@@ -347,63 +335,31 @@ sub confirm_delete {
 sub display_list {
    # Show a list of subscribers to the user ...
 
-   my ($i, $list, $listaddress, $moderated, @subscribers, $scrollsize);
+   my ($list);
    
    # Work out the address of this list ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-   $listaddress = &this_listaddress;
 
-   
-   # Get a list of subscribers from ezmlm ...
-   @subscribers = $list->subscribers;
-   
-   # Keep selection box a resonable size - suggested by Sebastian Andersson 
-   $scrollsize = 25 if(($scrollsize = $#subscribers + 1) > 25);
+   $pagename = 'display_list';
 
-   # Print out a form of options ...
-   $q->delete('state');                     
+   $pagedata->setValue("Data.ListName", $Q::list);
+   $pagedata->setValue("Data.ListAddress", &this_listaddress);
 
-   # Begin of content
-   print '<div id="edit" class="container">';
+   my $i = 0;
+   my $one_subs;
+   # TODO: use "pretty" output style for visible mail address
+   foreach $one_subs ($list->subscribers) {
+	$pagedata->setValue("Data.Subscribers." . $i, $one_subs);
+	$i++;
+     }
+   $pagedata->setValue("Data.SubscribersCount", $i);
 
-   print '<div class="title">';
-   print "<h2>$LANGUAGE{'subscribersto'} $Q::list</h2>";
-   print "<h3>($listaddress)</h3>";
-   print '<hr>';
-   print '</div>';	# end of edit->title
-
-   print $q->start_multipart_form;
-   print $q->hidden(-name=>'state', -default=>'edit');
-   print $q->hidden(-name=>'list', -default=>$Q::list);
-
-   print '<div class="list">';
-   print $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -labels=>&pretty_names, -multiple=>'true') if defined(@subscribers);
-   print '</div>';	# end of edit->list
-   
-   print '<div class="add_remove">';
-   print '<p>', ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'}, '</p>' if defined(@subscribers);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
-   print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
-   print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
-   print '</div>';	# end of edit->add_remove
-
-   print '<div class="options">';
-   print '<h3>', $LANGUAGE{'additionalparts'}, ':</h3>' if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
-   print '<p>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'moderators'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'moderator'}, '"> </span>' if ($list->ismodpost || $list->ismodsub || $list->isremote);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'denylist'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'deny'}, '"> </span>' if ($list->isdeny);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'allowlist'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'allow'}, '"> </span>' if ($list->isallow);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'digestsubscribers'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'digest'}, '"> </span>' if ($list->isdigest);
-   print '</p><p>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'webarchive'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'webarch'}, '">  </span>' if(&ezmlmcgirc);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'configuration'}]"), '<img src="', $HELP_ICON_URL, '" title="', $HELPER{'config'}, '"> </span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'selectlist'}]"), '</span>';
-   print '</p>';
-   print '</div>';	# end of edit->options
-   print $q->endform; 
-
-   print '</div>';	# end of edit
+   $pagedata->setValue("Data.ConfigAvail.Extras", 1) if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
+   $pagedata->setValue("Data.ConfigAvail.Moderation", 1) if ($list->ismodpost || $list->ismodsub || $list->isremote);
+   $pagedata->setValue("Data.ConfigAvail.DenyList", 1) if ($list->isdeny);
+   $pagedata->setValue("Data.ConfigAvail.AllowList", 1) if ($list->isallow);
+   $pagedata->setValue("Data.ConfigAvail.Digest", 1) if ($list->isdigest);
+   $pagedata->setValue("Data.ConfigAvail.WebArch", 1) if(&ezmlmcgirc);
 
 }
 
@@ -616,17 +572,17 @@ sub part_subscribers {
       my($divclass);
 
       $divclass = ($postpath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'posting'}]" if ($list->ismodpost);
+      $moderated .= "<p class=\"$divclass\">$LANGUAGE{'posting'}" if ($list->ismodpost);
       $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Posting Moderators are stored in a non-standard location (' . $postpath . '). You will have to edit them manually.">' if ($postpath);
       $moderated .= '</p>' if ($list->ismodpost);
 
       $divclass = ($subpath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'subscription'}]" if($list->ismodsub);
+      $moderated .= "<p class=\"$divclass\">$LANGUAGE{'subscription'}" if($list->ismodsub);
       $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Subscriber Moderators are stored in a non-standard location (' . $subpath . '). You will have to edit them manually">' if ($subpath);
       $moderated .= '</p>' if ($list->ismodsub);
 
       $divclass = ($remotepath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">[$LANGUAGE{'remoteadmin'}]" if($list->isremote);
+      $moderated .= "<p class=\"$divclass\">$LANGUAGE{'remoteadmin'}" if($list->isremote);
       $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually">' if ($remotepath);
       $moderated .= '</p> if ($list->isremote)';
      
@@ -661,11 +617,11 @@ sub part_subscribers {
    print '<div class="list">', $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -multiple=>'true', -labels=>&pretty_names), '</div>' if defined(@subscribers);
 
    print '<div class="add_remove">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")), '</span>' if defined(@subscribers);
    print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
    print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'subscribers'}]"), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.AddAddress","unknown button")), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Subscribers","unknown button")), '</span>';
    print '</div>';	# end of parts_subscribers_actions
 
    print $q->endform;          
@@ -731,9 +687,9 @@ sub allow_create_list {
    print '</div>';	# end of create->input
    
    print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'createlist'}]"), '</span>';
-   print '<span class="button">', $q->reset(-value=>"[$BUTTON{'resetform'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.CreateList","unknown button")), '</span>';
+   print '<span class="button">', $q->reset(-value=>$pagedata->getValue("Lang.Buttons.ResetForm","unknown button")), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>';
    print '</div>';	# end of create->question
    print $q->endform;  
 
@@ -870,10 +826,10 @@ sub list_config {
    print '</div>';	# end of config->input
    
    print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'updateconfiguration'}]"), '</span>';
-   print '<span class="button">', $q->reset(-value=>"[$BUTTON{'resetform'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>'; 
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'edittexts'}]"), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.UpdateConfiguration","unknown button")), '</span>';
+   print '<span class="button">', $q->reset(-value=>$pagedata->getValue("Lang.Buttons.ResetForm","unknown button")), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>'; 
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.EditTexts","unknown button")), '</span>';
    print '</div>';	# end of config->question
    
    print $q->endform;  
@@ -986,8 +942,8 @@ sub list_text {
    print '</div>';	# end of textfiles->info
 
    print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'editfile'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.EditFile","unknown button")), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>';
    print '</div>';	# end of textfiles->question
 
    print $q->endform;
@@ -1029,9 +985,9 @@ sub edit_text {
    print '</div>';	# end of edittext->info
 
    print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'savefile'}]"), '</span>';
-   print '<span class="button">', $q->reset(-value=>"[$BUTTON{'resetform'}]"), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'cancel'}]"), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.SaveFile","unknown button")), '</span>';
+   print '<span class="button">', $q->reset(-value=>$pagedata->getValue("Lang.Buttons.ResetForm","unknown button")), '</span>';
+   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>';
    print '</div>';	# end of edittext->question
 
    print $q->endform;
@@ -1194,7 +1150,6 @@ BEGIN {
          </</div>
 EOM
    }
-   sub set_message(\&handle_errors);
 
 	sub error_die {
 		my $msg = @_;
@@ -1257,6 +1212,7 @@ F<./ezmlmwebrc>
 =head1 AUTHOR
 
  Guy Antony Halse <guy-ezmlm@rucus.ru.ac.za>
+ Lars Kruse <ezmlm-web@sumpfralle.de>
 
 =head1 BUGS
 
