@@ -69,7 +69,10 @@ use vars qw[$DEFAULT_OPTIONS %EZMLM_LABELS $UNSAFE_RM $ALIAS_USER $LIST_DIR];
 use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES];
 use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
 use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
-use vars qw[$HTML_CSS_FILE];
+use vars qw[$HTML_CSS_FILE $TEMPLATE_DIR $LANGUAGE_DIR];
+
+#TODO: interim
+$TEMPLATE_DIR = "/root/clearsilver/template";
 
 # pagedata contains the hdf tree for clearsilver
 # pagename refers to the template file that should be used
@@ -266,7 +269,7 @@ sub load_hdf {
 	my $hdf = ClearSilver::HDF->new();
 
 	# TODO: respect LANGUAGE_DIR and LANGUAGE
-	$hdf->readFile("/usr/lib/cgi-bin/en.hdf");
+	$hdf->readFile($LANGUAGE_DIR . "/en.hdf");
 
 	$hdf->setValue("Stylesheet", $HTML_CSS_FILE);
 	$hdf->setValue("ScriptURL", "/ezmlm-web");
@@ -283,10 +286,10 @@ sub output_page {
 	print "Content-Type: text/html\n\n";
 
 	my $cs = ClearSilver::CS->new($pagedata);
-	$cs->parseFile('/usr/lib/cgi-bin/' . 'macros.cs');
-	$cs->parseFile('/usr/lib/cgi-bin/' . 'header' . '.cs');
-	$cs->parseFile('/usr/lib/cgi-bin/' . $pagename . '.cs');
-	$cs->parseFile('/usr/lib/cgi-bin/' . 'footer' . '.cs');
+	$cs->parseFile($TEMPLATE_DIR . 'macros.cs');
+	$cs->parseFile($TEMPLATE_DIR . 'header.cs');
+	$cs->parseFile($TEMPLATE_DIR . $pagename . '.cs');
+	$cs->parseFile($TEMPLATE_DIR . 'footer.cs');
 
 	print $cs->render();
 }
@@ -396,7 +399,7 @@ sub delete_list {
       closedir DIR;
       foreach (@files) {
          unless (move($_, "$HOME_DIR/deleted.qmail/")) {
-            die "Unable to move .qmail files: $!"; 
+            error_die("Unable to move .qmail files: $!"); 
          }
       }
       warn "List '$oldfile' moved (deleted)";   
@@ -404,13 +407,13 @@ sub delete_list {
       # This, however, does DELETE the list. I don't like the idea, but I was
       # asked to include support for it so ...
       if (!rmtree("$LIST_DIR/$Q::list")) {
-         die "Unable to delete list: $!";
+         error_die("Unable to delete list: $!");
       }
       opendir(DIR, "$HOME_DIR") or die "Unable to get directory listing: $!";
       my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
       closedir DIR;
       if (unlink(@files) <= 0) {
-         die "Unable to delete .qmail files: $!";
+         &error_die("Unable to delete .qmail files: $!");
       }
       warn "List '$list->thislist()' deleted";
    }   
@@ -513,7 +516,7 @@ sub add_address {
       }
    
       if ($list->sub($add->address(), $part) != 1) {
-         die "Unable to subscribe to list: $!";
+         &error_die("Unable to subscribe to list: $!");
       }
       $count++;
    }
@@ -533,7 +536,7 @@ sub delete_address {
    @address = $q->param('delsubscriber');
 
    if ($list->unsub(@address, $part) != 1) {
-      die "Unable to unsubscribe from list $list: $!";
+      &error_die("Unable to unsubscribe from list $list: $!");
    }
    
    if($PRETTY_NAMES) {
@@ -556,12 +559,16 @@ sub part_subscribers {
 
    my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize, $type);
    
+   $pageName = "config_list"
+   
    # Work out the address of this list ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-   $listaddress = &this_listaddress;
+   $listaddress = &this_listaddress();
 
    if($part eq 'mod') {
       # Lets know what is moderated :)
+
+      $pagedata->setValue("Data.isModerated",1);
       
       # do we store things in different directories?
       my $config = $list->getconfig;
@@ -569,65 +576,34 @@ sub part_subscribers {
       my($subpath) = $config =~ m{8\s*'([^']+)'};
       my($remotepath) = $config =~ m{9\s*'([^']+)'};
       
-      my($divclass);
+      $pagedata->setValue("Data.isPostMod", ($list->ismodpost)? 1 : 0);
+      $pagedata->setValue("Data.PostModPath", $postpath);
 
-      $divclass = ($postpath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">$LANGUAGE{'posting'}" if ($list->ismodpost);
-      $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Posting Moderators are stored in a non-standard location (' . $postpath . '). You will have to edit them manually.">' if ($postpath);
-      $moderated .= '</p>' if ($list->ismodpost);
+      $pagedata->setValue("Data.isSubMod", ($list->ismodsub)? 1 : 0);
+      $pagedata->setValue("Data.SubModPath", $subpath);
 
-      $divclass = ($subpath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">$LANGUAGE{'subscription'}" if($list->ismodsub);
-      $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Subscriber Moderators are stored in a non-standard location (' . $subpath . '). You will have to edit them manually">' if ($subpath);
-      $moderated .= '</p>' if ($list->ismodsub);
-
-      $divclass = ($remotepath)? 'warning' : 'ok';
-      $moderated .= "<p class=\"$divclass\">$LANGUAGE{'remoteadmin'}" if($list->isremote);
-      $moderated .= '<img src="' . $HELP_ICON_URL . '" title="Remote Administrators are stored in a non-standard location (' . $remotepath . '). You will have to edit them manually">' if ($remotepath);
-      $moderated .= '</p> if ($list->isremote)';
-     
+      $pagedata->setValue("Data.isRemote", ($list->isremote)? 1 : 0);
+      $pagedata->setValue("Data.RemotePath", $remotepath);
    }
 
    # What type of sublist is this?
    ($type) = $Q::action =~ m/^\[(.+)\]$/;
 
-   # Get a list of moderators from ezmlm ...
-   @subscribers = $list->subscribers($part);
+   my $i = 0;
+   my $one_subs;
+   # TODO: use "pretty" output style for visible mail address
+   foreach $one_subs ($list->subscribers($part)) {
+	$pagedata->setValue("Data.List." . $i, $one_subs);
+	$i++;
+     }
+   $pagedata->setValue("Data.ListCount", $i);
 
-   # Keep selection box a resonable size - suggested by Sebastian Andersson 
-   $scrollsize = 25 if(($scrollsize = $#subscribers + 1) > 25);
+   $pageData->setValue("Data.ListName", $q->param('list'));
+   $pageData->setValue("Data.ListAddress", $listaddress);
 
-   # Begin of content
-   print '<div id="parts" class="container">';
-   
-   # Print out a form of options ...
-   $q->delete('state');                     
+   $pageData->setValue("Data.Form.State", $q->param('part'));
 
-   print '<div class="title">';
-   print "<h2>$type $LANGUAGE{'for'} $listaddress</h2>";
-   print '<hr>';
-   print '</div>';	# end of parts_title
-
-   print '<div class="info">', "$moderated", '</div>' if(defined($moderated));
-
-   print $q->start_multipart_form;
-   print $q->hidden(-name=>'state', -default=>$part);
-   print $q->hidden(-name=>'list', -default=>$Q::list), "\n";
-
-   print '<div class="list">', $q->scrolling_list(-name=>'delsubscriber', -size=>$scrollsize, -values=>\@subscribers, -multiple=>'true', -labels=>&pretty_names), '</div>' if defined(@subscribers);
-
-   print '<div class="add_remove">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")), '</span>' if defined(@subscribers);
-   print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
-   print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.AddAddress","unknown button")), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Subscribers","unknown button")), '</span>';
-   print '</div>';	# end of parts_subscribers_actions
-
-   print $q->endform;          
-
-   print '</div>';	# end of parts
-
+   $pageData->setValue("Data.FileUploadAllowed", ($FILE_UPLOAD)? 1 : 0);
 }
 
 # ------------------------------------------------------------------------
@@ -674,8 +650,8 @@ sub allow_create_list {
 
    # Allow creation of mysql table if the module allows it
    if($Mail::Ezmlm::MYSQL_BASE) {
-	print '<span class="formfield">', $q->checkbox(-name=>'sql', -label=>$LANGUAGE{'mysqlcreate'}, -on=>1);
-	print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mysqlcreate'}, '"></span>';
+	print '<span class="formfield">', $q->checkbox(-name=>'sql', -label=>$LANGUAGE{'mysqlCreate'}, -on=>1);
+	print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mysqlCreate'}, '"></span>';
    }
    
    if(-e "$WEBUSERS_FILE") {
@@ -981,7 +957,7 @@ sub edit_text {
    print '</div>';	# end of edittext->input
 
    print '<id class="info">';
-   print $LANGUAGE{'editfileinfo'};
+   print $LANGUAGE{'EditFileInfo'};
    print '</div>';	# end of edittext->info
 
    print '<div class="question">';

@@ -19,7 +19,7 @@
 	      <?cs else ?>
 		<?cs set:Data.ScrollSize = Data.SubscribersCount ?>
 	    <?cs /if ?>
-	    <select name="delsubscriber" tabindex="1" size="<?cs var:Data.ScrollSize ?>" multiple="multiple">
+	    <select name="delsubscriber" tabindex="1" size="<?cs var:Data.ScrollSize ?>" multiple="yes">
 		<?cs each:item = Data.Subscribers ?>
 		    <option><?cs var:item ?></option>
 		<?cs /each ?>

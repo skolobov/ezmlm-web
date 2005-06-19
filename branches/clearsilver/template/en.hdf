@@ -155,7 +155,11 @@ Lang {
 	MimeRemove	= Mime types to strip from all outgoing mail
 	EditTextInfo	= The box on the left contains a list of files available in the DIR/text directory. These files are sent out in response to specfic user request, or as part of all outgoing messages<br/>To edit a file, select its name from the box. Then click on the [Edit File] button. Press [cancel] when you have finished editing.
 	EditingFile	= Editing File
-	editfileinfo	= <big><strong>ezmlm-manage</strong></big><br><tt><strong>&lt;#l#&gt;</strong></tt> The list name<br><tt><strong>&lt;#A#&gt;</strong></tt>The subscription address<br><tt><strong>&lt;#R#&gt;</strong></tt> The address a subscriber must reply to<p/><big><strong>ezmlm-store</strong></big><br><tt><strong>&lt;#l#&gt;</strong></tt> The list name<br/><tt><strong>&lt;#A#&gt;</strong></tt>The acceptance address<br/><tt><strong>&lt;#R#&gt;</strong></tt> The rejection address</ul>
-	mysqlcreate	= Create the MySQL database tables if necessary
+	EditFileInfo	= <big><strong>ezmlm-manage</strong></big><br><tt><strong>&lt;#l#&gt;</strong></tt> The list name<br><tt><strong>&lt;#A#&gt;</strong></tt>The subscription address<br><tt><strong>&lt;#R#&gt;</strong></tt> The address a subscriber must reply to<p/><big><strong>ezmlm-store</strong></big><br><tt><strong>&lt;#l#&gt;</strong></tt> The list name<br/><tt><strong>&lt;#A#&gt;</strong></tt>The acceptance address<br/><tt><strong>&lt;#R#&gt;</strong></tt> The rejection address</ul>
+	mysqlCreate	= Create the MySQL database tables if necessary
+	SuggestEdit	= You will have to edit them manually.
+	PostModPathWarn = Posting Moderators are stored in a non-standard location
+	SubModPathWarn	= Subscriber Moderators are stored in a non-standard location
+	RemotePathWarn	= Remote Administrators are stored in a non-standard location
       }
 }
