@@ -644,7 +644,7 @@ sub allow_create_list {
 # ------------------------------------------------------------------------
 
 sub create_list {
-   # Create a list acording to user selections ...
+   # Create a list according to user selections ...
 
    # Check the list directory exists and create if necessary ...
    if(!-e $LIST_DIR) {
@@ -708,26 +708,24 @@ sub create_list {
 sub list_config {
    # Allow user to alter the list configuration ...
 
-   my ($list, $listaddress, $listname, $options);
-   my ($headeradd, $headerremove, $mimeremove, $prefix, $j);
+   my ($list, $listname);
    
    # Store some variables before we delete them ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $listname = $q->param('list');
-   $listaddress = 
 
-   $pagedate->setValue("Data.ListName", $listname);
-   $pagedate->setValue("Data.ListAddress", &this_listaddress);
+   $pagedata->setValue("Data.ListName", $listname);
+   $pagedata->setValue("Data.ListAddress", &this_listaddress);
 
    # TODO: migrate
    # Print a list of options, selecting the ones that apply to this list ...
    &display_options($list->getconfig);
 
    # Get the contents of the headeradd, headerremove, mimeremove and prefix files
-   $pagedate->setValue("Data.List.Prefix", $list->getpart('prefix');
-   $pagedate->setValue("Data.List.HeaderAdd", $list->getpart('headeradd');
-   $pagedate->setValue("Data.List.HeaderRemove", $list->getpart('headerremove');
-   $pagedate->setValue("Data.List.MimeRemove", $list->getpart('mimeremove');
+   $pagedata->setValue("Data.List.Prefix", $list->getpart('prefix'));
+   $pagedata->setValue("Data.List.HeaderAdd", $list->getpart('headeradd'));
+   $pagedata->setValue("Data.List.HeaderRemove", $list->getpart('headerremove'));
+   $pagedata->setValue("Data.List.MimeRemove", $list->getpart('mimeremove'));
 
    # TODO: this is definitely ugly!
    if(open(WEBUSER, "<$WEBUSERS_FILE")) {
@@ -738,7 +736,7 @@ sub list_config {
       close WEBUSER;
       $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
 
-      $pagedate->setValue("Data.List.WebUsers", $webusers);
+      $pagedata->setValue("Data.List.WebUsers", $webusers);
    }
 }
 
@@ -820,6 +818,8 @@ sub this_listaddress {
 
 sub list_text {
    # Show a listing of what is in DIR/text ...
+
+   $pagename = 'list_textfiles';
    
    my(@files, $list);
    $list = $LIST_DIR . '/' . $q->param('list');
@@ -829,32 +829,16 @@ sub list_text {
    @files = grep !/^\./, readdir DIR; 
    closedir DIR;
 
-   # Begin of content
-   print '<div id="textfiles" class="container">';
+   $pagedata->setValue("Data.ListName", $q->param('list'));
 
-   # Print a form ...
-   $q->delete('state');
-   print $q->startform;
-   print $q->hidden(-name=>'state', -default=>'list_text');
-   print $q->hidden(-name=>'list', -default=>$q->param('list'));
-
-   print '<div class="list">';
-   print $q->scrolling_list(-name=>'file', -values=>\@files);
-   print '</div>';	# end of textfiles->list
-
-   print '<div class="info">';
-   print $LANGUAGE{'edittextinfo'};
-   print '</div>';	# end of textfiles->info
-
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.EditFile","unknown button")), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>';
-   print '</div>';	# end of textfiles->question
-
-   print $q->endform;
-
-   print '</div>';
-   
+   # TODO: find a better way to set a list ...
+   my $i = 0;
+   my $one_file;
+   foreach $one_file (@files) {
+	$pagedata->setValue("Data.Files." . $i, $one_file);
+	$i++;
+     }
+   $pagedata->setValue("Data.FilesCount", $i);
 }
 
 # ------------------------------------------------------------------------
@@ -1059,6 +1043,7 @@ EOM
 	sub error_die {
 		my $msg = @_;
 		$pagedata->setValue("Data.ErrorMessage", $msg);
+		# TODO: besser waere eine Warnung in header.cs
 		$pagename = 'error';
 		&output_page;
 		die;

@@ -40,55 +40,56 @@
 		      value="<?cs var:Lang.Buttons.AddAddress ?>"/></span>
 	    </div>
 	    <div class="options">
-		<?cs if:(Data.ConfigAvail.Extras == 1) ?>
+		<?cs if:Data.ConfigAvail.Extras ?>
 		<!-- at least one extra config option is available -->
-		    <h3><?cs Lang.Misc.AdditionalParts ?>:</h3>
+		    <h3><?cs var:Lang.Misc.AdditionalParts ?>:</h3>
 		<?cs /if ?>
 		<p>
-		<?cs if:(Data.ConfigAvail.Moderation == 1) ?>
+		<?cs if:Data.ConfigAvail.Moderation ?>
 		<!-- moderation -->
 		    <span class="button"><input type="submit" tabindex="6" name="action"
 			value="<?cs var:Lang.Buttons.Moderators ?>"/>
-		    <?cs call:help_icon("Moderator") ?></span>
+			<?cs call:help_icon("Moderator") ?></span>
 		<?cs /if ?>
 
-		<?cs if:(Data.ConfigAvail.DenyList == 1) ?>
+		<?cs if:Data.ConfigAvail.DenyList ?>
 		<!-- deny lists -->
 		    <span class="button"><input type="submit" tabindex="7" name="action"
 			value="<?cs var:Lang.Buttons.DenyList ?>"/>
-		    <?cs call:help_icon("Deny") ?></span>
+			<?cs call:help_icon("Deny") ?></span>
 		<?cs /if ?>
 
-		<?cs if:(Data.ConfigAvail.AllowList == 1) ?>
+		<?cs if:Data.ConfigAvail.AllowList ?>
 		<!-- allow lists -->
 		    <span class="button"><input type="submit" tabindex="8" name="action"
 			value="<?cs var:Lang.Buttons.AllowList ?>"/>
-		    <?cs call:help_icon("Allow") ?></span>
+			<?cs call:help_icon("Allow") ?></span>
 		<?cs /if ?>
 
-		<?cs if:(Data.ConfigAvail.Digest == 1) ?>
+		<?cs if:Data.ConfigAvail.Digest ?>
 		<!-- digest subscribers -->
 		    <span class="button"><input type="submit" tabindex="9" name="action"
 			value="<?cs var:Lang.Buttons.DigestSubscribers ?>"/>
-		    <?cs call:help_icon("Digest") ?></span>
+			<?cs call:help_icon("Digest") ?></span>
 		<?cs /if ?>
 		</p>
 
 		<p>
 		<!-- web archive -->
-		<?cs if:(Data.ConfigAvail.WebArch == 1) ?>
+		<?cs if:Data.ConfigAvail.WebArch ?>
 		    <span class="button"><input type="submit" tabindex="10" name="action"
 			value="<?cs var:Lang.Buttons.WebArchive ?>"/>
-		    <?cs call:help_icon("WebArch") ?></span>
+			<?cs call:help_icon("WebArch") ?></span>
 		<?cs /if ?>
 
 		<!-- extra config options -->
 		<span class="button"><input type="submit" tabindex="11" name="action"
 			value="<?cs var:Lang.Buttons.Configuration ?>"/>
-		<?cs call:help_icon("Config") ?></span>
+			<?cs call:help_icon("Config") ?></span>
 
 		<span class="button"><input type="submit" tabindex="12" name="action"
-			value="<?cs var:Lang.Buttons.SelectList ?>"/></span>
+			value="<?cs var:Lang.Buttons.SelectList ?>"/>
+			<?cs call:help_icon("SelectList") ?></span>
 		</p>
 		
 	    </div>
