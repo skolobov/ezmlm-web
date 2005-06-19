@@ -124,6 +124,7 @@ Lang {
 	MimeRemove	= All messages whose Content-Type matches these mime types will be bounced back to sender
 	AllowEdit	= Comma separated list of usernames, or 'ALL' (all valid users)
 	MysqlCreate	= This will create the necessary MySQL tables if the list configuration above requires it
+	SelectList	= Go back to list selection
       }
 
 
