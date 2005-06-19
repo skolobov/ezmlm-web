@@ -126,7 +126,7 @@ my $pagedata = load_hdf();
 # users chosen course of action ...
 unless (defined($q->param('state'))) {
    # Default action. Present a list of available lists to the user ...
-   &select_list; 
+   &select_list(); 
 
 } elsif ($Q::state eq 'select') {
    # User selects an action to perform on a list ...
@@ -140,7 +140,7 @@ unless (defined($q->param('state'))) {
          &confirm_delete;
       }
    } else {
-      &select_list; # NOP - Blank input ...
+      &select_list(); # NOP - Blank input ...
    }
    
 } elsif ($Q::state eq 'edit') {
@@ -171,7 +171,7 @@ unless (defined($q->param('state'))) {
       &list_config;
 
    } else { # Cancel - Return a screen ...
-      &select_list;
+      &select_list();
    }
 
 } elsif ($Q::state eq 'allow' || $Q::state eq 'mod' || $Q::state eq 'deny' || $q->param('state') eq 'digest') {
@@ -206,7 +206,7 @@ unless (defined($q->param('state'))) {
    
    &delete_list if($q->param('confirm') eq $pagedata->getValue("Lang.Buttons.Yes","unknown button")); # Do it ...
    $q->delete_all;
-   &select_list;
+   &select_list();
 
 } elsif ($Q::state eq 'create') {
    # User wants to create a list ...
@@ -215,11 +215,11 @@ unless (defined($q->param('state'))) {
       if (&create_list) { # Return if list creation is unsuccessful ...
          &allow_create_list;
       } else {
-         &select_list; # Else choose a list ...
+         &select_list(); # Else choose a list ...
       }
    
    } else { # Cancel ...
-      &select_list;
+      &select_list();
    }
    
 } elsif ($Q::state eq 'configuration') {
@@ -254,7 +254,7 @@ unless (defined($q->param('state'))) {
 } else {
    $pagedata->setValue("Data.Action", $Q::action);
    $pagedata->setValue("Data.Status", "unknown action");
-   $pagename = 'start';
+   $pagename = 'select_list';
 } 
 
 # Print page and exit :) ...
@@ -302,7 +302,7 @@ sub select_list {
 
    my (@lists, @files, $i, $scrollsize);
 
-   $pagename = 'start';
+   $pagename = 'select_list';
 
    # Read the list directory for mailing lists.
    opendir DIR, $LIST_DIR || &error_die("Unable to read $LIST_DIR: $!");
