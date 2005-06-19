@@ -13,7 +13,7 @@
 
     <!-- form -->
     <form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
-	<input type="submit" name="state" value="<?cs var:Data.Form.State ?>">
+	<input type="hidden" name="state" value="<?cs var:Data.Form.State ?>">
 	<input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
 	    <div class="list">
 		

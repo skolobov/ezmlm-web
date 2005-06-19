@@ -846,42 +846,15 @@ sub list_text {
 sub edit_text {
    # Allow user to edit the contents of DIR/text ...
 
+   $pagename = 'edit_text';
+
    my ($content);
    my($list) = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $content = $list->getpart("text/$Q::file");
 
-   # Begin of content
-   print '<div id="edittext" class="container">';
-
-   # Print a form ...
-   $q->delete('state');
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'editingfile'}, ': ', $Q::file, '</h2>';
-   print '</div>';	# end of edittext->title
-
-   print $q->startform;
-   print $q->hidden(-name=>'state', -default=>'edit_text');
-   print $q->hidden(-name=>'list', -default=>$q->param('list'));
-   print $q->hidden(-name=>'file', -default=>$q->param('file'));
-
-   print '<div class="input">';
-   print '<span class="formfield">', $q->textarea(-name=>'content', -default=>$content, -rows=>'25', -columns=>'72'), '</span>';
-   print '</div>';	# end of edittext->input
-
-   print '<id class="info">';
-   print $LANGUAGE{'EditFileInfo'};
-   print '</div>';	# end of edittext->info
-
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.SaveFile","unknown button")), '</span>';
-   print '<span class="button">', $q->reset(-value=>$pagedata->getValue("Lang.Buttons.ResetForm","unknown button")), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>';
-   print '</div>';	# end of edittext->question
-
-   print $q->endform;
-
-   print '</div>';	# end of edittext
+   $pagedata->setValue("Data.ListName", $q->param('list'));
+   $pagedata->setValue("Data.File.Name", $q->param('file'));
+   $pagedata->setValue("Data.File.Content", $content);
 }
    
 # ------------------------------------------------------------------------

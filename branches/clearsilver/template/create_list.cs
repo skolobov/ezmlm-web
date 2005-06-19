@@ -32,7 +32,7 @@
     <div class="question">
 	<span class="button"><input type="submit" name="action"
 	  value="<?cs var:Lang.Buttons.CreateList ?>"></span>
-	<span class="button"><input type="submit" name="action"
+	<span class="button"><input type="reset" name="action"
 	  value="<?cs var:Lang.Buttons.ResetForm ?>"></span>
 	<span class="button"><input type="submit" name="action"
 	  value="<?cs var:Lang.Buttons.Cancel ?>"></span>

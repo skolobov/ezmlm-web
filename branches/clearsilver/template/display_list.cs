@@ -9,7 +9,7 @@
 
     <div class="list">
 	<form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
-	    <input type="submit" name="state" value="edit">
+	    <input type="hidden" name="state" value="edit">
 	    <input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
 
 	    <!-- scrollbox for list's subscribers -->
