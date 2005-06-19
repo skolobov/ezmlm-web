@@ -462,7 +462,6 @@ sub check_permission_for_action {
 	$ret = 0;
    }
    return $ret;
-
 }
 
 # ------------------------------------------------------------------------
@@ -476,7 +475,7 @@ sub add_address {
    if (($q->param('addfile')) && ($FILE_UPLOAD)) {
 
       # Sanity check
-      die "File upload must be of type text/*" unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/});
+      &error_die("File upload must be of type text/*" unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/}));
 
       # Handle file uploads of addresses
       my($fh) = $q->param('addfile');
@@ -612,6 +611,9 @@ sub allow_create_list {
    # Let the user select options for list creation ...
    
    my($username, $hostname, %labels, $j);
+   # TODO: klaeren wofuer %labels da ist
+
+   $pageName = 'create_list';
    
    # Work out if this user has a virtual host and set input accordingly ...
    if(-e "$QMAIL_BASE/virtualdomains") {
@@ -627,50 +629,16 @@ sub allow_create_list {
       $hostname = $DEFAULT_HOST;
    }
 
-   print '<div id="create" class="container">';
+   $pageData->setValue("Data.UserName", $username);
+   $pageData->setValue("Data.HostName", $hostname);
 
-   # Print a form of options ...
-   $q->delete_all;
-
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'createnew'}, '</h2>';
-   print '<hr>';
-   print '</div>';	# end of create->title
-
-   print $q->startform;
-   print $q->hidden(-name=>'state', -value=>'create');
-
-   print '<div class="input">';
-   print '<span class="formfield">', $LANGUAGE{'listname'}, ': ', $q->textfield(-name=>'list', -size=>'20'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listname'}, '"></span>';
-   print '<span class="formfield">', $LANGUAGE{'listaddress'}, ': ', $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10');
-   print ' @ ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listadd'}, '"></span>';
-   
-   print '<span class="formfield">', $LANGUAGE{'listoptions'}, ':</span>';
+   # TODO: migrate to cs
    &display_options($DEFAULT_OPTIONS);
 
-   # Allow creation of mysql table if the module allows it
-   if($Mail::Ezmlm::MYSQL_BASE) {
-	print '<span class="formfield">', $q->checkbox(-name=>'sql', -label=>$LANGUAGE{'mysqlCreate'}, -on=>1);
-	print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mysqlCreate'}, '"></span>';
-   }
+   $pageData->setValue("Data.mysqlModule", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
    
-   if(-e "$WEBUSERS_FILE") {
-	print '<span class="formfield">', $LANGUAGE{'allowedtoedit'}, ': '; 
-	print $q->textfield(-name=>'webusers', -value=>$ENV{'REMOTE_USER'}||'ALL', -size=>'30');
-	print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '"></span>';
-	print '<span class="help">', $HELPER{'allowedit'}, '</span>';
-   }
-   print '</div>';	# end of create->input
-   
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.CreateList","unknown button")), '</span>';
-   print '<span class="button">', $q->reset(-value=>$pagedata->getValue("Lang.Buttons.ResetForm","unknown button")), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>';
-   print '</div>';	# end of create->question
-   print $q->endform;  
-
-   print '</div>';	# end of create
-   
+   $pageData->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
+   $pageData->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
 }
 
 # ------------------------------------------------------------------------
