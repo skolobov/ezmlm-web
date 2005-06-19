@@ -286,10 +286,10 @@ sub output_page {
 	print "Content-Type: text/html\n\n";
 
 	my $cs = ClearSilver::CS->new($pagedata);
-	$cs->parseFile($TEMPLATE_DIR . 'macros.cs');
-	$cs->parseFile($TEMPLATE_DIR . 'header.cs');
-	$cs->parseFile($TEMPLATE_DIR . $pagename . '.cs');
-	$cs->parseFile($TEMPLATE_DIR . 'footer.cs');
+	$cs->parseFile($TEMPLATE_DIR . '/macros.cs');
+	$cs->parseFile($TEMPLATE_DIR . '/header.cs');
+	$cs->parseFile($TEMPLATE_DIR . '/' . $pagename . '.cs');
+	$cs->parseFile($TEMPLATE_DIR . '/footer.cs');
 
 	print $cs->render();
 }
@@ -475,7 +475,7 @@ sub add_address {
    if (($q->param('addfile')) && ($FILE_UPLOAD)) {
 
       # Sanity check
-      &error_die("File upload must be of type text/*" unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/}));
+      &error_die("File upload must be of type text/*") unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/});
 
       # Handle file uploads of addresses
       my($fh) = $q->param('addfile');
@@ -558,7 +558,7 @@ sub part_subscribers {
 
    my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize, $type);
    
-   $pageName = "config_list"
+   $pagename = "config_list";
    
    # Work out the address of this list ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
@@ -597,12 +597,12 @@ sub part_subscribers {
      }
    $pagedata->setValue("Data.ListCount", $i);
 
-   $pageData->setValue("Data.ListName", $q->param('list'));
-   $pageData->setValue("Data.ListAddress", $listaddress);
+   $pagedata->setValue("Data.ListName", $q->param('list'));
+   $pagedata->setValue("Data.ListAddress", $listaddress);
 
-   $pageData->setValue("Data.Form.State", $q->param('part'));
+   $pagedata->setValue("Data.Form.State", $q->param('part'));
 
-   $pageData->setValue("Data.FileUploadAllowed", ($FILE_UPLOAD)? 1 : 0);
+   $pagedata->setValue("Data.FileUploadAllowed", ($FILE_UPLOAD)? 1 : 0);
 }
 
 # ------------------------------------------------------------------------
@@ -613,7 +613,7 @@ sub allow_create_list {
    my($username, $hostname, %labels, $j);
    # TODO: klaeren wofuer %labels da ist
 
-   $pageName = 'create_list';
+   $pagename = 'create_list';
    
    # Work out if this user has a virtual host and set input accordingly ...
    if(-e "$QMAIL_BASE/virtualdomains") {
@@ -629,16 +629,16 @@ sub allow_create_list {
       $hostname = $DEFAULT_HOST;
    }
 
-   $pageData->setValue("Data.UserName", $username);
-   $pageData->setValue("Data.HostName", $hostname);
+   $pagedata->setValue("Data.UserName", $username);
+   $pagedata->setValue("Data.HostName", $hostname);
 
    # TODO: migrate to cs
    &display_options($DEFAULT_OPTIONS);
 
-   $pageData->setValue("Data.mysqlModule", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
+   $pagedata->setValue("Data.mysqlModule", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
    
-   $pageData->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
-   $pageData->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
+   $pagedata->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
+   $pagedata->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
 }
 
 # ------------------------------------------------------------------------
@@ -688,13 +688,13 @@ sub create_list {
                -switches=>$options,
                -user=>$USER)
    ) {
-      die 'List creation failed', $list->errmsg();
+      &error_die('List creation failed' , $list->errmsg());
    }
 
    # handle MySQL stuff
    if($q->param('sql') && $options =~ m/-6\s+/) {
       unless($list->createsql()) {
-         die 'SQL table creation failed: ', $list->errmsg(); 
+         error_die('SQL table creation failed: ' , $list->errmsg());
       }
    }
    
@@ -714,45 +714,22 @@ sub list_config {
    # Store some variables before we delete them ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $listname = $q->param('list');
-   $listaddress = &this_listaddress;
+   $listaddress = 
 
-   # Begin of content
-   print '<div id="config" class="container">';
-    
-   # Print a form of options ...
-   $q->delete_all;
+   $pagedate->setValue("Data.ListName", $listname);
+   $pagedate->setValue("Data.ListAddress", &this_listaddress);
 
-   print '<div class="title">';
-   print '<h2>', $LANGUAGE{'editconfiguration'}, '</h2>';
-   print '<hr>';
-   print '</div>';	# end of config->title
-
-   print $q->startform;
-   print $q->hidden(-name=>'state', -value=>'configuration');
-   print $q->hidden(-name=>'list', -value=>$listname);
-
-   print '<div class="info">';
-   print '<p>', $LANGUAGE{'listname'}, ": <em>$listname</em></p>";
-   print '<p>', "$LANGUAGE{'listaddress'}: <em>$listaddress</em></p>";
-   print '</div>';	# end of config->info
-
-   print '<div class="input">';
-   print '<h2>', $LANGUAGE{'listoptions'}, ':</h2>';
-
+   # TODO: migrate
    # Print a list of options, selecting the ones that apply to this list ...
    &display_options($list->getconfig);
 
    # Get the contents of the headeradd, headerremove, mimeremove and prefix files
-   $headeradd = $list->getpart('headeradd');
-   $headerremove = $list->getpart('headerremove');
-   $mimeremove = $list->getpart('mimeremove');
-   $prefix = $list->getpart('prefix'); 
+   $pagedate->setValue("Data.List.Prefix", $list->getpart('prefix');
+   $pagedate->setValue("Data.List.HeaderAdd", $list->getpart('headeradd');
+   $pagedate->setValue("Data.List.HeaderRemove", $list->getpart('headerremove');
+   $pagedate->setValue("Data.List.MimeRemove", $list->getpart('mimeremove');
 
-   print '<span class="formfield">', $LANGUAGE{'prefix'}, ': ', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>12), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'prefix'}, '"></span>' if defined($prefix);
-   print '<p class="formfield">', $LANGUAGE{'headerremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headerremove'}, '"><br>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70), '</span>';
-   print '<span class="formfield">', $LANGUAGE{'headeradd'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headeradd'}, '"><br>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70), '</div>';
-   print '<span class="formfield">', $LANGUAGE{'mimeremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mimeremove'}, '"><br>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70), '</span>' if defined($mimeremove);
-   
+   # TODO: this is definitely ugly!
    if(open(WEBUSER, "<$WEBUSERS_FILE")) {
       my($webusers);
       while(<WEBUSER>) {
@@ -761,24 +738,8 @@ sub list_config {
       close WEBUSER;
       $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
 
-      print '<span class="formfield">', $LANGUAGE{'allowedtoedit'}, ': ';
-      print $q->textfield(-name=>'webusers', -value=>$webusers, -size=>'30');
-      print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '"></span>',
-      print '<span class="help">', $HELPER{'allowedit'}, '</span>';
-      
+      $pagedate->setValue("Data.List.WebUsers", $webusers);
    }
-   print '</div>';	# end of config->input
-   
-   print '<div class="question">';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.UpdateConfiguration","unknown button")), '</span>';
-   print '<span class="button">', $q->reset(-value=>$pagedata->getValue("Lang.Buttons.ResetForm","unknown button")), '</span>';
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.Cancel","unknown button")), '</span>'; 
-   print '<span class="button">', $q->submit(-name=>'action', -value=>$pagedata->getValue("Lang.Buttons.EditTexts","unknown button")), '</span>';
-   print '</div>';	# end of config->question
-   
-   print $q->endform;  
-
-   print '</div>';	# end of config
 }
 
 # ------------------------------------------------------------------------

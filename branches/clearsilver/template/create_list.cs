@@ -13,9 +13,10 @@
 	<span class="formfield"><?cs var:Lang.Misc.ListAddress ?>: <input type="textfield" name="inlocal" size="10" default="<?cs var:Data.UserName ?>">
 	  <?cs call:help_icon("ListName") ?> @ <input type="textfield" name="inhost" default="<?cs var:Data.HostName ?>" size="30"><?cs call:help_icon("ListAdd") ?></span>
 	<span class="formfield"><?cs var:Lang.Misc.ListOptions ?>:</span>
+	<!-- TODO: display_options muss hier rein -->
 
-	# Allow creation of mysql table if the module allows it
 	<?cs if:Data.mysqlModule ?>
+	<!-- Allow creation of mysql table if the module allows it -->
 		<span class="formfield"><input type="checkbox" name="sql"label="<?cs var:Lang.Misc.mysqlCreate ?>" on="1"><?cs call:help_icon("mysqlCreate") ?></span>
 	<?cs /if ?>
 
