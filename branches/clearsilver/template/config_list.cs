@@ -8,11 +8,11 @@
 
     <!-- Moderation -->
     <?cs if:Data.isModerated ?>
-	    <?cs include:"modpath_info.cs" ?>
+	    <?cs include:TemplateDir + "modpath_info.cs" ?>
     <?cs /if ?>
 
     <!-- form -->
-    <form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
+    <form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
 	<input type="hidden" name="state" value="<?cs var:Data.Form.State ?>">
 	<input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
 	    <div class="list">

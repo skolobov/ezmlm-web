@@ -6,7 +6,7 @@
     </div>
 
 
-  <form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
+  <form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
     <input type="hidden" name="state" value="create">
     <div class="input">
 	<span class="formfield"><?cs var:Lang.Misc.ListName ?>: <input type="text" name="list" size="20"><?cs call:help_icon("ListName") ?></span>
@@ -14,7 +14,7 @@
 	  <?cs call:help_icon("ListName") ?> @ <input type="text" name="inhost" value="<?cs var:Data.HostName ?>" size="30"><?cs call:help_icon("ListAdd") ?></span>
 	<span class="formfield"><?cs var:Lang.Misc.ListOptions ?>:</span>
 
-	<?cs include:"display_options.cs" ?>
+	<?cs include:TemplateDir + "display_options.cs" ?>
 
 	<?cs if:Data.mysqlModule ?>
 	<!-- Allow creation of mysql table if the module allows it -->

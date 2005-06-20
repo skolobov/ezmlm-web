@@ -5,7 +5,7 @@
 	<hr>
     </div>
 
-  <form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
+  <form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
     <input type="hidden" name="state" value="configuration">
     <input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
     <div class="info">
@@ -16,30 +16,28 @@
     <div class="input">
 	<h2><?cs var:Lang.Misc.ListOptions ?> :</h2>
 
-	<?cs include:"display_options.cs" ?>
+	<?cs include:TemplateDir + "display_options.cs" ?>
 
-	<!-- TODO: "default" ist kein html-Element, oder? - value?
 	<?cs if:Data.List.Prefix ?>
-	  <span class="formfield"><?cs var:Lang.Misc.Prefix ?>: <input type="text" name="prefix"
-	    value="<?cs var:Data.List.Prefix ?>" size="12"><?cs call:help_icon("Prefix") ?></span>
+	  <div class="formfield"><?cs var:Lang.Misc.Prefix ?>: <input type="text" name="prefix"
+	    value="<?cs var:Data.List.Prefix ?>" size="12"><?cs call:help_icon("Prefix") ?></div>
 	<?cs /if ?>
-	<span class="formfield"><?cs var:Lang.Misc.HeaderRemove ?>:
-	  <?cs call:help_icon("HeaderRemove") ?><br/><input type="textarea" name="headerremove"
-	  value="<?cs var:Data.List.HeaderRemove ?>" rows="5" columns="70"></span>
-	<span class="formfield"><?cs var:Lang.Misc.HeaderAdd ?>:<?cs call:help_icon("HeaderAdd") ?>
-	  <br/><input type="textarea" name="headeradd" value="<?cs var:Data.List.HeaderAdd ?>"
-	  rows="5" columns="70"></span>
+	<div class="formfield"><?cs var:Lang.Misc.HeaderRemove ?>:<?cs call:help_icon("HeaderRemove") ?>
+	  <br/><textarea name="headerremove" rows="5" cols="70"><?cs var:Data.List.HeaderRemove ?></textarea></div>
+	<div class="formfield"><?cs var:Lang.Misc.HeaderAdd ?>:<?cs call:help_icon("HeaderAdd") ?>
+	  <br/><textarea name="headeradd" rows="5" cols="70"><?cs var:Data.List.HeaderAdd ?></textarea></div>
 	<?cs if:Data.List.MimeRemove ?>
-	  <span class="formfield"><?cs var:Lang.Misc.MimeRemove ?>:
-	    <?cs call:help_icon("MimeRemove") ?><br/><input type="textarea" name="mimeremove"
-	    value="<?cs var:Data.List.MimeRemove ?>" rows="5" columns="70"></span>
+	  <div class="formfield"><?cs var:Lang.Misc.MimeRemove ?>:<?cs call:help_icon("MimeRemove") ?>
+	    <br/><textarea name="mimeremove" rows="5" cols="70"><?cs var:Data.List.MimeRemove ?></textarea></div>
 	<?cs /if ?>
 
 	<?cs if:Data.List.WebUsers ?>
+	  <div>
 	    <span class="formfield"><?cs var:Lang.Misc.AllowedToEdit ?>: <input type="text"
 	      name="webusers" value="<?cs var:Data.List.WebUsers ?>" size="30">
-	      <?cs call:help_icon("WebUsers") ?></span>
-	    <span class="help"><?cs Lang.Helper.AllowEdit ?></span>
+	      <cs call:help_icon("WebUsers") ?></span>
+	    <span class="help"><?cs var:Lang.Helper.AllowEdit ?></span>
+	  </div>
 	<?cs /if ?>
     </div>
 

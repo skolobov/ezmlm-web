@@ -11,7 +11,7 @@
 
     <div id="main" class="container">
 	<!-- TODO: die URL des cgi ersetzen - DRINGEND! -->
-	<form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
+	<form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
 	    <input type="hidden" name="state" value="select">
 
 	    <?cs if:(Data.ListsCount > 0) ?>

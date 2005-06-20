@@ -1,11 +1,11 @@
 <div id="textfiles" class="container">
 
-  <form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
+  <form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
     <input type="hidden" name="state" value="list_text">
     <input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
 
     <div class="list">
-	<select name="file" tabindex="1">
+	<select name="file" tabindex="1" size="25">
 		<?cs each:item = Data.Files ?>
 		    <option><?cs var:item ?></option>
 		<?cs /each ?>

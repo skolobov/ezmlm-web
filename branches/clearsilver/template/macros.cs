@@ -5,3 +5,7 @@
 	<?cs /if ?>
     <?cs /each ?>
 <?cs /def ?>
+
+<?cs def:generic_icon(helptext) ?>
+	&nbsp<img src="<?cs var:HelpIconURL ?>" title="<?cs var:helptext ?>"/>
+<?cs /def ?>

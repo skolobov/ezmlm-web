@@ -118,7 +118,6 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
 
 my $pagedata = load_hdf();
 
-
 # check permissions
 &check_permission_for_action == 0 || &error_die('Error: you are not allowed to do this!');
 
@@ -252,7 +251,7 @@ unless (defined($q->param('state'))) {
    &list_text;
    
 } else {
-   $pagedata->setValue("Data.Action", $Q::action);
+   $pagedata->setValue("Data.Action", $q->param('action'));
    $pagedata->setValue("Data.Status", "unknown action");
    $pagename = 'select_list';
 } 
@@ -271,9 +270,12 @@ sub load_hdf {
 	# TODO: respect LANGUAGE_DIR and LANGUAGE
 	$hdf->readFile($LANGUAGE_DIR . "/en.hdf");
 
-	$hdf->setValue("Stylesheet", $HTML_CSS_FILE);
-	$hdf->setValue("ScriptURL", "/ezmlm-web");
-	$hdf->setValue("HelpIconURL", $HELP_ICON_URL);
+	# TODO: check for existence
+	$hdf->setValue("TemplateDir", "$TEMPLATE_DIR/");
+	$hdf->setValue("LanguageDir", "$LANGUAGE_DIR/");
+	$hdf->setValue("ScriptName", $ENV{'SCRIPT_NAME'});
+	$hdf->setValue("Stylesheet", "$HTML_CSS_FILE");
+	$hdf->setValue("HelpIconURL", "$HELP_ICON_URL");
 
 	return $hdf;
 }
@@ -281,6 +283,9 @@ sub load_hdf {
 
 sub output_page {
 	# Print the page
+
+	my $pagefile = $TEMPLATE_DIR . "/" . $pagename . ".cs";
+	die "template ($pagefile) not found!" unless (-e "$pagefile");
 
 	# print http header
 	print "Content-Type: text/html\n\n";
@@ -314,10 +319,10 @@ sub select_list {
    foreach $i (0 .. $#files) {
       if ((-e "$LIST_DIR/$files[$i]/lock") && (&webauth($files[$i]) == 0)) {
          $num++;
-         $pagedata->setValue("Data.Lists." . $num, $files[$i]);
+         $pagedata->setValue("Data.Lists." . $num, "$files[$i]");
       }
    }
-   $pagedata->setValue("Data.ListsCount", $num);
+   $pagedata->setValue("Data.ListsCount", "$num");
 
    # TODO: ACL an einer Stelle zentral bestimmen lassen
    $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
@@ -345,17 +350,17 @@ sub display_list {
 
    $pagename = 'display_list';
 
-   $pagedata->setValue("Data.ListName", $Q::list);
+   $pagedata->setValue("Data.ListName", $q->param('list'));
    $pagedata->setValue("Data.ListAddress", &this_listaddress);
 
    my $i = 0;
    my $one_subs;
    # TODO: use "pretty" output style for visible mail address
    foreach $one_subs ($list->subscribers) {
-	$pagedata->setValue("Data.Subscribers." . $i, $one_subs);
+	$pagedata->setValue("Data.Subscribers." . $i, "$one_subs");
 	$i++;
      }
-   $pagedata->setValue("Data.SubscribersCount", $i);
+   $pagedata->setValue("Data.SubscribersCount", "$i");
 
    $pagedata->setValue("Data.ConfigAvail.Extras", 1) if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
    $pagedata->setValue("Data.ConfigAvail.Moderation", 1) if ($list->ismodpost || $list->ismodsub || $list->isremote);
@@ -576,13 +581,13 @@ sub part_subscribers {
       my($remotepath) = $config =~ m{9\s*'([^']+)'};
       
       $pagedata->setValue("Data.isPostMod", ($list->ismodpost)? 1 : 0);
-      $pagedata->setValue("Data.PostModPath", $postpath);
+      $pagedata->setValue("Data.PostModPath", "$postpath");
 
       $pagedata->setValue("Data.isSubMod", ($list->ismodsub)? 1 : 0);
-      $pagedata->setValue("Data.SubModPath", $subpath);
+      $pagedata->setValue("Data.SubModPath", "$subpath");
 
       $pagedata->setValue("Data.isRemote", ($list->isremote)? 1 : 0);
-      $pagedata->setValue("Data.RemotePath", $remotepath);
+      $pagedata->setValue("Data.RemotePath", "$remotepath");
    }
 
    # What type of sublist is this?
@@ -592,13 +597,13 @@ sub part_subscribers {
    my $one_subs;
    # TODO: use "pretty" output style for visible mail address
    foreach $one_subs ($list->subscribers($part)) {
-	$pagedata->setValue("Data.List." . $i, $one_subs);
+	$pagedata->setValue("Data.List." . $i, "$one_subs");
 	$i++;
      }
-   $pagedata->setValue("Data.ListCount", $i);
+   $pagedata->setValue("Data.ListCount", "$i");
 
    $pagedata->setValue("Data.ListName", $q->param('list'));
-   $pagedata->setValue("Data.ListAddress", $listaddress);
+   $pagedata->setValue("Data.ListAddress", "$listaddress");
 
    $pagedata->setValue("Data.Form.State", $q->param('part'));
 
@@ -629,8 +634,8 @@ sub allow_create_list {
       $hostname = $DEFAULT_HOST;
    }
 
-   $pagedata->setValue("Data.UserName", $username);
-   $pagedata->setValue("Data.HostName", $hostname);
+   $pagedata->setValue("Data.UserName", "$username");
+   $pagedata->setValue("Data.HostName", "$hostname");
 
    # TODO: migrate to cs
    &display_options($DEFAULT_OPTIONS);
@@ -710,12 +715,14 @@ sub list_config {
    # Allow user to alter the list configuration ...
 
    my ($list, $listname);
+
+   $pagename = "list_config";
    
    # Store some variables before we delete them ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $listname = $q->param('list');
 
-   $pagedata->setValue("Data.ListName", $listname);
+   $pagedata->setValue("Data.ListName", "$listname");
    $pagedata->setValue("Data.ListAddress", &this_listaddress);
 
    # TODO: migrate
@@ -724,11 +731,15 @@ sub list_config {
 
    # Get the contents of the headeradd, headerremove, mimeremove and prefix files
    $pagedata->setValue("Data.List.Prefix", $list->getpart('prefix'));
-   $pagedata->setValue("Data.List.HeaderAdd", $list->getpart('headeradd'));
-   $pagedata->setValue("Data.List.HeaderRemove", $list->getpart('headerremove'));
-   $pagedata->setValue("Data.List.MimeRemove", $list->getpart('mimeremove'));
+   # TODO: die folgenden Zeilen enden in einem Hash anstelle des Inhalts
+   my $temp = $list->getpart('headeradd');
+   $pagedata->setValue("Data.List.HeaderAdd", "$temp");
+   $temp = $list->getpart('headerremove');
+   $pagedata->setValue("Data.List.HeaderRemove", "$temp");
+   $temp = $list->getpart('mimeremove');
+   $pagedata->setValue("Data.List.MimeRemove", "$temp");
 
-   # TODO: this is definitely ugly!
+   # TODO: this is definitely ugly - create a new sub!
    if(open(WEBUSER, "<$WEBUSERS_FILE")) {
       my($webusers);
       while(<WEBUSER>) {
@@ -737,7 +748,7 @@ sub list_config {
       close WEBUSER;
       $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
 
-      $pagedata->setValue("Data.List.WebUsers", $webusers);
+      $pagedata->setValue("Data.List.WebUsers", "$webusers");
    }
 }
 
@@ -826,7 +837,7 @@ sub list_text {
    $list = $LIST_DIR . '/' . $q->param('list');
 
    # Read the list directory for text ...
-   opendir DIR, "$list/text" || die "Unable to read DIR/text: $!";
+   opendir DIR, "$list/text" || &error_die("Unable to read DIR/text: $!");
    @files = grep !/^\./, readdir DIR; 
    closedir DIR;
 
@@ -836,10 +847,10 @@ sub list_text {
    my $i = 0;
    my $one_file;
    foreach $one_file (@files) {
-	$pagedata->setValue("Data.Files." . $i, $one_file);
+	$pagedata->setValue("Data.Files." . $i, "$one_file");
 	$i++;
      }
-   $pagedata->setValue("Data.FilesCount", $i);
+   $pagedata->setValue("Data.FilesCount", "$i");
 }
 
 # ------------------------------------------------------------------------
@@ -854,8 +865,9 @@ sub edit_text {
    $content = $list->getpart("text/$Q::file");
 
    $pagedata->setValue("Data.ListName", $q->param('list'));
+   # TODO: file wird nurals hash interpretiert
    $pagedata->setValue("Data.File.Name", $q->param('file'));
-   $pagedata->setValue("Data.File.Content", $content);
+   $pagedata->setValue("Data.File.Content", "$content");
 }
    
 # ------------------------------------------------------------------------
@@ -921,27 +933,28 @@ sub display_options {
    my($i, $j);
  
    # TODO: remove when migration to cs is done
-   return 0;
    $j = 0;
    # convert EZMLM_LABELS to hdf-language values
    foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
-	$pagedata->setValue("Data.ListOptions." . $i . ".name", $i);
-	$pagedata->setValue("Data.ListOptions." . $i . ".label", $EZMLM_LABELS{$i}[0]);
+	$pagedata->setValue("Data.ListOptions." . $i . ".name", "$i");
+	$pagedata->setValue("Data.ListOptions." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
+	$pagedata->setValue("Data.ListOptions." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
 	$pagedata->setValue("Data.ListOptions." . $i . ".state", ($opts =~ /^\w*$i\w*\s*/)? 1 : 0);
 	$j++;
    }
-   $pagedata->setValue("Data.ListOptionsCount", $j);
+   $pagedata->setValue("Data.ListOptionsCount", "$j");
 
    $j = 0;
    # convert EZMLM_LABELS to hdf-language values
    foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-	$pagedata->setValue("Data.ListSettings." . $i . ".name", $i);
-	$pagedata->setValue("Data.ListSettings." . $i . ".label", $EZMLM_LABELS{$i}[0]);
+	$pagedata->setValue("Data.ListSettings." . $i . ".name", "$i");
+	$pagedata->setValue("Data.ListSettings." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
+	$pagedata->setValue("Data.ListSettings." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
 	$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
 	$pagedata->setValue("Data.ListSettings." . $i . ".value", $1||$EZMLM_LABELS{$i}[2]);
 	$j++;
    }
-   $pagedata->setValue("Data.ListSettingsCount", $j);
+   $pagedata->setValue("Data.ListSettingsCount", "$j");
    
 }
 
@@ -1011,7 +1024,7 @@ EOM
 
 	sub error_die {
 		my $msg = @_;
-		$pagedata->setValue("Data.ErrorMessage", $msg);
+		$pagedata->setValue("Data.ErrorMessage", "$msg");
 		# TODO: besser waere eine Warnung in header.cs
 		$pagename = 'error';
 		&output_page;

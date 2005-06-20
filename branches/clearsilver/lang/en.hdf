@@ -18,7 +18,7 @@ Lang {
 	AllowList	= [Allow List]
 	DigestSubscribers = [Digest Subscribers]
 	Configuration	= [Configuration]
-	UpdateConfiguration = [Update Configuration',
+	UpdateConfiguration = [Update Configuration]
 	EditTexts	= [Edit Texts]
 	EditFile	= [Edit File]
 	SaveFile	= [Save File]
@@ -29,7 +29,7 @@ Lang {
       }
 
 
-    Labels {
+    Options {
 	a.short		= Archived
 	a.long		= Ezmlm will archive new messages
 	b.short		= Block archive 
@@ -77,7 +77,9 @@ Lang {
 	x.long		= Strip certain mimetypes, etc
 #	y => not used
 #	z => not used
+     }
 
+     Settings {
 	0.short 	= Sublist
 	0.long		= Make the list a sublist of list mainlist@host
 	0.default	= mainlist@host

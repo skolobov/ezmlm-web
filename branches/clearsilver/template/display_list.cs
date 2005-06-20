@@ -8,7 +8,7 @@
     </div>
 
     <div class="list">
-	<form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
+	<form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
 	    <input type="hidden" name="state" value="edit">
 	    <input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
 
