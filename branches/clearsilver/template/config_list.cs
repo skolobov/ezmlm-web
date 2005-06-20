@@ -44,7 +44,7 @@
 	  <?cs /if ?>
 
 	  <span class="formfield">
-	    <input type="textfield" name="addsubscriber" size="40"/> <?cs call:help_icon("AddAddress") ?></span>
+	    <input type="text" name="addsubscriber" size="40"/> <?cs call:help_icon("AddAddress") ?></span>
 	  <?cs if:FileUploadAllowed ?><span class="formfield">
 	    <input type="filefield" name="addfile" size="20" maxlength="100"/> <?cs call:help_icon("AddAddressFile") ?></span><?cs /if ?>
 	  <span class="button">

@@ -9,9 +9,9 @@
   <form method="post" action="<?cs var:ScriptURL ?>" enctype="application/x-www-form-urlencoded">
     <input type="hidden" name="state" value="create">
     <div class="input">
-	<span class="formfield"><?cs var:Lang.Misc.ListName ?>: <input type="textfield" name="list" size="20"><?cs call:help_icon("ListName") ?></span>
-	<span class="formfield"><?cs var:Lang.Misc.ListAddress ?>: <input type="textfield" name="inlocal" size="10" default="<?cs var:Data.UserName ?>">
-	  <?cs call:help_icon("ListName") ?> @ <input type="textfield" name="inhost" default="<?cs var:Data.HostName ?>" size="30"><?cs call:help_icon("ListAdd") ?></span>
+	<span class="formfield"><?cs var:Lang.Misc.ListName ?>: <input type="text" name="list" size="20"><?cs call:help_icon("ListName") ?></span>
+	<span class="formfield"><?cs var:Lang.Misc.ListAddress ?>: <input type="text" name="inlocal" size="10" value="<?cs var:Data.UserName ?>">
+	  <?cs call:help_icon("ListName") ?> @ <input type="text" name="inhost" value="<?cs var:Data.HostName ?>" size="30"><?cs call:help_icon("ListAdd") ?></span>
 	<span class="formfield"><?cs var:Lang.Misc.ListOptions ?>:</span>
 
 	<?cs include:"display_options.cs" ?>
@@ -22,7 +22,7 @@
 	<?cs /if ?>
 
 	<?cs if:Data.WebUser.show ?>
-		<span class="formfield"><?cs var:Lang.Misc.AllowedToEdit ?>: <input type="textfield"
+		<span class="formfield"><?cs var:Lang.Misc.AllowedToEdit ?>: <input type="text"
 		  name="webusers" size="30" value="<?cs var:Data.WebUser.UserName ?>">
 		  <?cs call:help_icon("WebUsers") ?></span>
 		# TODO: the following span is quite unusual

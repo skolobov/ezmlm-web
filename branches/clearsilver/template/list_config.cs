@@ -20,23 +20,23 @@
 
 	<!-- TODO: "default" ist kein html-Element, oder? - value?
 	<?cs if:Data.List.Prefix ?>
-	  <span class="formfield"><?cs var:Lang.Misc.Prefix ?>: <input type="textfield" name="prefix"
-	    default="<?cs var:Data.List.Prefix ?>" size="12"><?cs call:help_icon("Prefix") ?></span>
+	  <span class="formfield"><?cs var:Lang.Misc.Prefix ?>: <input type="text" name="prefix"
+	    value="<?cs var:Data.List.Prefix ?>" size="12"><?cs call:help_icon("Prefix") ?></span>
 	<?cs /if ?>
 	<span class="formfield"><?cs var:Lang.Misc.HeaderRemove ?>:
 	  <?cs call:help_icon("HeaderRemove") ?><br/><input type="textarea" name="headerremove"
-	  default="<?cs var:Data.List.HeaderRemove ?>" rows="5" columns="70"></span>
+	  value="<?cs var:Data.List.HeaderRemove ?>" rows="5" columns="70"></span>
 	<span class="formfield"><?cs var:Lang.Misc.HeaderAdd ?>:<?cs call:help_icon("HeaderAdd") ?>
-	  <br/><input type="textarea" name="headeradd" default="<?cs var:Data.List.HeaderAdd ?>"
+	  <br/><input type="textarea" name="headeradd" value="<?cs var:Data.List.HeaderAdd ?>"
 	  rows="5" columns="70"></span>
 	<?cs if:Data.List.MimeRemove ?>
 	  <span class="formfield"><?cs var:Lang.Misc.MimeRemove ?>:
 	    <?cs call:help_icon("MimeRemove") ?><br/><input type="textarea" name="mimeremove"
-	    default="<?cs var:Data.List.MimeRemove ?>" rows="5" columns="70"></span>
+	    value="<?cs var:Data.List.MimeRemove ?>" rows="5" columns="70"></span>
 	<?cs /if ?>
 
 	<?cs if:Data.List.WebUsers ?>
-	    <span class="formfield"><?cs var:Lang.Misc.AllowedToEdit ?>: <input type="textfield"
+	    <span class="formfield"><?cs var:Lang.Misc.AllowedToEdit ?>: <input type="text"
 	      name="webusers" value="<?cs var:Data.List.WebUsers ?>" size="30">
 	      <?cs call:help_icon("WebUsers") ?></span>
 	    <span class="help"><?cs Lang.Helper.AllowEdit ?></span>

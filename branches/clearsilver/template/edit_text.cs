@@ -11,7 +11,7 @@
 	
 	<div class="input">
 	    <span class="formfield"><input type="textarea" name="content"
-	      default="<?cs var:Data.File.Content ?>" rows="25" columns="72"></span>
+	      value="<?cs var:Data.File.Content ?>" rows="25" columns="72"></span>
 	</div>
 
 	<div class="info">
