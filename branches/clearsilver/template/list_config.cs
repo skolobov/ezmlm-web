@@ -15,7 +15,9 @@
 
     <div class="input">
 	<h2><?cs var:Lang.Misc.ListOptions ?> :</h2>
-	<!-- TODO: hier muss display_options reinkommen -->
+
+	<?cs include:"display_options.cs" ?>
+
 	<!-- TODO: "default" ist kein html-Element, oder? - value?
 	<?cs if:Data.List.Prefix ?>
 	  <span class="formfield"><?cs var:Lang.Misc.Prefix ?>: <input type="textfield" name="prefix"

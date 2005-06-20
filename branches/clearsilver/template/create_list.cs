@@ -13,7 +13,8 @@
 	<span class="formfield"><?cs var:Lang.Misc.ListAddress ?>: <input type="textfield" name="inlocal" size="10" default="<?cs var:Data.UserName ?>">
 	  <?cs call:help_icon("ListName") ?> @ <input type="textfield" name="inhost" default="<?cs var:Data.HostName ?>" size="30"><?cs call:help_icon("ListAdd") ?></span>
 	<span class="formfield"><?cs var:Lang.Misc.ListOptions ?>:</span>
-	<!-- TODO: display_options muss hier rein -->
+
+	<?cs include:"display_options.cs" ?>
 
 	<?cs if:Data.mysqlModule ?>
 	<!-- Allow creation of mysql table if the module allows it -->
@@ -31,7 +32,7 @@
 
     <div class="question">
 	<span class="button"><input type="submit" name="action"
-	  value="<?cs var:Lang.Buttons.CreateList ?>"></span>
+	  value="<?cs var:Lang.Buttons.Create ?>"></span>
 	<span class="button"><input type="reset" name="action"
 	  value="<?cs var:Lang.Buttons.ResetForm ?>"></span>
 	<span class="button"><input type="submit" name="action"

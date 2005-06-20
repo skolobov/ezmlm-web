@@ -660,7 +660,8 @@ sub create_list {
    # Sanity Checks ...
    return 1 if ($listname eq '' || $qmail eq '');
    if(-e ("$LIST_DIR/$listname/lock") || -e ("$HOME_DIR/.qmail-$qmail")) {
-      print '<h1 class="warning">', "List '$listname' already exists :(</h1>";
+      &error_die("Can't create list '$listname', as it already exists");
+      # TODO: create a language string for this message
       return 1;
    }
   
@@ -919,33 +920,28 @@ sub display_options {
    my($opts) = shift;
    my($i, $j);
  
-   print "<!-- $opts -->";  
-   print '<p>';
+   # TODO: remove when migration to cs is done
+   return 0;
+   $j = 0;
+   # convert EZMLM_LABELS to hdf-language values
    foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
-      if ($opts =~ /^\w*$i\w*\s*/) {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
-      } else {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
-      }
-      print '<img src="', $HELP_ICON_URL, '" border="0" title="', $EZMLM_LABELS{$i}[1] , '"></span>';
-      print '</td>'; $j++;
-      if ($j >= 3) {
-         $j = 0; print '</p><p>';
-      }
+	$pagedata->setValue("Data.ListOptions." . $i . ".name", $i);
+	$pagedata->setValue("Data.ListOptions." . $i . ".label", $EZMLM_LABELS{$i}[0]);
+	$pagedata->setValue("Data.ListOptions." . $i . ".state", ($opts =~ /^\w*$i\w*\s*/)? 1 : 0);
+	$j++;
    }
-   print '</p>';
+   $pagedata->setValue("Data.ListOptionsCount", $j);
 
+   $j = 0;
+   # convert EZMLM_LABELS to hdf-language values
    foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-      print '<p>';
-      if ($opts =~ /$i (?:'(.+?)')/) {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0], -on=>'1');
-      } else {
-         print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
-      }
-      print '<img src="', $HELP_ICON_URL, '" border="0" title="', $EZMLM_LABELS{$i}[1] , '"></span>';
-      print '<span class="formfield">', $q->textfield(-name=>"$i-value", -value=>$1||$EZMLM_LABELS{$i}[2], -size=>30), '</span>';
-      print '</p>';
+	$pagedata->setValue("Data.ListSettings." . $i . ".name", $i);
+	$pagedata->setValue("Data.ListSettings." . $i . ".label", $EZMLM_LABELS{$i}[0]);
+	$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
+	$pagedata->setValue("Data.ListSettings." . $i . ".value", $1||$EZMLM_LABELS{$i}[2]);
+	$j++;
    }
+   $pagedata->setValue("Data.ListSettingsCount", $j);
    
 }
 
