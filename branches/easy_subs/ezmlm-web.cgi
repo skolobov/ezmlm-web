@@ -234,19 +234,19 @@ unless (defined($q->param('state'))) {
       &display_list;
    }
 
-} elsif ($Q::state eq 'list_text') {
+} elsif ($q->param('state') eq 'list_text') {
    # User wants to edit texts associated with the list ...
    
-   if ($Q::action eq $pagedata->getValue("Lang.Buttons.EditFile","unknown button")) {
+   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.EditFile","unknown button")) {
       &edit_text;  
    } else {
       &list_config; # Cancel ...
    }
 
-} elsif ($Q::state eq 'edit_text') {   
+} elsif ($q->param('state') eq 'edit_text') {   
    # User wants to save a new version of something in DIR/text ...
    
-   &save_text if ($Q::action eq $pagedata->getValue("Lang.Buttons.SaveFile","unknown button"));
+   &save_text if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.SaveFile","unknown button"));
    &list_text;
    
 } else {
@@ -322,15 +322,15 @@ sub set_pagedata()
 
    if ($q->param('list') ne '' )
    {
-	my ($list);
+	my ($list, $listname);
 
-	$pagedata->setValue("Data.ListName", $q->param('list'));
+	$listname = $q->param('list');
 	
 	# Work out the address of this list ...
-	$list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
+	$list = new Mail::Ezmlm("$LIST_DIR/$listname");
 
 	# TODO: change Data.ListName to Data.List.Name and so on ...
-	$pagedata->setValue("Data.ListName", $q->param('list'));
+	$pagedata->setValue("Data.ListName", "$listname");
 	$pagedata->setValue("Data.ListAddress", &this_listaddress);
 
 	$i = 0;
@@ -390,10 +390,10 @@ sub set_pagedata()
 		$pagedata->setValue("Data.FilesCount", "$i");
 
 		# text file specified?
-		if ($->param('file') ne '')
+		if ($q->param('file') ne '')
 		{
 			my ($content);
-			$content = $list->getpart("text/" . q->param('file'));
+			$content = $list->getpart("text/" . $q->param('file'));
 			$pagedata->setValue("Data.File.Name", $q->param('file'));
 			$pagedata->setValue("Data.File.Content", "$content");
 		}
@@ -476,8 +476,8 @@ sub delete_list {
 
       use File::Copy;
 
-      my ($oldfile); $oldfile = "$LIST_DIR/$Q::list";
-      my ($newfile); $newfile = "$LIST_DIR/.$Q::list"; 
+      my ($oldfile); $oldfile = "$LIST_DIR/" . $q->param('list');
+      my ($newfile); $newfile = "$LIST_DIR/." . $q->param('list'); 
       move($oldfile, $newfile) or die "Unable to rename list: $!";
       mkdir "$HOME_DIR/deleted.qmail", 0700 if(!-e "$HOME_DIR/deleted.qmail");
 
