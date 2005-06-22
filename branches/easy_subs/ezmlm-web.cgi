@@ -118,6 +118,8 @@ my $pagedata = load_hdf();
 # check permissions
 &check_permission_for_action == 0 || &error_die('Error: you are not allowed to do this!');
 
+&set_pagedata();
+
 # This is where we decide what to do, depending on the form state and the
 # users chosen course of action ...
 unless (defined($q->param('state'))) {
@@ -297,14 +299,9 @@ sub output_page {
 }
 
 
-sub select_list {
-   # List all mailing lists (sub directories) in the list directory.
-   # Allow the user to choose a course of action; either editing an existing
-   # list, creating a new one, or deleting an old one.
-
-   my (@lists, @files, $i, $scrollsize);
-
-   $pagename = 'select_list';
+sub set_pagedata()
+{
+   my (@lists, @files, $i, $item);
 
    # Read the list directory for mailing lists.
    opendir DIR, $LIST_DIR || &error_die("Unable to read $LIST_DIR: $!");
@@ -321,9 +318,123 @@ sub select_list {
    }
    $pagedata->setValue("Data.ListsCount", "$num");
 
-   # TODO: ACL an einer Stelle zentral bestimmen lassen
    $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
- 
+
+   if ($q->param('list') ne '' )
+   {
+	my ($list);
+
+	$pagedata->setValue("Data.ListName", $q->param('list'));
+	
+	# Work out the address of this list ...
+	$list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
+
+	# TODO: change Data.ListName to Data.List.Name and so on ...
+	$pagedata->setValue("Data.ListName", $q->param('list'));
+	$pagedata->setValue("Data.ListAddress", &this_listaddress);
+
+	$i = 0;
+	my $item;
+	# TODO: use "pretty" output style for visible mail address
+	foreach $item ($list->subscribers) {
+		$pagedata->setValue("Data.Subscribers." . $i, "$item");
+		$i++;
+	}
+	$pagedata->setValue("Data.SubscribersCount", "$i");
+
+	$pagedata->setValue("Data.ConfigAvail.Extras", 1) if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
+	$pagedata->setValue("Data.ConfigAvail.Moderation", 1) if ($list->ismodpost || $list->ismodsub || $list->isremote);
+	$pagedata->setValue("Data.ConfigAvail.DenyList", 1) if ($list->isdeny);
+	$pagedata->setValue("Data.ConfigAvail.AllowList", 1) if ($list->isallow);
+	$pagedata->setValue("Data.ConfigAvail.Digest", 1) if ($list->isdigest);
+	$pagedata->setValue("Data.ConfigAvail.WebArch", 1) if(&ezmlmcgirc);
+
+	# Get the contents of the headeradd, headerremove, mimeremove and prefix files
+	$pagedata->setValue("Data.List.Prefix", $list->getpart('prefix'));
+	$item = $list->getpart('headeradd');
+	$pagedata->setValue("Data.List.HeaderAdd", "$item");
+	$item = $list->getpart('headerremove');
+	$pagedata->setValue("Data.List.HeaderRemove", "$item");
+	$item = $list->getpart('mimeremove');
+	$pagedata->setValue("Data.List.MimeRemove", "$item");
+
+	# TODO: this is definitely ugly - create a new sub!
+	if(open(WEBUSER, "<$WEBUSERS_FILE")) {
+	      my($webusers);
+	      while(<WEBUSER>) {
+		 last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
+	      }
+	      close WEBUSER;
+	      $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
+
+	      $pagedata->setValue("Data.List.WebUsers", "$webusers");
+	}
+
+	# get the names of the textfiles of this list
+	{
+		my($listDir);
+		$listDir = $LIST_DIR . '/' . $q->param('list');
+
+		# Read the list directory for text ...
+		opendir DIR, "$listDir/text" || &error_die("Unable to read DIR/text: $!");
+		@files = grep !/^\./, readdir DIR; 
+		closedir DIR;
+
+		# TODO: find a better way to set a list ...
+		$i = 0;
+		my $item;
+		foreach $item (@files) {
+			$pagedata->setValue("Data.Files." . $i, "$item");
+			$i++;
+		}
+		$pagedata->setValue("Data.FilesCount", "$i");
+
+		# text file specified?
+		if ($->param('file') ne '')
+		{
+			my ($content);
+			$content = $list->getpart("text/" . q->param('file'));
+			$pagedata->setValue("Data.File.Name", $q->param('file'));
+			$pagedata->setValue("Data.File.Content", "$content");
+		}
+	}
+	&display_options($list->getconfig);   
+   } else {
+   	&display_options($DEFAULT_OPTIONS);
+   }
+
+   # username, hostname and modules
+   my ($hostname, $username);
+   # Work out if this user has a virtual host and set input accordingly ...
+   if(-e "$QMAIL_BASE/virtualdomains") {
+      open(VD, "<$QMAIL_BASE/virtualdomains") || warn "Can't read virtual domains file: $!";
+      while(<VD>) {
+	 last if(($hostname) = /(.+?):$USER/);
+      }
+      close VD;
+   }
+   
+   if(!defined($hostname)) {
+      $username = "$USER-" if ($USER ne $ALIAS_USER);
+      $hostname = $DEFAULT_HOST;
+   }
+
+   $pagedata->setValue("Data.UserName", "$username");
+   $pagedata->setValue("Data.HostName", "$hostname");
+
+   $pagedata->setValue("Data.mysqlModule", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
+   
+   $pagedata->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
+   $pagedata->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
+}
+
+
+sub select_list {
+   # List all mailing lists (sub directories) in the list directory.
+   # Allow the user to choose a course of action; either editing an existing
+   # list, creating a new one, or deleting an old one.
+
+   $pagename = 'select_list';
 }
 
 # ------------------------------------------------------------------------
@@ -331,7 +442,6 @@ sub select_list {
 sub confirm_delete {
    # Make sure that the user really does want to delete the list!
 
-   $pagedata->setValue("Data.ListName", $q->param('list'));
    $pagename = 'confirm_delete';
 }
 
@@ -340,32 +450,7 @@ sub confirm_delete {
 sub display_list {
    # Show a list of subscribers to the user ...
 
-   my ($list);
-   
-   # Work out the address of this list ...
-   $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-
    $pagename = 'display_list';
-
-   $pagedata->setValue("Data.ListName", $q->param('list'));
-   $pagedata->setValue("Data.ListAddress", &this_listaddress);
-
-   my $i = 0;
-   my $one_subs;
-   # TODO: use "pretty" output style for visible mail address
-   foreach $one_subs ($list->subscribers) {
-	$pagedata->setValue("Data.Subscribers." . $i, "$one_subs");
-	$i++;
-     }
-   $pagedata->setValue("Data.SubscribersCount", "$i");
-
-   $pagedata->setValue("Data.ConfigAvail.Extras", 1) if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
-   $pagedata->setValue("Data.ConfigAvail.Moderation", 1) if ($list->ismodpost || $list->ismodsub || $list->isremote);
-   $pagedata->setValue("Data.ConfigAvail.DenyList", 1) if ($list->isdeny);
-   $pagedata->setValue("Data.ConfigAvail.AllowList", 1) if ($list->isallow);
-   $pagedata->setValue("Data.ConfigAvail.Digest", 1) if ($list->isdigest);
-   $pagedata->setValue("Data.ConfigAvail.WebArch", 1) if(&ezmlmcgirc);
-
 }
 
 # ------------------------------------------------------------------------
@@ -555,6 +640,7 @@ sub delete_address {
 # ------------------------------------------------------------------------
 
 sub part_subscribers {
+   # TODOTODO not migrated
    my($part) = @_;
    # Deal with list parts ....
 
@@ -599,9 +685,6 @@ sub part_subscribers {
      }
    $pagedata->setValue("Data.ListCount", "$i");
 
-   $pagedata->setValue("Data.ListName", $q->param('list'));
-   $pagedata->setValue("Data.ListAddress", "$listaddress");
-
    $pagedata->setValue("Data.Form.State", $q->param('part'));
 
    $pagedata->setValue("Data.FileUploadAllowed", ($FILE_UPLOAD)? 1 : 0);
@@ -612,35 +695,7 @@ sub part_subscribers {
 sub allow_create_list {
    # Let the user select options for list creation ...
    
-   my($username, $hostname, %labels, $j);
-   # TODO: klaeren wofuer %labels da ist
-
    $pagename = 'create_list';
-   
-   # Work out if this user has a virtual host and set input accordingly ...
-   if(-e "$QMAIL_BASE/virtualdomains") {
-      open(VD, "<$QMAIL_BASE/virtualdomains") || warn "Can't read virtual domains file: $!";
-      while(<VD>) {
-         last if(($hostname) = /(.+?):$USER/);
-      }
-      close VD;
-   }
-   
-   if(!defined($hostname)) {
-      $username = "$USER-" if ($USER ne $ALIAS_USER);
-      $hostname = $DEFAULT_HOST;
-   }
-
-   $pagedata->setValue("Data.UserName", "$username");
-   $pagedata->setValue("Data.HostName", "$hostname");
-
-   # TODO: migrate to cs
-   &display_options($DEFAULT_OPTIONS);
-
-   $pagedata->setValue("Data.mysqlModule", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
-   
-   $pagedata->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
-   $pagedata->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
 }
 
 # ------------------------------------------------------------------------
@@ -711,42 +766,7 @@ sub create_list {
 sub list_config {
    # Allow user to alter the list configuration ...
 
-   my ($list, $listname);
-
    $pagename = "list_config";
-   
-   # Store some variables before we delete them ...
-   $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-   $listname = $q->param('list');
-
-   $pagedata->setValue("Data.ListName", "$listname");
-   $pagedata->setValue("Data.ListAddress", &this_listaddress);
-
-   # TODO: migrate
-   # Print a list of options, selecting the ones that apply to this list ...
-   &display_options($list->getconfig);
-
-   # Get the contents of the headeradd, headerremove, mimeremove and prefix files
-   $pagedata->setValue("Data.List.Prefix", $list->getpart('prefix'));
-   # TODO: die folgenden Zeilen enden in einem Hash anstelle des Inhalts
-   my $temp = $list->getpart('headeradd');
-   $pagedata->setValue("Data.List.HeaderAdd", "$temp");
-   $temp = $list->getpart('headerremove');
-   $pagedata->setValue("Data.List.HeaderRemove", "$temp");
-   $temp = $list->getpart('mimeremove');
-   $pagedata->setValue("Data.List.MimeRemove", "$temp");
-
-   # TODO: this is definitely ugly - create a new sub!
-   if(open(WEBUSER, "<$WEBUSERS_FILE")) {
-      my($webusers);
-      while(<WEBUSER>) {
-         last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
-      }
-      close WEBUSER;
-      $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
-
-      $pagedata->setValue("Data.List.WebUsers", "$webusers");
-   }
 }
 
 # ------------------------------------------------------------------------
@@ -829,25 +849,6 @@ sub list_text {
    # Show a listing of what is in DIR/text ...
 
    $pagename = 'list_textfiles';
-   
-   my(@files, $list);
-   $list = $LIST_DIR . '/' . $q->param('list');
-
-   # Read the list directory for text ...
-   opendir DIR, "$list/text" || &error_die("Unable to read DIR/text: $!");
-   @files = grep !/^\./, readdir DIR; 
-   closedir DIR;
-
-   $pagedata->setValue("Data.ListName", $q->param('list'));
-
-   # TODO: find a better way to set a list ...
-   my $i = 0;
-   my $one_file;
-   foreach $one_file (@files) {
-	$pagedata->setValue("Data.Files." . $i, "$one_file");
-	$i++;
-     }
-   $pagedata->setValue("Data.FilesCount", "$i");
 }
 
 # ------------------------------------------------------------------------
@@ -856,15 +857,6 @@ sub edit_text {
    # Allow user to edit the contents of DIR/text ...
 
    $pagename = 'edit_text';
-
-   my ($content);
-   my($list) = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-   $content = $list->getpart("text/$Q::file");
-
-   $pagedata->setValue("Data.ListName", $q->param('list'));
-   # TODO: file wird nurals hash interpretiert
-   $pagedata->setValue("Data.File.Name", $q->param('file'));
-   $pagedata->setValue("Data.File.Content", "$content");
 }
    
 # ------------------------------------------------------------------------
