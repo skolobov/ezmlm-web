@@ -116,7 +116,7 @@ if(defined($Q::action) && $Q::action eq '[Web Archive]') {
 my $pagedata = load_hdf();
 
 # check permissions
-&check_permission_for_action == 0 || &error_die('Error: you are not allowed to do this!');
+&check_permission_for_action == 0 || &error_die($pagedata->getValue("Lang.ErrorMessages.Forbidden", "Error: you are not allowed to do this!"));
 
 &set_pagedata();
 
@@ -304,7 +304,7 @@ sub set_pagedata()
    my (@lists, @files, $i, $item);
 
    # Read the list directory for mailing lists.
-   opendir DIR, $LIST_DIR || &error_die("Unable to read $LIST_DIR: $!");
+   opendir DIR, $LIST_DIR || &error_die($pagedata->getValue("Lang.ErrorMessages.ListDirAccessDenied", "Unable to read") . " $LIST_DIR");
    @files = grep !/^\./, readdir DIR; 
    closedir DIR;
 
@@ -366,6 +366,7 @@ sub set_pagedata()
 sub set_pagedata4list
 {
 	my ($list, $listname);
+	my ($i, $item, @files);
 
 	$listname = $q->param('list');
 	
@@ -418,7 +419,7 @@ sub set_pagedata4list
 		$listDir = $LIST_DIR . '/' . $q->param('list');
 
 		# Read the list directory for text ...
-		opendir DIR, "$listDir/text" || &error_die("Unable to read DIR/text: $!");
+		opendir DIR, "$listDir/text" || &error_die($pagedata->getValue("Lang.ErrorMessages.TextDirAccessDenied","Unable to read DIR/text:") . " $listDir/text");
 		@files = grep !/^\./, readdir DIR; 
 		closedir DIR;
 
@@ -525,29 +526,29 @@ sub delete_list {
 
       my ($oldfile); $oldfile = "$LIST_DIR/" . $q->param('list');
       my ($newfile); $newfile = "$LIST_DIR/." . $q->param('list'); 
-      move($oldfile, $newfile) or die "Unable to rename list: $!";
+      move($oldfile, $newfile) or error_die($pagedata->getValue("Lang.ErrorMessages.SafeRemoveRenameDirFailed","Unable to rename list:") . " ($oldfile -> $newfile)");
       mkdir "$HOME_DIR/deleted.qmail", 0700 if(!-e "$HOME_DIR/deleted.qmail");
 
-      opendir(DIR, "$HOME_DIR") or die "Unable to get directory listing: $!";
+      opendir(DIR, "$HOME_DIR") or &error_die($pagedata->getValue("Lang.ErrorMessages.DotQmailDirAccessDenied","Unable to get directory listing:") . " $HOME_DIR");
       my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
       closedir DIR;
       foreach (@files) {
          unless (move($_, "$HOME_DIR/deleted.qmail/")) {
-            error_die("Unable to move .qmail files: $!"); 
+            &error_die($pagedata->getValue("Lang.ErrorMessages.SafeRemoveMoveDotQmailFailed", "Unable to move .qmail files:") . " ($_ -> $HOME_DIR/deleted.qmail)"); 
          }
       }
       warn "List '$oldfile' moved (deleted)";   
    } else {
       # This, however, does DELETE the list. I don't like the idea, but I was
       # asked to include support for it so ...
-      if (!rmtree("$LIST_DIR/$Q::list")) {
-         error_die("Unable to delete list: $!");
+      if (!rmtree("$LIST_DIR/" . $q->param('list'))) {
+         &error_die($pagedata->getValue("Lang.ErrorMessages.UnsafeRemoveListDirFailed", "Unable to delete list:"). " $LIST_DIR/" . $q->param('list'));
       }
       opendir(DIR, "$HOME_DIR") or die "Unable to get directory listing: $!";
       my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
       closedir DIR;
       if (unlink(@files) <= 0) {
-         &error_die("Unable to delete .qmail files: $!");
+         &error_die($pagedata->getValue("Lang.ErrorMessages.UnsafeRemoveDotQmailFailed", "Unable to delete .qmail files:") . " $HOME_DIR");
       }
       warn "List '$list->thislist()' deleted";
    }   
