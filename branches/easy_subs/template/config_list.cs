@@ -1,8 +1,8 @@
 <div id="parts" class="container">
     <div class="title">
 	<!-- TODO: einheitliche Formatierung fuer listaddress - span und css -->
-	<h2><?cs var:Lang.Misc.For <i><?cs var:Data.ListName ?></i></h2>
-	<h3><?cs var:Data.ListAddress ?></h3>
+	<h2><?cs var:Lang.Misc.For <i><?cs var:Data.List.Name ?></i></h2>
+	<h3><?cs var:Data.List.Address ?></h3>
 	<hr>
     </div>
 
@@ -14,7 +14,7 @@
     <!-- form -->
     <form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
 	<input type="hidden" name="state" value="<?cs var:Data.Form.State ?>">
-	<input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
+	<input type="hidden" name="list" value="<?cs var:Data.List.Name ?>">
 	    <div class="list">
 		
 

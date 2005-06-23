@@ -308,7 +308,7 @@ sub set_pagedata()
    @files = grep !/^\./, readdir DIR; 
    closedir DIR;
 
-   # Check that they actually are lists ...
+   # Check that they actually are lists and add good ones to pagedata ...
    my $num = 0;
    foreach $i (0 .. $#files) {
       if ((-e "$LIST_DIR/$files[$i]/lock") && (&webauth($files[$i]) == 0)) {
@@ -318,10 +318,53 @@ sub set_pagedata()
    }
    $pagedata->setValue("Data.ListsCount", "$num");
 
-   $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
 
+   # list specific configuration
    if ($q->param('list') ne '' )
    {
+   	&set_pagedata4list();
+   } else {
+   	&set_pagedata4options($DEFAULT_OPTIONS);
+   }
+
+
+   # username and hostname
+   my ($hostname, $username);
+   # Work out if this user has a virtual host and set input accordingly ...
+   if(-e "$QMAIL_BASE/virtualdomains") {
+      open(VD, "<$QMAIL_BASE/virtualdomains") || warn "Can't read virtual domains file: $!";
+      while(<VD>) {
+	 last if(($hostname) = /(.+?):$USER/);
+      }
+      close VD;
+   }
+   
+   if(!defined($hostname)) {
+      $username = "$USER-" if ($USER ne $ALIAS_USER);
+      $hostname = $DEFAULT_HOST;
+   }
+
+   $pagedata->setValue("Data.UserName", "$username");
+   $pagedata->setValue("Data.HostName", "$hostname");
+
+
+   # modules
+   $pagedata->setValue("Data.Modules.mySQL", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
+   
+
+   # permission to create lists?
+   $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
+
+
+   # display webuser textfield?
+   $pagedata->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
+   # default username for webuser file
+   $pagedata->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
+}
+
+
+sub set_pagedata4list
+{
 	my ($list, $listname);
 
 	$listname = $q->param('list');
@@ -329,9 +372,8 @@ sub set_pagedata()
 	# Work out the address of this list ...
 	$list = new Mail::Ezmlm("$LIST_DIR/$listname");
 
-	# TODO: change Data.ListName to Data.List.Name and so on ...
-	$pagedata->setValue("Data.ListName", "$listname");
-	$pagedata->setValue("Data.ListAddress", &this_listaddress);
+	$pagedata->setValue("Data.List.Name", "$listname");
+	$pagedata->setValue("Data.List.Address", &this_listaddress);
 
 	$i = 0;
 	my $item;
@@ -398,36 +440,41 @@ sub set_pagedata()
 			$pagedata->setValue("Data.File.Content", "$content");
 		}
 	}
-	&display_options($list->getconfig);   
-   } else {
-   	&display_options($DEFAULT_OPTIONS);
-   }
-
-   # username, hostname and modules
-   my ($hostname, $username);
-   # Work out if this user has a virtual host and set input accordingly ...
-   if(-e "$QMAIL_BASE/virtualdomains") {
-      open(VD, "<$QMAIL_BASE/virtualdomains") || warn "Can't read virtual domains file: $!";
-      while(<VD>) {
-	 last if(($hostname) = /(.+?):$USER/);
-      }
-      close VD;
-   }
-   
-   if(!defined($hostname)) {
-      $username = "$USER-" if ($USER ne $ALIAS_USER);
-      $hostname = $DEFAULT_HOST;
-   }
-
-   $pagedata->setValue("Data.UserName", "$username");
-   $pagedata->setValue("Data.HostName", "$hostname");
-
-   $pagedata->setValue("Data.mysqlModule", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
-   
-   $pagedata->setValue("Data.WebUser.show", (-e "$WEBUSERS_FILE")? 1 : 0);
-   $pagedata->setValue("Data.WebUser.UserName", $ENV{'REMOTE_USER'}||'ALL');
+	&set_pagedata4options($list->getconfig);   
 }
 
+# ---------------------------------------------------------------------------
+
+sub set_pagedata4options {
+   my($opts) = shift;
+   my($i, $j);
+ 
+   # TODO: remove when migration to cs is done
+   $j = 0;
+   # convert EZMLM_LABELS to hdf-language values
+   foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
+	$pagedata->setValue("Data.ListOptions." . $i . ".name", "$i");
+	$pagedata->setValue("Data.ListOptions." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
+	$pagedata->setValue("Data.ListOptions." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
+	$pagedata->setValue("Data.ListOptions." . $i . ".state", ($opts =~ /^\w*$i\w*\s*/)? 1 : 0);
+	$j++;
+   }
+   $pagedata->setValue("Data.ListOptionsCount", "$j");
+
+   $j = 0;
+   # convert EZMLM_LABELS to hdf-language values
+   foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
+	$pagedata->setValue("Data.ListSettings." . $i . ".name", "$i");
+	$pagedata->setValue("Data.ListSettings." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
+	$pagedata->setValue("Data.ListSettings." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
+	$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
+	$pagedata->setValue("Data.ListSettings." . $i . ".value", $1||$EZMLM_LABELS{$i}[2]);
+	$j++;
+   }
+   $pagedata->setValue("Data.ListSettingsCount", "$j");
+}
+
+# ---------------------------------------------------------------------------
 
 sub select_list {
    # List all mailing lists (sub directories) in the list directory.
@@ -913,38 +960,6 @@ sub webauth_create_allowed {
    }
    close USERS;
    return 1;
-}
-
-# ---------------------------------------------------------------------------
-
-sub display_options {
-   my($opts) = shift;
-   my($i, $j);
- 
-   # TODO: remove when migration to cs is done
-   $j = 0;
-   # convert EZMLM_LABELS to hdf-language values
-   foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
-	$pagedata->setValue("Data.ListOptions." . $i . ".name", "$i");
-	$pagedata->setValue("Data.ListOptions." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
-	$pagedata->setValue("Data.ListOptions." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
-	$pagedata->setValue("Data.ListOptions." . $i . ".state", ($opts =~ /^\w*$i\w*\s*/)? 1 : 0);
-	$j++;
-   }
-   $pagedata->setValue("Data.ListOptionsCount", "$j");
-
-   $j = 0;
-   # convert EZMLM_LABELS to hdf-language values
-   foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-	$pagedata->setValue("Data.ListSettings." . $i . ".name", "$i");
-	$pagedata->setValue("Data.ListSettings." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
-	$pagedata->setValue("Data.ListSettings." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
-	$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
-	$pagedata->setValue("Data.ListSettings." . $i . ".value", $1||$EZMLM_LABELS{$i}[2]);
-	$j++;
-   }
-   $pagedata->setValue("Data.ListSettingsCount", "$j");
-   
 }
 
 # ---------------------------------------------------------------------------

@@ -2,15 +2,15 @@
 
     <div class="title">
 
-        <h2><?cs var:Lang.Misc.SubscribersTo ?> <i><?cs var:Data.ListName ?></i></h2>
-        <h3><?cs var:Data.ListAddress ?></h3>
+        <h2><?cs var:Lang.Misc.SubscribersTo ?> <i><?cs var:Data.List.Name ?></i></h2>
+        <h3><?cs var:Data.List.Address ?></h3>
 	<hr>
     </div>
 
     <div class="list">
 	<form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
 	    <input type="hidden" name="state" value="edit">
-	    <input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
+	    <input type="hidden" name="list" value="<?cs var:Data.List.Name ?>">
 
 	    <!-- scrollbox for list's subscribers -->
 	    <!-- Keep selection box a reasonable size - suggested by Sebastian Andersson -->

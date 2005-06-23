@@ -2,9 +2,9 @@
 
     <form method="post" action="<?cs var:ScriptName ?>" enctype="application/x-www-form-urlencoded">
 	<input type="hidden" name="state" value="confirm_delete">
-	<input type="hidden" name="list" value="<?cs var:Data.ListName ?>">
+	<input type="hidden" name="list" value="<?cs var:Data.List.Name ?>">
 	<div class="title">
-	    <h2><?cs var:Lang.Misc.ConfirmDelete ?> <i><?cs var:Data.ListName ?></i></h2>
+	    <h2><?cs var:Lang.Misc.ConfirmDelete ?> <i><?cs var:Data.List.Name ?></i></h2>
 	    <div class="question">
 		<span class="button"><input type="submit" name="confirm"
 			value="<?cs var:Lang.Buttons.Yes ?>" tabindex="1"></span>
