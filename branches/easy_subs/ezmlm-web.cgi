@@ -498,7 +498,7 @@ sub confirm_delete {
 sub display_list {
    # Show a list of subscribers to the user ...
 
-   $pagename = 'display_list';
+   $pagename = 'list_subscribers';
 }
 
 # ------------------------------------------------------------------------
@@ -694,7 +694,7 @@ sub part_subscribers {
 
    my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize, $type);
    
-   $pagename = "config_list";
+   $pagename = "part_subscribers";
    
    # Work out the address of this list ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
