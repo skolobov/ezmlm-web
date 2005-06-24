@@ -1,13 +1,13 @@
 <div id="parts" class="container">
     <div class="title">
 	<!-- TODO: einheitliche Formatierung fuer listaddress - span und css -->
-	<h2><?cs var:Lang.Misc.For <i><?cs var:Data.List.Name ?></i></h2>
+	<h2><?cs var:Lang.Misc.For ?> <i><?cs var:Data.List.Name ?></i></h2>
 	<h3><?cs var:Data.List.Address ?></h3>
 	<hr>
     </div>
 
-    <!-- Moderation -->
     <?cs if:Data.isModerated ?>
+	    <!-- Moderation -->
 	    <?cs include:TemplateDir + "modpath_info.cs" ?>
     <?cs /if ?>
 
@@ -18,8 +18,8 @@
 	    <div class="list">
 		
 
-	# TODO: the same as of "display_list.cs"
-	# list of moderators/administrators
+	<!-- TODO: the same as of "display_list.cs" -->
+	<!-- list of moderators/administrators -->
 	<?cs if:Data.ListCount >0 ?>
 	    <!-- Keep selection box a resonable size - suggested by Sebastian Andersson -->
 	    <?cs if:(Data.ListCount > 25) ?>
@@ -38,7 +38,7 @@
 
 	<div class="add_remove">
 
-	  <?cs if:Data.ListCount > 0) ?>
+	  <?cs if:(Data.ListCount > 0) ?>
 	    <span class="button"><input type="submit"
 		value="<?cs var:Lang.Buttons.DeleteAddress ?>" name="action"/></span>
 	  <?cs /if ?>

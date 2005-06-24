@@ -570,7 +570,7 @@ sub untaint {
       next if($params[$i] eq 'addfile');
       foreach $param ($q->param($params[$i])) {
          next if $param eq '';
-         if ($param =~ /^([#-\@\w\.\/\[\]\:\n\r\>\< ]+)$/) {
+         if ($param =~ /^([#-\@\w\.\/\[\]\:\n\r\>\< _]+)$/) {
             push @values, $1;
          } else {
             warn "Tainted input in '$params[$i]': " . $q->param($params[$i]); 
@@ -733,7 +733,8 @@ sub part_subscribers {
      }
    $pagedata->setValue("Data.ListCount", "$i");
 
-   $pagedata->setValue("Data.Form.State", $q->param('part'));
+   my $temp = $q->param('part');
+   $pagedata->setValue("Data.Form.State", "$temp");
 
    $pagedata->setValue("Data.FileUploadAllowed", ($FILE_UPLOAD)? 1 : 0);
 }
