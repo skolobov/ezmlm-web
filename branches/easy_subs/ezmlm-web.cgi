@@ -692,7 +692,7 @@ sub part_subscribers {
    my($part) = @_;
    # Deal with list parts ....
 
-   my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize, $type);
+   my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize);
    
    $pagename = "part_subscribers";
    
@@ -720,9 +720,6 @@ sub part_subscribers {
       $pagedata->setValue("Data.isRemote", ($list->isremote)? 1 : 0);
       $pagedata->setValue("Data.RemotePath", "$remotepath");
    }
-
-   # What type of sublist is this?
-   ($type) = $Q::action =~ m/^\[(.+)\]$/;
 
    my $i = 0;
    my $one_subs;
