@@ -22,13 +22,13 @@
 	<!-- list of moderators/administrators -->
 	<?cs if:Data.ListCount >0 ?>
 	    <!-- Keep selection box a resonable size - suggested by Sebastian Andersson -->
-	    <?cs if:(Data.ListCount > 25) ?>
+	    <?cs if:(Data.List.SubscribersCount > 25) ?>
 		<?cs set:Data.ScrollSize = 25 ?>
 	      <?cs else ?>
 	 	<?cs set:Data.ScrollSize = Data.ListCount ?>
 	    <?cs /if ?>
 	    <select name="delsubscriber" tabindex="1" multiple="true" size="<?cs var:Data.ScrollSize ?>">
-		<?cs each:item = Data.List ?>
+		<?cs each:item = Data.List.Subscribers ?>
 		    <!-- TODO: pretty names sind notwendig -->
 		    <option><?cs var:item ?></option>
 		<?cs /each ?>
@@ -38,14 +38,14 @@
 
 	<div class="add_remove">
 
-	  <?cs if:(Data.ListCount > 0) ?>
+	  <?cs if:(Data.List.SubscribersCount > 0) ?>
 	    <span class="button"><input type="submit"
 		value="<?cs var:Lang.Buttons.DeleteAddress ?>" name="action"/></span>
 	  <?cs /if ?>
 
 	  <span class="formfield">
 	    <input type="text" name="addsubscriber" size="40"/> <?cs call:help_icon("AddAddress") ?></span>
-	  <?cs if:FileUploadAllowed ?><span class="formfield">
+	  <?cs if:Data.Permissions.FileUpload ?><span class="formfield">
 	    <input type="filefield" name="addfile" size="20" maxlength="100"/> <?cs call:help_icon("AddAddressFile") ?></span><?cs /if ?>
 	  <span class="button">
 	    <input type="submit" name="action" value="<?cs var:Lang.Buttons.AddAddress ?>"/></span>

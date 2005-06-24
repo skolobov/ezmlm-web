@@ -14,21 +14,21 @@
 
 	    <!-- scrollbox for list's subscribers -->
 	    <!-- Keep selection box a reasonable size - suggested by Sebastian Andersson -->
-	    <?cs if:(Data.SubscribersCount > 25) ?>
+	    <?cs if:(Data.List.SubscribersCount > 25) ?>
 		<?cs set:Data.ScrollSize = 25 ?>
 	      <?cs else ?>
-		<?cs set:Data.ScrollSize = Data.SubscribersCount ?>
+		<?cs set:Data.ScrollSize = Data.List.SubscribersCount ?>
 	    <?cs /if ?>
 	    <!-- TODO: this div should float to left - the buttons should be at the right -->
 	    <select name="delsubscriber" tabindex="1" size="<?cs var:Data.ScrollSize ?>" multiple="yes">
-		<?cs each:item = Data.Subscribers ?>
+		<?cs each:item = Data.List.Subscribers ?>
 		    <option><?cs var:item ?></option>
 		<?cs /each ?>
 	    </select>
 	
 	    <div class="add_remove">
-		<?cs if:(Data.SubscribersCount > 0) ?> 
-		    <p><?cs var:Data.SubscribersCount ?> <?cs var:Lang.Misc.Subscribers ?></p>
+		<?cs if:(Data.List.SubscribersCount > 0) ?> 
+		    <p><?cs var:Data.List.SubscribersCount ?> <?cs var:Lang.Misc.Subscribers ?></p>
 		    <span class="button"><input type="submit" name="action" tabindex="2"
 			value="<?cs var:Lang.Buttons.DeleteAddress ?>"></span>
 		<?cs /if ?>
@@ -36,8 +36,10 @@
 		<p class="formfield"><input type="text" name="addsubscriber"
 			tabindex="3" size="40"/><?cs call:help_icon("AddAddress") ?></p>
 		<!-- TODO: eventuell ein BR einfuegen -->
-		<p class="formfield"><input type="file" name="addfile" size="20"
+		<?cs if:Data.Permissions.FileUpload ?>
+		    <p class="formfield"><input type="file" name="addfile" size="20"
 			maxlength="100" tabindex="4"/><?cs call:help_icon("AddAddressFile") ?></p>
+		<?cs /if ?>
 		<p class="button"><input type="submit" tabindex="5" name="action"
 		      value="<?cs var:Lang.Buttons.AddAddress ?>"/></p>
 	    </div>

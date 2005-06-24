@@ -380,10 +380,10 @@ sub set_pagedata4list
 	my $item;
 	# TODO: use "pretty" output style for visible mail address
 	foreach $item ($list->subscribers) {
-		$pagedata->setValue("Data.Subscribers." . $i, "$item");
+		$pagedata->setValue("Data.List.Subscribers." . $i, "$item");
 		$i++;
 	}
-	$pagedata->setValue("Data.SubscribersCount", "$i");
+	$pagedata->setValue("Data.List.SubscribersCount", "$i");
 
 	$pagedata->setValue("Data.ConfigAvail.Extras", 1) if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
 	$pagedata->setValue("Data.ConfigAvail.Moderation", 1) if ($list->ismodpost || $list->ismodsub || $list->isremote);
@@ -728,15 +728,15 @@ sub part_subscribers {
    my $one_subs;
    # TODO: use "pretty" output style for visible mail address
    foreach $one_subs ($list->subscribers($part)) {
-	$pagedata->setValue("Data.List." . $i, "$one_subs");
+	$pagedata->setValue("Data.List.Subscribers." . $i, "$one_subs");
 	$i++;
      }
-   $pagedata->setValue("Data.ListCount", "$i");
+   $pagedata->setValue("Data.List.SubscribersCount", "$i");
 
    my $temp = $q->param('part');
    $pagedata->setValue("Data.Form.State", "$temp");
 
-   $pagedata->setValue("Data.FileUploadAllowed", ($FILE_UPLOAD)? 1 : 0);
+   $pagedata->setValue("Data.Permissions.FileUpload", ($FILE_UPLOAD)? 1 : 0);
 }
 
 # ------------------------------------------------------------------------
