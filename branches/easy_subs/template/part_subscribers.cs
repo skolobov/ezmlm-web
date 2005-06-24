@@ -39,18 +39,22 @@
 	<div class="add_remove">
 
 	  <?cs if:(Data.List.SubscribersCount > 0) ?>
-	    <span class="button"><input type="submit"
-		value="<?cs var:Lang.Buttons.DeleteAddress ?>" name="action"/></span>
+	    <div class="button"><input type="submit"
+		value="<?cs var:Lang.Buttons.DeleteAddress ?>" name="action"/></div>
 	  <?cs /if ?>
 
-	  <span class="formfield">
-	    <input type="text" name="addsubscriber" size="40"/> <?cs call:help_icon("AddAddress") ?></span>
-	  <?cs if:Data.Permissions.FileUpload ?><span class="formfield">
-	    <input type="filefield" name="addfile" size="20" maxlength="100"/> <?cs call:help_icon("AddAddressFile") ?></span><?cs /if ?>
-	  <span class="button">
-	    <input type="submit" name="action" value="<?cs var:Lang.Buttons.AddAddress ?>"/></span>
-	  <span class="button">
-	    <input type="submit" name="action" value="<?cs var:Lang.Buttons.Subscribers ?>"/></span>
+	  <div class="formfield">
+	    <input type="text" name="addsubscriber" size="40"/><?cs call:help_icon("AddAddress") ?>
+	  </div>
+	  <?cs if:Data.Permissions.FileUpload ?>
+	    <div class="formfield">
+	      <input type="filefield" name="addfile" size="20" maxlength="100"/> <?cs call:help_icon("AddAddressFile") ?>
+	    </div>
+	  <?cs /if ?>
+	  <div class="button">
+	    <input type="submit" name="action" value="<?cs var:Lang.Buttons.AddAddress ?>"/></div>
+	  <div class="button">
+	    <input type="submit" name="action" value="<?cs var:Lang.Buttons.Subscribers ?>"/></div>
 
 	</div>
 
