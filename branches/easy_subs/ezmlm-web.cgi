@@ -172,27 +172,17 @@ unless (defined($q->param('state'))) {
       &select_list();
    }
 
-} elsif ($Q::state eq 'allow' || $Q::state eq 'mod' || $Q::state eq 'deny' || $q->param('state') eq 'digest') {
+} elsif ($q->param('part_list') eq 'allow' || $q->param('part_list') eq 'mod' || $q->param('part_list') eq 'deny' || $q->param('part_list') eq 'digest') {
    # User edits moderators || deny || digest ...
 
-   my($part); 
-   # Which list directory are we using ...
-   if($Q::state eq 'mod') {
-      $part = 'mod'; 
-   } elsif($Q::state eq 'deny' ) {
-      $part = 'deny'; 
-   } elsif($Q::state eq 'allow') {
-      $part = 'allow';
-   } else {
-      $part = 'digest'; 
-   }
+   my($part) = $q->param('part_list'); 
    
-   if ($Q::action eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
-      &delete_address("$LIST_DIR/$Q::list", $part);
+   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
+      &delete_address("$LIST_DIR/" . $q->param('list'), $part);
       &part_subscribers($part);
 
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
-      &add_address("$LIST_DIR/$Q::list", $part);
+   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
+      &add_address("$LIST_DIR/" . $q->param('list'), $part);
       &part_subscribers($part);
 
    } else { # Cancel - Return to the list ...
@@ -352,8 +342,9 @@ sub set_pagedata()
    $pagedata->setValue("Data.Modules.mySQL", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
    
 
-   # permission to create lists?
+   # permissions
    $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
+   $pagedata->setValue("Data.Permissions.FileUpload", ($FILE_UPLOAD)? 1 : 0);
 
 
    # display webuser textfield?
@@ -379,7 +370,7 @@ sub set_pagedata4list
 	$i = 0;
 	my $item;
 	# TODO: use "pretty" output style for visible mail address
-	foreach $item ($list->subscribers) {
+	foreach $item ($list->subscribers($q->param('part'))) {
 		$pagedata->setValue("Data.List.Subscribers." . $i, "$item");
 		$i++;
 	}
@@ -694,7 +685,7 @@ sub part_subscribers {
 
    my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize);
    
-   $pagename = "part_subscribers";
+   $pagename = "list_subscribers";
    
    # Work out the address of this list ...
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
@@ -712,28 +703,14 @@ sub part_subscribers {
       my($remotepath) = $config =~ m{9\s*'([^']+)'};
       
       $pagedata->setValue("Data.isPostMod", ($list->ismodpost)? 1 : 0);
-      $pagedata->setValue("Data.PostModPath", "$postpath");
+      $pagedata->setValue("Data.PostModPathWarn", "$postpath");
 
       $pagedata->setValue("Data.isSubMod", ($list->ismodsub)? 1 : 0);
-      $pagedata->setValue("Data.SubModPath", "$subpath");
+      $pagedata->setValue("Data.SubModPathWarn", "$subpath");
 
       $pagedata->setValue("Data.isRemote", ($list->isremote)? 1 : 0);
-      $pagedata->setValue("Data.RemotePath", "$remotepath");
+      $pagedata->setValue("Data.RemotePathWarn", "$remotepath");
    }
-
-   my $i = 0;
-   my $one_subs;
-   # TODO: use "pretty" output style for visible mail address
-   foreach $one_subs ($list->subscribers($part)) {
-	$pagedata->setValue("Data.List.Subscribers." . $i, "$one_subs");
-	$i++;
-     }
-   $pagedata->setValue("Data.List.SubscribersCount", "$i");
-
-   my $temp = $q->param('part');
-   $pagedata->setValue("Data.Form.State", "$temp");
-
-   $pagedata->setValue("Data.Permissions.FileUpload", ($FILE_UPLOAD)? 1 : 0);
 }
 
 # ------------------------------------------------------------------------
