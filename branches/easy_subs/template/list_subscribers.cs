@@ -54,7 +54,9 @@
 	    </div>
 
 	    <?cs if:Data.List.PartType ?>
-		<input type="hidden" name="part" value="<?cs var:Data.List.PartType ?>">
+		    <span class="button"><input type="submit" tabindex="11" name="action"
+			value="<?cs var:Lang.Buttons.Configuration ?>"/>
+			<?cs call:help_icon("Config") ?></span>
 	    <?cs else ?>
 		<div class="options">
 		    <?cs if:Data.ConfigAvail.Extras ?>

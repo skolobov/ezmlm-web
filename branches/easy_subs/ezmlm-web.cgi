@@ -43,6 +43,7 @@ use Getopt::Std;
 use ClearSilver;
 use Mail::Ezmlm;
 use Mail::Address;
+use File::Copy;
 use DB_File;
 use CGI;
 
@@ -108,7 +109,7 @@ close GETHOST;
 &untaint;
 
 # redirect must come before headers are printed
-if(defined($Q::action) && $Q::action eq '[Web Archive]') {
+if(defined($q->param('action')) && $q->param('action') eq '[Web Archive]') {
    print $q->redirect(&ezmlmcgirc);
    exit;
 }
@@ -124,120 +125,90 @@ my $pagedata = load_hdf();
 # users chosen course of action ...
 unless (defined($q->param('state'))) {
    # Default action. Present a list of available lists to the user ...
-   &select_list(); 
+   $pagename = 'select_list';
 
-} elsif ($Q::state eq 'select') {
+} elsif ($q->param('state') eq 'select') {
    # User selects an action to perform on a list ...
    
-   if ($Q::action eq $pagedata->getValue("Lang.Buttons.Create","unknown button")) { # Create a new list ...
-      &allow_create_list;
-   } elsif (defined($Q::list)) {
-      if ($Q::action eq $pagedata->getValue("Lang.Buttons.Edit","unknown button")) { # Edit an existing list ...
-         &display_list;
-      } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.Delete","unknown button")) { # Delete a list ...
-         &confirm_delete;
+   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Create","unknown button")) { # Create a new list ...
+      $pagename = 'create_list';
+   } elsif (defined($q->param('list'))) {
+      if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Edit","unknown button")) { # Edit an existing list ...
+         $pagename = 'list_subscribers';
+      } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Delete","unknown button")) { # Delete a list ...
+	$pagename = 'confirm_delete';
       }
    } else {
-      &select_list(); # NOP - Blank input ...
+      $pagename = 'select_list'; # NOP - blank input
    }
    
-} elsif ($Q::state eq 'edit') {
+} elsif ($q->param('state') eq 'edit') {
    # User chooses to edit a list
-   
-   my($list); $list = $LIST_DIR . '/' . $q->param('list'); 
-   if ($Q::action eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
-      &delete_address($list);
-      &display_list;
-   
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
-      &add_address($list);
-      &display_list;
-   
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.Moderators","unknown button")) { # Edit the moderators ...
-      &part_subscribers('mod');
 
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.DenyList","unknown button")) { # Edit the deny list ...
-      &part_subscribers('deny');
-
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.AllowList","unknown button")) { # edit the allow list ...
-      &part_subscribers('allow');   
-
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.DigestSubscribers","unknown button")) { # Edit the digest subscribers ...
-      &part_subscribers('digest');
-      
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.Configuration","unknown button")) { # Edit the config ...
-      &list_config;
-
-   } else { # Cancel - Return a screen ...
-      &select_list();
-   }
-
-} elsif ($q->param('part_list') eq 'allow' || $q->param('part_list') eq 'mod' || $q->param('part_list') eq 'deny' || $q->param('part_list') eq 'digest') {
-   # User edits moderators || deny || digest ...
-
-   my($part) = $q->param('part_list'); 
+   $pagename = 'list_subscribers';
    
    if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
-      &delete_address("$LIST_DIR/" . $q->param('list'), $part);
-      &part_subscribers($part);
-
+      &delete_address();
+   
    } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
-      &add_address("$LIST_DIR/" . $q->param('list'), $part);
-      &part_subscribers($part);
+      &add_address();
+   
+   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Configuration","unknown button")) { # Edit the config ...
+      $pagename = 'list_config';
 
-   } else { # Cancel - Return to the list ...
-      &display_list;
+   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Cancel","unknown button")) { # Cancel - Return a screen ...
+      $pagename = 'select_list';
    }
 
-} elsif ($Q::state eq 'confirm_delete') {
+} elsif ($q->param('state') eq 'confirm_delete') {
    # User wants to delete a list ...
    
    &delete_list if($q->param('confirm') eq $pagedata->getValue("Lang.Buttons.Yes","unknown button")); # Do it ...
    $q->delete_all;
-   &select_list();
+   $pagename = 'select_list';
 
-} elsif ($Q::state eq 'create') {
+} elsif ($q->param('state') eq 'create') {
    # User wants to create a list ...
 
-   if ($Q::action eq $pagedata->getValue("Lang.Buttons.CreateList","unknown button")) {
+   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.CreateList","unknown button")) {
       if (&create_list) { # Return if list creation is unsuccessful ...
-         &allow_create_list;
+         $pagename = 'create_list';
       } else {
-         &select_list(); # Else choose a list ...
+         $pagename = 'select_list'; # Else choose a list ...
       }
    
    } else { # Cancel ...
-      &select_list();
+      $pagename = 'select_list';
    }
    
-} elsif ($Q::state eq 'configuration') {
+} elsif ($q->param('state') eq 'configuration') {
    # User updates configuration ...
    
-   if ($Q::action eq $pagedata->getValue("Lang.Buttons.UpdateConfiguration","unknown button")) { # Save current settings ...
+   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.UpdateConfiguration","unknown button")) { # Save current settings ...
       &update_config;
-      &display_list;
+      $pagename = 'list_subscribers';
       
-   } elsif ($Q::action eq $pagedata->getValue("Lang.Buttons.EditTexts","unknown button")) { # Edit DIR/text ...
-      &list_text;
+   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.EditTexts","unknown button")) { # Edit DIR/text ...
+      $pagename = 'list_textfiles';
    
    } else { # Cancel - Return to list editing screen ...
-      &display_list;
+      $pagename = 'list_subscribers';
    }
 
 } elsif ($q->param('state') eq 'list_text') {
    # User wants to edit texts associated with the list ...
    
    if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.EditFile","unknown button")) {
-      &edit_text;  
+      $pagename = 'edit_text';
    } else {
-      &list_config; # Cancel ...
+      $pagename = 'list_config'; # Cancel ...
    }
 
 } elsif ($q->param('state') eq 'edit_text') {   
    # User wants to save a new version of something in DIR/text ...
    
    &save_text if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.SaveFile","unknown button"));
-   &list_text;
+   $pagename = 'list_textfiles';
    
 } else {
    $pagedata->setValue("Data.Action", $q->param('action'));
@@ -312,7 +283,7 @@ sub set_pagedata()
    # list specific configuration
    if ($q->param('list') ne '' )
    {
-   	&set_pagedata4list();
+   	&set_pagedata4list(&get_list_part());
    } else {
    	&set_pagedata4options($DEFAULT_OPTIONS);
    }
@@ -356,6 +327,7 @@ sub set_pagedata()
 
 sub set_pagedata4list
 {
+	my $part_type = shift;
 	my ($list, $listname);
 	my ($i, $item, @files);
 
@@ -366,11 +338,12 @@ sub set_pagedata4list
 
 	$pagedata->setValue("Data.List.Name", "$listname");
 	$pagedata->setValue("Data.List.Address", &this_listaddress);
+	&set_pagedata4part_list($part_type) if ($part_type ne '');
 
 	$i = 0;
 	my $item;
 	# TODO: use "pretty" output style for visible mail address
-	foreach $item ($list->subscribers($q->param('part'))) {
+	foreach $item ($list->subscribers($part_type)) {
 		$pagedata->setValue("Data.List.Subscribers." . $i, "$item");
 		$i++;
 	}
@@ -454,13 +427,16 @@ sub set_pagedata4options {
    $pagedata->setValue("Data.ListOptionsCount", "$j");
 
    $j = 0;
+   my $state;
    # convert EZMLM_LABELS to hdf-language values
    foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
 	$pagedata->setValue("Data.ListSettings." . $i . ".name", "$i");
 	$pagedata->setValue("Data.ListSettings." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
 	$pagedata->setValue("Data.ListSettings." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
-	$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
-	$pagedata->setValue("Data.ListSettings." . $i . ".value", $1||$EZMLM_LABELS{$i}[2]);
+	#$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
+	$state = ($opts =~ /$i (?:'(.+?)')/);
+	$pagedata->setValue("Data.ListSettings." . $i . ".state", $state ? 1 : 0);
+	$pagedata->setValue("Data.ListSettings." . $i . ".value", $state ? $1 : "$EZMLM_LABELS{$i}[2]");
 	$j++;
    }
    $pagedata->setValue("Data.ListSettingsCount", "$j");
@@ -468,31 +444,27 @@ sub set_pagedata4options {
 
 # ---------------------------------------------------------------------------
 
-sub select_list {
-   # List all mailing lists (sub directories) in the list directory.
-   # Allow the user to choose a course of action; either editing an existing
-   # list, creating a new one, or deleting an old one.
+sub get_list_part
+# return the name of the part list (deny, allow, mod, digest or '')
+{
+	return $q->param('part') if (defined($q->param('part')));
 
-   $pagename = 'select_list';
+	my $action = $q->param('action');
+
+	# moderators list?
+	return 'mod' if ($action eq $pagedata->getValue("Lang.Buttons.Moderators","unknown button"));
+
+	# deny list?
+	return 'deny' if ($action eq $pagedata->getValue("Lang.Buttons.DenyList","unknown button"));
+
+	# allow list?
+	return 'allow' if ($action eq $pagedata->getValue("Lang.Buttons.AllowList","unknown button"));
+
+	# digest list?
+	return 'digest' if ($action eq $pagedata->getValue("Lang.Buttons.DigestSubscribers","unknown button"));
 }
 
-# ------------------------------------------------------------------------
-
-sub confirm_delete {
-   # Make sure that the user really does want to delete the list!
-
-   $pagename = 'confirm_delete';
-}
-
-# ------------------------------------------------------------------------
-
-sub display_list {
-   # Show a list of subscribers to the user ...
-
-   $pagename = 'list_subscribers';
-}
-
-# ------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 sub delete_list {
    # Delete a list ...
@@ -500,7 +472,7 @@ sub delete_list {
    # Fixes a bug from the previous version ... when the .qmail file has a
    # different name to the list. We use outlocal to handle vhosts ...
    my ($list, $listaddress, $listadd); 
-   $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
+   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
    if ($listadd = $list->getpart('outlocal')) {
       chomp($listadd);
    } else {
@@ -512,8 +484,6 @@ sub delete_list {
       # This doesn't actually delete anything ... It just moves them so that
       # they don't show up. That way they can always be recovered by a helpful
       # sysadmin should he be in the mood :)
-
-      use File::Copy;
 
       my ($oldfile); $oldfile = "$LIST_DIR/" . $q->param('list');
       my ($newfile); $newfile = "$LIST_DIR/." . $q->param('list'); 
@@ -580,10 +550,10 @@ sub check_permission_for_action {
    # but the final creation is omitted
 
    my $ret;
-   if ($Q::state eq 'create') {
+   if ($q->param('state') eq 'create') {
 	$ret = &webauth_create_allowed();
-   } elsif (defined($Q::list)) {
-	$ret = &webauth($Q::list);
+   } elsif (defined($q->param('list'))) {
+	$ret = &webauth($q->param('list'));
    } else {
 	$ret = 0;
    }
@@ -595,8 +565,9 @@ sub check_permission_for_action {
 sub add_address {
    # Add an address to a list ..
 
-   my ($address, $list, @addresses, $count); my ($listname, $part) = @_;
-   $list = new Mail::Ezmlm($listname);
+   my ($address, $list, $part, @addresses, $count);
+   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+   $part = &get_list_part();
 
    if (($q->param('addfile')) && ($FILE_UPLOAD)) {
 
@@ -630,12 +601,13 @@ sub add_address {
 
 	}
    
+   $count = 0;
    foreach $address (@addresses) {
 
       my($add) = Mail::Address->parse($address);
       if(defined($add->name()) && $PRETTY_NAMES) {
          my(%pretty);
-         tie %pretty, "DB_File", "$LIST_DIR/$Q::list/webnames";
+         tie %pretty, "DB_File", "$LIST_DIR/" . $q->param('list') . "/webnames";
          $pretty{$add->address()} = $add->name();
          untie %pretty;
       }
@@ -654,8 +626,9 @@ sub add_address {
 sub delete_address {
    # Delete an address from a list ...
 
-   my ($list, @address); my($listname, $part) = @_;
-   $list = new Mail::Ezmlm($listname);
+   my ($list, @address);
+   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+   my $part = &get_list_part();
    return if ($q->param('delsubscriber') eq '');
 
    @address = $q->param('delsubscriber');
@@ -666,7 +639,7 @@ sub delete_address {
    
    if($PRETTY_NAMES) {
       my(%pretty, $add);
-      tie %pretty, "DB_File", "$LIST_DIR/$Q::list/webnames";
+      tie %pretty, "DB_File", "$LIST_DIR/" . $q->param('list') . "/webnames";
       foreach $add (@address) {
          delete $pretty{$add};
       }
@@ -678,18 +651,19 @@ sub delete_address {
 
 # ------------------------------------------------------------------------
 
-sub part_subscribers {
-   # TODOTODO not migrated
+sub set_pagedata4part_list {
    my($part) = @_;
    # Deal with list parts ....
 
-   my ($i, $list, $listaddress, @subscribers, $moderated, $scrollsize);
+   my ($i, $list, $listaddress,);
    
    $pagename = "list_subscribers";
    
    # Work out the address of this list ...
-   $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
+   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
    $listaddress = &this_listaddress();
+
+   $pagedata->setValue("Data.List.PartType", "$part");
 
    if($part eq 'mod') {
       # Lets know what is moderated :)
@@ -715,14 +689,6 @@ sub part_subscribers {
 
 # ------------------------------------------------------------------------
 
-sub allow_create_list {
-   # Let the user select options for list creation ...
-   
-   $pagename = 'create_list';
-}
-
-# ------------------------------------------------------------------------
-
 sub create_list {
    # Create a list according to user selections ...
 
@@ -741,7 +707,6 @@ sub create_list {
    return 1 if ($listname eq '' || $qmail eq '');
    if(-e ("$LIST_DIR/$listname/lock") || -e ("$HOME_DIR/.qmail-$qmail")) {
       &error_die("Can't create list '$listname', as it already exists");
-      # TODO: create a language string for this message
       return 1;
    }
   
@@ -786,19 +751,11 @@ sub create_list {
 
 # ------------------------------------------------------------------------
 
-sub list_config {
-   # Allow user to alter the list configuration ...
-
-   $pagename = "list_config";
-}
-
-# ------------------------------------------------------------------------
-
 sub update_config {
    # Save the new user entered config ...
    
    my ($list, $options, $i, @inlocal, @inhost);
-   $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
+   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
 
    # Work out the command line options ...
    foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
@@ -834,7 +791,7 @@ sub update_config {
 sub update_webusers {
    # replace existing webusers-line or add a new one
 
-   if($Q::webusers) {
+   if($q->param('webusers')) {
       # Back up web users file
       open(TMP, ">/tmp/ezmlm-web.$$");
       open(WU, "<$WEBUSERS_FILE");
@@ -846,7 +803,7 @@ sub update_webusers {
       while(<TMP>) {
 		print WU unless (/^$Q::list\s*:/);
 	}
-	print WU "$Q::list\: $Q::webusers\n";
+	print WU $q->param('list') . ': ' $q->param('webusers') . "\n";
       close TMP; close WU;
       unlink "/tmp/ezmlm-web.$$";
    }
@@ -859,7 +816,7 @@ sub this_listaddress {
    # Work out the address of this list ... Used often so put in its own subroutine ...
    
    my ($list, $listaddress);
-   $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
+   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
    chomp($listaddress = $list->getpart('outlocal'));
    $listaddress .= '@';
    chomp($listaddress .= $list->getpart('outhost'));
@@ -868,27 +825,11 @@ sub this_listaddress {
 
 # ------------------------------------------------------------------------
 
-sub list_text {
-   # Show a listing of what is in DIR/text ...
-
-   $pagename = 'list_textfiles';
-}
-
-# ------------------------------------------------------------------------
-
-sub edit_text {
-   # Allow user to edit the contents of DIR/text ...
-
-   $pagename = 'edit_text';
-}
-   
-# ------------------------------------------------------------------------
-
 sub save_text {
    # Save new text in DIR/text ...
 
-   my ($list) = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-   $list->setpart("text/$Q::file", $q->param('content'));
+   my ($list) = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+   $list->setpart("text/" . $q->param('list'), $q->param('content'));
    
 }   
 
@@ -957,7 +898,7 @@ sub ezmlmcgirc {
 sub pretty_names {
    return undef unless($PRETTY_NAMES);
    my (%pretty, %prettymem);
-   tie %pretty, "DB_File", "$LIST_DIR/$Q::list/webnames";
+   tie %pretty, "DB_File", "$LIST_DIR/" . $q->param('list') . '/webnames';
    %prettymem = %pretty;
    untie %pretty;   
    
@@ -985,32 +926,13 @@ sub rmtree {
 
 # ------------------------------------------------------------------------
 
-BEGIN {
-   sub handle_errors {
-      my $msg = shift;
-      print << "EOM";
-         </div><div class="error">
-         <h2>A fatal error has occoured</h2>
-         <p>Something you did caused this script to bail out. The error
-         message we got was</p>
-         <p class="msg">$msg</p>
-         <p>Please try what you were doing again, checking everything you entered.<br>
-         If you still find yourself getting this error, please
-         contact the <a href="mailto:webmaster\@$DEFAULT_HOST">site administrator</a>
-         quoting the error message above.</p>
-         </</div>
-EOM
-   }
-
-	sub error_die {
-		my $msg = @_;
-		$pagedata->setValue("Data.ErrorMessage", "$msg");
-		# TODO: besser waere eine Warnung in header.cs
-		$pagename = 'error';
-		&output_page;
-		die;
-	}
-
+sub error_die {
+	my $msg = @_;
+	$pagedata->setValue("Data.ErrorMessage", "$msg");
+	# TODO: besser waere eine Warnung in header.cs
+	$pagename = 'error';
+	&output_page;
+	die $msg;
 }
                                                                                                                  
 # ------------------------------------------------------------------------
