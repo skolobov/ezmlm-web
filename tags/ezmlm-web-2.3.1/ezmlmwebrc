@@ -1,4 +1,4 @@
-# Configuration file for ezmlm-web 2.3
+# Configuration file for ezmlm-web 2.3.1
 # ===========================================================================
 
 # This file is not just an ordinary configuration file - it contains valid
@@ -62,7 +62,7 @@ $HTML_HEADER .= '<TABLE BORDER="0" CELLPADDING="5" CELLSPACING="5" ALIGN="CENTER
 # Footer for every page (.= concatinates)
 $HTML_FOOTER = '</TD></TR></TABLE>';
 $HTML_FOOTER .= '<TABLE BORDER="0" CELLPADDING="5" CELLSPACING="5" ALIGN="CENTER" WIDTH="99%"><TR><TD BGCOLOR="#e0e0ff">';
-$HTML_FOOTER .= '<FONT SIZE="-1"><A HREF="https://systemausfall.org/toolforge/ezmlm-web" TARGET="_blank">ezmlm-web</A> (v2.3) A web interface to <A HREF="http://www.ezmlm.org/" TARGET="_blank">ezmlm</A></FONT></TD></TR></TABLE>';
+$HTML_FOOTER .= '<FONT SIZE="-1"><A HREF="https://systemausfall.org/toolforge/ezmlm-web" TARGET="_blank">ezmlm-web</A> (v2.3.1) A web interface to <A HREF="http://www.ezmlm.org/" TARGET="_blank">ezmlm</A></FONT></TD></TR></TABLE>';
 
 # NEW:
 # html properties (e.g. color, background-color) can be defined in a
@@ -74,8 +74,10 @@ $HTML_TITLE = 'E Z Mailing List Manager';
 # Optional: use a cascading style sheet (css)
 $HTML_CSS_FILE = "css/default.css";
 
-# choose a language (en|de)
+# choose a language (en|de|jp)
 $HTML_LANGUAGE = 'en';
+# choose a text charset (jis or another)
+#$TEXT_ENCODE = 'jis';
 
 # ---------------------------------------------------------------------------
 # include language-specific definitions

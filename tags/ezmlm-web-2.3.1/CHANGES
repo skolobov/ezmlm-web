@@ -95,3 +95,10 @@ Version 2.3 - 10/06/02005
 * file upload typo fixed
 * update of webusers file fixed
 * moderator unsubscribe fixed
+
+Version 2.3.1 - 13/09/02005
+* Japanese translarion of web interface and support text edit for multibye
+* many web style improvement
+* mimeremove and prefix option delete enable
+* add $USER value For virtual USER
+* another lot of bug fix
