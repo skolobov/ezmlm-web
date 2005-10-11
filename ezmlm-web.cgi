@@ -1,6 +1,6 @@
 #!/usr/bin/perl 
 #===========================================================================
-# ezmlm-web.cgi - version 2.3 - 10/06/02005
+# ezmlm-web.cgi - version 2.3.1 - 13/09/02005
 #
 # Copyright (C) 1999/2000, Guy Antony Halse, All Rights Reserved.
 # Please send bug reports and comments to guy-ezmlm@rucus.ru.ac.za
@@ -45,12 +45,14 @@ use Mail::Address;
 use DB_File;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser set_message);
+use Encode qw/ from_to /;  # add by ooyama for char convert
 
 # These two are actually included later and are put here so we remember them.
 #use File::Find if ($UNSAFE_RM == 1);
 #use File::Copy if ($UNSAFE_RM == 0);
 
 my $q = new CGI;
+$q->charset('utf8'); # add by ooyama for support UTF-8
 $q->import_names('Q');
 use vars qw[$opt_c $opt_d $opt_C];
 getopts('cd:C:');
@@ -60,7 +62,7 @@ $ENV{'PATH'} = '/bin';
 
 # We run suid so we can't use $ENV{'HOME'} and $ENV{'USER'} to determine the
 # user. :( Don't alter this line unless you are _sure_ you have to.
-my @tmp = getpwuid($>); my $USER=$tmp[0]; 
+my @tmp = getpwuid($>); use vars qw[$USER]; $USER=$tmp[0];  # add by ooyama for virtual user
 
 # use strict is a good thing++
 
@@ -70,10 +72,12 @@ use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES
 use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
 use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
 use vars qw[$HTML_CSS_FILE];
+use vars qw[$TEXT_ENCODE]; $TEXT_ENCODE='us-ascii';  # by ooyama for multibyte convert support
 
 # Get user configuration stuff
 if(defined($opt_C)) {
-   require "$opt_C"; # Command Line
+   $opt_C =~ /^([-\w.\/]+)$/;
+   require "$1"; # Command Line For perl security check by ooyama
 } elsif(-e "$HOME_DIR/.ezmlmwebrc") {
    require "$HOME_DIR/.ezmlmwebrc"; # User
 } elsif(-e "/etc/ezmlm/ezmlmwebrc") {
@@ -99,12 +103,20 @@ my($DEFAULT_HOST);
 open (GETHOST, "<$QMAIL_BASE/me") || open (GETHOST, "<$QMAIL_BASE/defaultdomain") || die "Unable to read $QMAIL_BASE/me: $!";
 chomp($DEFAULT_HOST = <GETHOST>);
 close GETHOST;
+# add by ooyama DEFAULT_DOMAIN
+my($DEFAULT_DOMAIN);
+if(open (GETDOMAIN, "<$QMAIL_BASE/defaultdomain")){
+   chomp($DEFAULT_DOMAIN = <GETDOMAIN>);
+   close GETDOMAIN;
+}else{
+   $DEFAULT_DOMAIN = $DEFAULT_HOST;
+}
 
 # Untaint form input ...
 &untaint;
 
 # redirect must come before headers are printed
-if(defined($Q::action) && $Q::action eq '[Web Archive]') {
+if(defined($Q::action) && $Q::action eq "[$BUTTON{'webarchive'}]") { # bug fix
    print $q->redirect(&ezmlmcgirc);
    exit;
 }
@@ -286,7 +298,7 @@ sub select_list {
    print $q->startform;
    print $q->hidden(-name=>'state', -default=>'select');
 
-   print '<div class="list">';
+   print '<div style="margin-top : 5px;margin-left : 5px;margin-right : 40px;margin-bottom : 50px;" class="list">'; # By ooayam For better style
    print $q->scrolling_list(-name=>'list', -size=>$scrollsize, -values=>\@lists) if defined(@lists);
    print '</div>';	# end of main_mainlinglists_list
  
@@ -352,7 +364,7 @@ sub display_list {
    # Begin of content
    print '<div id="edit" class="container">';
 
-   print '<div class="title">';
+   print '<div class="title" align="center">'; # by ooyama for style
    print "<h2>$LANGUAGE{'subscribersto'} $Q::list</h2>";
    print "<h3>($listaddress)</h3>";
    print '<hr>';
@@ -369,6 +381,7 @@ sub display_list {
    print '<div class="add_remove">';
    print '<p>', ($#subscribers + 1), ' ', $LANGUAGE{'subscribers'}, '</p>' if defined(@subscribers);
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
+   print '<p>'; # by ooyama for style
    print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
    print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
@@ -648,6 +661,7 @@ sub part_subscribers {
 
    print '<div class="add_remove">';
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'deleteaddress'}]"), '</span>' if defined(@subscribers);
+   print '<p>'; 
    print '<span class="formfield">', $q->textfield(-name=>'addsubscriber', -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddress'}, '"></span>';
    print '<span class="formfield">', $q->filefield(-name=>'addfile', -size=>20, -maxlength=>100), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'addaddressfile'}, '"></span>' if ($FILE_UPLOAD);
    print '<span class="button">', $q->submit(-name=>'action', -value=>"[$BUTTON{'addaddress'}]"), '</span>';
@@ -665,7 +679,7 @@ sub part_subscribers {
 sub allow_create_list {
    # Let the user select options for list creation ...
    
-   my($username, $hostname, %labels, $j);
+   my($username, $hostname, %labels, $j, $domain); # by ooyama add dmain
    
    # Work out if this user has a virtual host and set input accordingly ...
    if(-e "$QMAIL_BASE/virtualdomains") {
@@ -679,6 +693,9 @@ sub allow_create_list {
    if(!defined($hostname)) {
       $username = "$USER-" if ($USER ne $ALIAS_USER);
       $hostname = $DEFAULT_HOST;
+      $domain = $DEFAULT_DOMAIN; # by ooyama add domain
+   }else{
+      $domain = $hostname;
    }
 
    print '<div id="create" class="container">';
@@ -696,9 +713,11 @@ sub allow_create_list {
 
    print '<div class="input">';
    print '<span class="formfield">', $LANGUAGE{'listname'}, ': ', $q->textfield(-name=>'list', -size=>'20'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listname'}, '"></span>';
-   print '<span class="formfield">', $LANGUAGE{'listaddress'}, ': ', $q->textfield(-name=>'inlocal', -default=>$username, -size=>'10');
-   print ' @ ', $q->textfield(-name=>'inhost', -default=>$hostname, -size=>'30'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listadd'}, '"></span>';
+   print '<p>'; # By ooyama For style
+   print '<span class="formfield">', $LANGUAGE{'listaddress'}, ': ', $q->textfield(-name=>'inlocal', -default=>$username, -size=>'20');
+   print ' @ ', $q->textfield(-name=>'inhost', -default=>$domain, -size=>'40'), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'listadd'}, '"></span>'; # by ooyama change to use domain
    
+   print '<p>'; # By ooyama For style
    print '<span class="formfield">', $LANGUAGE{'listoptions'}, ':</span>';
    &display_options($DEFAULT_OPTIONS);
 
@@ -820,10 +839,10 @@ sub list_config {
    print '<div class="info">';
    print '<p>', $LANGUAGE{'listname'}, ": <em>$listname</em></p>";
    print '<p>', "$LANGUAGE{'listaddress'}: <em>$listaddress</em></p>";
+   print '<p>', $LANGUAGE{'listoptions'}, ':</p>'; # by ooyama for style
    print '</div>';	# end of config->info
 
    print '<div class="input">';
-   print '<h2>', $LANGUAGE{'listoptions'}, ':</h2>';
 
    # Print a list of options, selecting the ones that apply to this list ...
    &display_options($list->getconfig);
@@ -834,10 +853,11 @@ sub list_config {
    $mimeremove = $list->getpart('mimeremove');
    $prefix = $list->getpart('prefix'); 
 
-   print '<span class="formfield">', $LANGUAGE{'prefix'}, ': ', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>12), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'prefix'}, '"></span>' if defined($prefix);
-   print '<p class="formfield">', $LANGUAGE{'headerremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headerremove'}, '"><br>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70), '</span>';
-   print '<span class="formfield">', $LANGUAGE{'headeradd'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headeradd'}, '"><br>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70), '</div>';
-   print '<span class="formfield">', $LANGUAGE{'mimeremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mimeremove'}, '"><br>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70), '</span>' if defined($mimeremove);
+   # by ooyama change for style and bug fix
+   print '<span class="formfield">', $LANGUAGE{'prefix'}, ': ', $q->textfield(-name=>'prefix', -default=>$prefix, -size=>20), ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'prefix'}, '"></span><p>' if defined($prefix);
+   print '<span class="formfield">', $LANGUAGE{'headerremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headerremove'}, '"><br>', $q->textarea(-name=>'headerremove', -default=>$headerremove, -rows=>5, -columns=>70), '</span><p>';
+   print '<span class="formfield">', $LANGUAGE{'headeradd'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'headeradd'}, '"><br>', $q->textarea(-name=>'headeradd', -default=>$headeradd, -rows=>5, -columns=>70), '</span><p>';
+   print '<span class="formfield">', $LANGUAGE{'mimeremove'}, ': <img src="', $HELP_ICON_URL, '" title="', $HELPER{'mimeremove'}, '"><br>', $q->textarea(-name=>'mimeremove', -default=>$mimeremove, -rows=>5, -columns=>70), '</span><p>' if defined($mimeremove);
    
    if(open(WEBUSER, "<$WEBUSERS_FILE")) {
       my($webusers);
@@ -849,8 +869,8 @@ sub list_config {
 
       print '<span class="formfield">', $LANGUAGE{'allowedtoedit'}, ': ';
       print $q->textfield(-name=>'webusers', -value=>$webusers, -size=>'30');
-      print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '"></span>',
-      print '<span class="help">', $HELPER{'allowedit'}, '</span>';
+      print ' <img src="', $HELP_ICON_URL, '" title="', $HELPER{'webusers'}, '"></span><p>',
+      print '<span class="help">', $HELPER{'allowedit'}, '</span><p>';
       
    }
    print '</div>';	# end of config->input
@@ -872,13 +892,15 @@ sub list_config {
 sub update_config {
    # Save the new user entered config ...
    
-   my ($list, $options, $i, @inlocal, @inhost);
+   my ($list, $options, $i, @inlocal, @inhost, $opt_mime, $opt_prefix); # add by ooyama
    $list = new Mail::Ezmlm("$LIST_DIR/$Q::list");
 
    # Work out the command line options ...
    foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
       if (defined($q->param($i))) {
          $options .= $i;
+         $opt_mime = 1 if($i eq 'x'); # add by ooyama
+         $opt_prefix = 1 if($i eq 'f'); # add by ooyama
       } else {
          $options .= uc($i);
       }
@@ -898,8 +920,16 @@ sub update_config {
    # Update headeradd, headerremove, mimeremove and prefix ...
    $list->setpart('headeradd', $q->param('headeradd'));
    $list->setpart('headerremove', $q->param('headerremove'));
-   $list->setpart('mimeremove', $q->param('mimeremove')) if defined($q->param('mimeremove'));
-   $list->setpart('prefix', $q->param('prefix')) if defined($q->param('prefix'));
+   if($opt_mime){
+      $list->setpart('mimeremove', $q->param('mimeremove')) if defined($q->param('mimeremove'));
+   }else{ # add by ooyama to delete option f
+      unlink "$LIST_DIR/$Q::list/mimeremove" if(-f "$LIST_DIR/$Q::list/mimeremove");
+   }
+   if($opt_prefix){
+      $list->setpart('prefix', $q->param('prefix')) if defined($q->param('prefix'));
+   }else{ # add by ooyama to delete option f
+      unlink "$LIST_DIR/$Q::list/prefix" if(-f "$LIST_DIR/$Q::list/prefix");
+   }
 
    &update_webusers();
 }
@@ -990,6 +1020,7 @@ sub edit_text {
    my ($content);
    my($list) = new Mail::Ezmlm("$LIST_DIR/$Q::list");
    $content = $list->getpart("text/$Q::file");
+   from_to($content,$TEXT_ENCODE,'utf8');  # by ooyama for multibyte
 
    # Begin of content
    print '<div id="edittext" class="container">';
@@ -1031,7 +1062,9 @@ sub save_text {
    # Save new text in DIR/text ...
 
    my ($list) = new Mail::Ezmlm("$LIST_DIR/$Q::list");
-   $list->setpart("text/$Q::file", $q->param('content'));
+   my ($content) = $q->param('content');
+   from_to($content,'utf8',$TEXT_ENCODE);  # by ooyama for multibyte
+   $list->setpart("text/$Q::file", $content);
    
 }   
 
@@ -1096,7 +1129,7 @@ sub display_options {
          print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
       print '<img src="', $HELP_ICON_URL, '" border="0" title="', $EZMLM_LABELS{$i}[1] , '"></span>';
-      print '</td>'; $j++;
+      $j++; # By ooyama bug fix
       if ($j >= 3) {
          $j = 0; print '</p><p>';
       }
@@ -1111,7 +1144,7 @@ sub display_options {
          print '<span class="checkbox">', $q->checkbox(-name=>$i, -value=>$i, -label=>$EZMLM_LABELS{$i}[0]);
       }
       print '<img src="', $HELP_ICON_URL, '" border="0" title="', $EZMLM_LABELS{$i}[1] , '"></span>';
-      print '<span class="formfield">', $q->textfield(-name=>"$i-value", -value=>$1||$EZMLM_LABELS{$i}[2], -size=>30), '</span>';
+      print '<span class="formfield">', $q->textfield(-name=>"$i-value", -value=>$1||$EZMLM_LABELS{$i}[2], -size=>50), '</span>';
       print '</p>';
    }
    
