@@ -1,6 +1,6 @@
-=================
-| ezmlm-web-2.3 |
-=================
+===================
+| ezmlm-web-2.3.1 |
+===================
 
 If you only want to know how to install ezmlm-web, then you should
 read INSTALL.
@@ -21,7 +21,7 @@ VIII.   Bugs && Bug Reports
 
 I. Copyright Stuff - essentially the FreeBSD licence ...
 ==================
-ezmlm-web - version 2.3 - 10/06/02005
+ezmlm-web - version 2.3.1 - 11/10/02005
 
 Copyright (C) 1998, Guy Antony Halse, All Rights Reserved.
 Please send bug reports and comments to guy-ezmlm@rucus.ru.ac.za
@@ -265,6 +265,8 @@ IX. Acknowledgements
 *  Fred Lindberg (lindberg@id.wustl.edu) for his useful posts to the 
    mailing list, suggestions, help, etc
 *  Galen Johnson (gjohnson@totalsports.net) - For some ideas on bugfixes.
+*  Reinin Oyama (lenin@hasiru.net) - japanese translation, design improvements
+   and bugfixes
 
 
 X. Availability
