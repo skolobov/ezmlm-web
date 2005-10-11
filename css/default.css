@@ -54,11 +54,15 @@ div.add_remove span.button {
 	margin-right: auto;
 	}
 
-div.add_remove div.formfield {
+div.add_remove span.formfield {
 	width: auto;
 	margin: 0px;
 	margin-right: auto;
 	padding: 0px;
+	}
+
+div.add_remove span.formfield:before {
+	content: attr("<br>");
 	}
 
 div.list {
@@ -112,7 +116,7 @@ available classes:	title button
 
 /************************* edit page ***********************
 name of container:	edit
-available classes:	title list add_remove options
+availbale classes:	title list add_remove options
 ***********************************************************/
 
 
