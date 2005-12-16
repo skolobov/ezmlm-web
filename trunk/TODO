@@ -1,2 +1,3 @@
 remove old language file dependencies
 part list should have a title regarding its type
+replace "use var qw[]" by "our ..." (see http://www.unix.org.ua/orelly/perl/prog3/ch31_21.htm)
