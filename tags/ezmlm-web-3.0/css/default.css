@@ -1,0 +1,318 @@
+body {
+	margin: 0;
+	padding: 0;
+	font: normal 100% sans-serif;
+	color: #606760;
+	}
+
+font.ez {
+	font-style: italic;
+	color: #505050;
+	}
+
+font.hint { 
+	font-size: 85%;
+	}
+
+font.feature {
+	font-weight: bold;
+	}
+
+#nav_bar {
+	float: left;
+	width: 20%;
+	margin-left: 1%;
+	margin-right: 1%;
+	margin-bottom: 1%;
+	margin-top: 5px;
+	padding-left: 0.5%;
+	padding-right: 0.5%;
+	padding-top: 1.5%;
+	padding-bottom: 1.5%;
+	background-color: #c0c0b0;
+	}
+
+.nav_group {
+	margin-top: 1%;
+	padding-bottom: 1%;
+	}
+
+#nav_bar ul {
+	color: #af8060;
+	margin: 0;
+	padding-left: 10px;
+	list-style: none;
+	}
+
+#nav_bar li {
+	margin-top: 0;
+	}
+
+#nav_bar li a.nav_active {
+	color: #fff;
+	}
+
+#nav_bar font.no_link {
+	color: #2f4860;
+	font-style: italic;
+	}
+
+#nav_bar a {
+	color: #2f4860;
+	text-decoration: none;
+	}
+
+#nav_bar a:hover {
+	background-color: #d8d8d8;
+	color: #2f4860;
+	}
+
+#main_content {
+	margin-left: 22%;
+	padding-left: 3%;
+	padding-right: 1%;
+	min-height: 440px;
+	}
+
+#main_content li {
+	list-style: none;
+	}
+
+#main_content button {
+	margin-top: 12px;
+	}
+
+#main_content ul {
+	line-height: 1.8em;
+	list-style: none;
+	}
+
+#main_content ul li ul {
+	font-size: 85%;
+	}
+
+#main_content fieldset {
+	margin-top: 0.5%;
+	margin-bottom: 1%;
+	padding-top: 1%;
+	padding-bottom: 1.5%;
+	}
+
+#main_content fieldset.form form ul {
+	padding-left: 1%;
+	}
+
+#main_content fieldset.form form ul li ul {
+	padding-left: 3%;
+	}
+
+#main_content table.list_select {
+	table-layout: fixed;
+	width: 100%;
+	text-align: left;
+	line-height: 1.2em;
+	border-width: 0px;
+	padding-left: 2%;
+	padding-right: 0px;
+	}
+
+div.formfield {
+	font-style: normal;
+	}
+
+#news {
+	background: #e8947c;
+	color: #000000;
+	margin: 1%;
+	padding: 5px;
+	width: 30%;
+	float: right;
+	font-size: 80%;
+	}
+
+#news font.title {
+	font-style: italic;
+	font-size: 110%;
+	}
+
+#news ul.changes {
+	font-size: 90%;
+	margin-top: 0px;
+	}
+
+a:visited {
+	color: #005040;
+	}
+
+#oben {
+	background-color: #2f4860;
+	}
+	
+h1.oben {
+	text-align: left;
+	border-bottom: solid 2px #ffffff;
+	padding: 5px;
+	font-weight: bold;
+	letter-spacing: -1px;
+	color: #ffffff;
+	margin: 0;
+	}
+
+#perm_nav {
+	float: right;
+	padding-right: 5px;
+	font-size: 100%;
+	color: #ffd7f0;
+	background-color: inherit;
+	}
+
+#perm_nav a {
+	font-weight: bold;
+	color: #ffffff;
+	padding-left: 2px;
+	padding-right: 2px;
+	text-decoration: none;
+	}
+
+#perm_nav a:hover {
+	color: #ffcc00;
+	} 
+
+table.subscribers {
+	border-width: 0;
+	margin: 0;
+	padding: 1%;
+	width: 100%;
+	}
+
+tr, td {
+	margin: 0;
+	padding: 0;
+	}
+
+button {
+	color: #5e5e5e;
+	background-color: #d8d8d8;
+	border: 1px dotted #5e5e5e;
+	font-size: 90%;
+	cursor: pointer;
+	}
+
+button:hover {
+	color: #505050;
+	background-color: #d0d0d0;
+	border: 1px dotted #ACE149;
+	font-size: 90%;
+	cursor: pointer;
+	}
+
+.lid {
+	margin: 0;
+	padding: 3px;
+	border-bottom: solid 1px #606070;
+	background-color: #c0c0b0;
+	font: bold 100% sans-serif;
+	letter-spacing: -1px;
+	color: #ffffff;
+	}
+
+#content {
+ 	position: absolute; 
+	right: 0px;
+	width: 85%;
+	font: normal 82% sans-serif;
+	background-color: #ffffff;
+	padding: 2px;
+	}
+
+#content h2 {
+	margin-left: 5px;
+	margin-right: 5px;
+	margin-top: 10px;
+	font-weight: normal;
+	letter-spacing: -1px;
+	color: #2f4860;
+	}
+
+.push {
+	margin: 5px;
+	padding: 0;
+	}
+
+.push p {
+	text-align: justify;
+	}
+
+#info_title {
+	text-align: center;
+	background-color: #c0c0b0;
+	margin-top: 5px;
+	margin-left: 0%;
+	margin-right: 1%;
+	margin-bottom: 0.2%;
+	color: #ffffff;
+	font-size: 125%;
+	font-style: italic;
+	}
+
+#header {
+	text-align: right;
+	background-color: #2f4860;
+	font-size: 90%;
+	color: #ffffff;
+	margin: 0;
+	top: 0;
+	width: 100%;
+	}
+
+#footer {
+	text-align: center;
+	background-color: #2f4860;
+	font-size: 90%;
+	color: #ffffff;
+	margin: 0px;
+	padding: 3px;
+	}
+
+#footer a {
+	color: #a0d0b0;
+	}
+
+#footer a:visited {
+	color: #a0d0b0;
+	}
+
+#main_content div.introduction {
+	font-size: 80%;
+	}
+
+#main_content div.warning, div.error, div.success {
+	margin-left: 10%;
+	margin-right: 10%;
+	margin-top: 2%;
+	margin-bottom: 3%;
+	padding: 2%;
+	text-align: center;
+	font-style: italic;
+	font-size: 90%;
+	}
+
+#main_content div.success {
+	background-color: #40d070;
+	color: #202020;
+	}
+
+#main_content div.warning {
+	background-color: #e0a0a0;
+	color: #202020;
+	}
+
+#main_content div.error {
+	background-color: #d05050;
+	color: #202020;
+	}
+
+.mail {
+	font-style: italic;
+	color: #2f4860;
+	}
