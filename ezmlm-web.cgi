@@ -37,6 +37,8 @@
 # POD documentation is at the end of this file
 # ==========================================================================
 
+package ezmlm_web;
+
 # Modules to include
 use strict;
 use Getopt::Std;
@@ -46,10 +48,14 @@ use Mail::Address;
 use File::Copy;
 use DB_File;
 use CGI;
+use IO::File;
+use POSIX qw(tmpnam);
+use Encode qw/ from_to /;	# add by ooyama for char convert
 
 # These two are actually included later and are put here so we remember them.
 #use File::Find if ($UNSAFE_RM == 1);
 #use File::Copy if ($UNSAFE_RM == 0);
+
 
 my $q = new CGI;
 $q->import_names('Q');
@@ -61,24 +67,28 @@ $ENV{'PATH'} = '/bin';
 
 # We run suid so we can't use $ENV{'HOME'} and $ENV{'USER'} to determine the
 # user. :( Don't alter this line unless you are _sure_ you have to.
-my @tmp = getpwuid($>); my $USER=$tmp[0]; 
+my @tmp = getpwuid($>); use vars qw[$USER]; $USER=$tmp[0];
 
 # use strict is a good thing++
 
 use vars qw[$HOME_DIR]; $HOME_DIR=$tmp[7];
-use vars qw[$DEFAULT_OPTIONS %EZMLM_LABELS $UNSAFE_RM $ALIAS_USER $LIST_DIR];
-use vars qw[$QMAIL_BASE $EZMLM_CGI_RC $EZMLM_CGI_URL $HTML_BGCOLOR $PRETTY_NAMES];
-use vars qw[%HELPER $HELP_ICON_URL $HTML_HEADER $HTML_FOOTER $HTML_TEXT $HTML_LINK];
-use vars qw[%BUTTON %LANGUAGE $HTML_VLINK $HTML_TITLE $FILE_UPLOAD $WEBUSERS_FILE];
-use vars qw[$HTML_CSS_FILE $TEMPLATE_DIR $LANGUAGE_DIR];
+use vars qw[$DEFAULT_OPTIONS $UNSAFE_RM $ALIAS_USER $LIST_DIR];
+use vars qw[$QMAIL_BASE $PRETTY_NAMES];
+use vars qw[$FILE_UPLOAD $WEBUSERS_FILE $MAIL_DOMAIN $HTML_TITLE];
+use vars qw[$HTML_CSS_FILE $TEMPLATE_DIR $LANGUAGE_DIR $HTML_LANGUAGE];
+
+# set default TEXT_ENCODE
+use vars qw[$TEXT_ENCODE]; $TEXT_ENCODE='us-ascii';	# by ooyama for multibyte convert support
 
 # pagedata contains the hdf tree for clearsilver
 # pagename refers to the template file that should be used
-use vars qw[$pagedata $pagename];
+use vars qw[$DEFAULT_HOST];
+use vars qw[$pagedata $pagename $error $customError $warning $customWarning $success];
 
 # Get user configuration stuff
 if(defined($opt_C)) {
-   require "$opt_C"; # Command Line
+   $opt_C =~ /^([-\w.\/]+)$/;	# security check by ooyama
+   require "$1"; # Command Line
 } elsif(-e "$HOME_DIR/.ezmlmwebrc") {
    require "$HOME_DIR/.ezmlmwebrc"; # User
 } elsif(-e "/etc/ezmlm/ezmlmwebrc") {
@@ -99,122 +109,170 @@ if (!defined($WEBUSERS_FILE)) {
    $WEBUSERS_FILE = $LIST_DIR . '/webusers'
 }
 
-# Work out default domain name from qmail (for David Summers)
-my($DEFAULT_HOST);
-open (GETHOST, "<$QMAIL_BASE/me") || open (GETHOST, "<$QMAIL_BASE/defaultdomain") || die "Unable to read $QMAIL_BASE/me: $!";
-chomp($DEFAULT_HOST = <GETHOST>);
-close GETHOST;
+# check optional stylesheet
+$HTML_CSS_FILE = '' unless defined($HTML_CSS_FILE);
+
+# check template directory
+$TEMPLATE_DIR = 'template' unless defined($TEMPLATE_DIR);
+
+if (defined($MAIL_DOMAIN) && ($MAIL_DOMAIN ne '')) {
+	$DEFAULT_HOST = $MAIL_DOMAIN;
+} else {
+	# Work out default domain name from qmail (for David Summers)
+	open (GETHOST, "<$QMAIL_BASE/defaultdomain") || open (GETHOST, "<$QMAIL_BASE/me") || die "Unable to read $QMAIL_BASE/me: $!";
+	chomp($DEFAULT_HOST = <GETHOST>);
+	close GETHOST;
+}
+
 
 # Untaint form input ...
 &untaint;
 
-# redirect must come before headers are printed
-if(defined($q->param('action')) && $q->param('action') eq '[Web Archive]') {
-   print $q->redirect(&ezmlmcgirc);
-   exit;
-}
-
 my $pagedata = load_hdf();
+my $action = $q->param('action');
 
 # check permissions
-&check_permission_for_action == 0 || &error_die($pagedata->getValue("Lang.ErrorMessages.Forbidden", "Error: you are not allowed to do this!"));
-
-&set_pagedata();
-
+unless (&check_permission_for_action) {
+	$pagename = 'list_select';
+	$error = 'Forbidden';
+}
 # This is where we decide what to do, depending on the form state and the
 # users chosen course of action ...
-unless (defined($q->param('state'))) {
-   # Default action. Present a list of available lists to the user ...
-   $pagename = 'select_list';
-
-} elsif ($q->param('state') eq 'select') {
-   # User selects an action to perform on a list ...
-   
-   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Create","unknown button")) { # Create a new list ...
-      $pagename = 'create_list';
-   } elsif (defined($q->param('list'))) {
-      if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Edit","unknown button")) { # Edit an existing list ...
-         $pagename = 'list_subscribers';
-      } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Delete","unknown button")) { # Delete a list ...
-	$pagename = 'confirm_delete';
-      }
-   } else {
-      $pagename = 'select_list'; # NOP - blank input
-   }
-   
-} elsif ($q->param('state') eq 'edit') {
-   # User chooses to edit a list
-
-   $pagename = 'list_subscribers';
-   
-   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.DeleteAddress","unknown button")) { # Delete a subscriber ...
-      &delete_address();
-   
-   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.AddAddress","unknown button")) { # Add a subscriber ...
-      &add_address();
-   
-   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Configuration","unknown button")) { # Edit the config ...
-      $pagename = 'list_config';
-
-   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.Cancel","unknown button")) { # Cancel - Return a screen ...
-      $pagename = 'select_list';
-   }
-
-} elsif ($q->param('state') eq 'confirm_delete') {
-   # User wants to delete a list ...
-   
-   &delete_list if($q->param('confirm') eq $pagedata->getValue("Lang.Buttons.Yes","unknown button")); # Do it ...
-   $q->delete_all;
-   $pagename = 'select_list';
-
-} elsif ($q->param('state') eq 'create') {
-   # User wants to create a list ...
-
-   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.CreateList","unknown button")) {
-      if (&create_list) { # Return if list creation is unsuccessful ...
-         $pagename = 'create_list';
-      } else {
-         $pagename = 'select_list'; # Else choose a list ...
-      }
-   
-   } else { # Cancel ...
-      $pagename = 'select_list';
-   }
-   
-} elsif ($q->param('state') eq 'configuration') {
-   # User updates configuration ...
-   
-   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.UpdateConfiguration","unknown button")) { # Save current settings ...
-      &update_config;
-      $pagename = 'list_subscribers';
-      
-   } elsif ($q->param('action') eq $pagedata->getValue("Lang.Buttons.EditTexts","unknown button")) { # Edit DIR/text ...
-      $pagename = 'list_textfiles';
-   
-   } else { # Cancel - Return to list editing screen ...
-      $pagename = 'list_subscribers';
-   }
-
-} elsif ($q->param('state') eq 'list_text') {
-   # User wants to edit texts associated with the list ...
-   
-   if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.EditFile","unknown button")) {
-      $pagename = 'edit_text';
-   } else {
-      $pagename = 'list_config'; # Cancel ...
-   }
-
-} elsif ($q->param('state') eq 'edit_text') {   
-   # User wants to save a new version of something in DIR/text ...
-   
-   &save_text if ($q->param('action') eq $pagedata->getValue("Lang.Buttons.SaveFile","unknown button"));
-   $pagename = 'list_textfiles';
-   
+# TODO: unify all these "is list param set?" checks ...
+elsif ($action eq '' || $action eq 'list_select') {
+	# Default action. Present a list of available lists to the user ...
+	$pagename = 'list_select';
+} elsif ($action eq 'subscribers') {
+	# display list (or part list) subscribers
+	if (defined($q->param('list'))) {
+		$pagename = 'subscribers';
+	} else {
+		$pagename = 'list_select';
+		$error = 'ParameterMissing';
+	}
+} elsif ($action eq 'address_del') {
+	# Delete a subscriber ...
+	if (defined($q->param('list'))) {
+		$success = 'DeleteAddress' if (&delete_address());
+		$pagename = 'subscribers';
+	} else {
+		$error = 'ParameterMissing';
+		$pagename = 'list_select';
+	}
+} elsif ($action eq 'address_add') {
+	# Add a subscriber ...
+	# no selected addresses -> no error
+	if (defined($q->param('list'))) {
+		$success = 'AddAddress' if (&add_address());
+		$pagename = 'subscribers';
+	} else {
+		$error = 'ParameterMissing';
+		$pagename = 'list_select';
+	}
+} elsif ($action eq 'list_delete_ask') {
+	# Confirm list removal
+	if (defined($q->param('list'))) {
+		$pagename = 'list_delete';
+	} else {
+		$pagename = 'list_select';
+		$error = 'ParameterMissing';
+	}
+} elsif ($action eq 'list_delete_do') {
+	# User really wants to delete a list ...
+	warn "do it";
+	if (defined($q->param('list'))) {
+		$success = 'DeleteList' if (&delete_list());
+	} else {
+		$error = 'ParameterMissing';
+	}
+	$pagename = 'list_select';
+} elsif ($action eq 'list_create_ask') {
+	# User wants to create a list ...
+	$pagename = 'list_create';
+} elsif ($action eq 'list_create_do') {
+	# create the new list
+	# Message if list creation is unsuccessful ...
+	if (&create_list()) {
+		$success = 'CreateList';
+		$pagename = 'subscribers';
+	} else {
+		$pagename = 'list_create';
+	}
+} elsif (($action eq 'config_ask') || ($action eq 'config_do')) {
+	# User wants to see/change the configuration ...
+	if (defined($q->param('list'))) {
+		$success = 'UpdateConfig' if (($action eq 'config_do') && &update_config());
+		if ($q->param('config_subset') eq 'subscription') {
+			$pagename = 'config_subscription';
+		} elsif ($q->param('config_subset') eq 'posting') {
+			$pagename = 'config_posting';
+		} elsif ($q->param('config_subset') eq 'archive') {
+			$pagename = 'config_archive';
+		} elsif ($q->param('config_subset') eq 'admin') {
+			$pagename = 'config_admin';
+		} elsif ($q->param('config_subset') eq 'filter') {
+			$pagename = 'config_filter';
+		} elsif ($q->param('config_subset') eq 'main') {
+			$pagename = 'config_main';
+		} elsif (defined($q->param('part'))) {
+			$pagename = 'subscribers';
+		} else {
+			$error = 'ParameterMissing';
+			$pagename = 'list_select';
+		}
+	} else {
+		$error = 'ParameterMissing';
+		$pagename = 'list_select';
+	}
+} elsif ($action eq 'textfiles') {
+	# Edit DIR/text ...
+	if (defined($q->param('list'))) {
+		$pagename = 'textfiles';
+	} else {
+		$error = 'ParameterMissing';
+		$pagename = 'list_select';
+	}
+} elsif ($action eq 'textfile_edit') {
+	# edit the content of a text file
+	if (defined($q->param('list')) && defined($q->param('file'))) {
+		if (! &check_filename($q->param('file'))) {
+			$error = 'InvalidFileName';
+			$pagename = 'textfiles';
+		} else {
+			$pagename = 'textfile_edit';
+		}
+	} else {
+		$error = 'ParameterMissing';
+		$pagename = 'list_select';
+	}
+} elsif ($action eq 'textfile_save') {   
+	# User wants to save a new version of something in DIR/text ...
+	if (defined($q->param('list')) && defined($q->param('file')) && defined($q->param('content'))) {
+		if (! &check_filename($q->param('file'))) {
+			$error = 'InvalidFileName';
+			$pagename = 'textfiles';
+		} elsif (&save_text()) {
+			$pagename = 'textfiles';
+			$success = 'SaveFile';
+		} else {
+			$warning = 'SaveFile';
+			$pagename = 'textfile_edit';
+		}
+	} else {
+		$error = 'ParameterMissing';
+		if ($q->param('list')) {
+			$pagename = 'textfiles';
+		} else {
+			$pagename = 'list_select';
+		}
+	}
 } else {
-   $pagedata->setValue("Data.Action", $q->param('action'));
-   $pagedata->setValue("Data.Status", "unknown action");
-   $pagename = 'select_list';
-} 
+	$pagename = 'list_select';
+	$error = 'UnknownAction';
+}
+
+# read the current state
+&set_pagedata();
 
 # Print page and exit :) ...
 &output_page;
@@ -227,15 +285,14 @@ sub load_hdf {
 	# initialize the data for clearsilver
 	my $hdf = ClearSilver::HDF->new();
 
-	# TODO: respect LANGUAGE_DIR and LANGUAGE
-	$hdf->readFile($LANGUAGE_DIR . "/en.hdf");
+	$hdf->readFile($LANGUAGE_DIR . '/' . $HTML_LANGUAGE . '.hdf');
 
 	# TODO: check for existence
 	$hdf->setValue("TemplateDir", "$TEMPLATE_DIR/");
 	$hdf->setValue("LanguageDir", "$LANGUAGE_DIR/");
 	$hdf->setValue("ScriptName", $ENV{'SCRIPT_NAME'});
 	$hdf->setValue("Stylesheet", "$HTML_CSS_FILE");
-	$hdf->setValue("HelpIconURL", "$HELP_ICON_URL");
+	$hdf->setValue("Config.PageTitle", "$HTML_TITLE");
 
 	return $hdf;
 }
@@ -244,17 +301,24 @@ sub load_hdf {
 sub output_page {
 	# Print the page
 
-	my $pagefile = $TEMPLATE_DIR . "/" . $pagename . ".cs";
-	die "template ($pagefile) not found!" unless (-e "$pagefile");
+	$pagedata->setValue('Data.Success', "$success") if (defined($success));
+	$pagedata->setValue('Data.Error', "$error") if (defined($error));
+	$pagedata->setValue('Data.Warning', "$warning") if (defined($warning));
+	$pagedata->setValue('Data.CustomError', "$customError") if (defined($customError));
+	$pagedata->setValue('Data.CustomWarning', "$customWarning") if (defined($customWarning));
+
+	$pagedata->setValue('Data.Action', "$pagename");
+
+	my $pagefile = $TEMPLATE_DIR . "/main.cs";
+	die "main template ($pagefile) not found!" unless (-e "$pagefile");
+	die "sub template ($TEMPLATE_DIR/$pagename.cs) not found!" unless (-e "$TEMPLATE_DIR/$pagename.cs");
 
 	# print http header
 	print "Content-Type: text/html\n\n";
 
 	my $cs = ClearSilver::CS->new($pagedata);
-	$cs->parseFile($TEMPLATE_DIR . '/macros.cs');
-	$cs->parseFile($TEMPLATE_DIR . '/header.cs');
-	$cs->parseFile($TEMPLATE_DIR . '/' . $pagename . '.cs');
-	$cs->parseFile($TEMPLATE_DIR . '/footer.cs');
+
+	$cs->parseFile($pagefile);
 
 	print $cs->render();
 }
@@ -265,20 +329,22 @@ sub set_pagedata()
    my (@lists, @files, $i, $item);
 
    # Read the list directory for mailing lists.
-   opendir DIR, $LIST_DIR || &error_die($pagedata->getValue("Lang.ErrorMessages.ListDirAccessDenied", "Unable to read") . " $LIST_DIR");
-   @files = grep !/^\./, readdir DIR; 
+   unless (opendir DIR, $LIST_DIR) {
+		$warning = 'ListDirAccessDenied';
+		return (1==0);
+	}
+
+   @files = sort grep !/^\./, readdir DIR; 
    closedir DIR;
 
    # Check that they actually are lists and add good ones to pagedata ...
    my $num = 0;
    foreach $i (0 .. $#files) {
-      if ((-e "$LIST_DIR/$files[$i]/lock") && (&webauth($files[$i]) == 0)) {
-         $num++;
-         $pagedata->setValue("Data.Lists." . $num, "$files[$i]");
+		if ((-e "$LIST_DIR/$files[$i]/lock") && (&webauth($files[$i]))) {
+		$pagedata->setValue("Data.Lists." . $num, "$files[$i]");
+		$num++;
       }
    }
-   $pagedata->setValue("Data.ListsCount", "$num");
-
 
    # list specific configuration
    if ($q->param('list') ne '' )
@@ -310,11 +376,12 @@ sub set_pagedata()
 
 
    # modules
-   $pagedata->setValue("Data.Modules.mySQL", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
+   # TODO: someone should test, if the mysql support works
+   $pagedata->setValue("Data.Modules.MySQL", ($Mail::Ezmlm::MYSQL_BASE)? 1 : 0);
    
 
    # permissions
-   $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed == 0)? 1 : 0 );
+   $pagedata->setValue("Data.Permissions.Create", (&webauth_create_allowed)? 1 : 0 );
    $pagedata->setValue("Data.Permissions.FileUpload", ($FILE_UPLOAD)? 1 : 0);
 
 
@@ -328,10 +395,15 @@ sub set_pagedata()
 sub set_pagedata4list
 {
 	my $part_type = shift;
-	my ($list, $listname);
+	my ($list, $listname, $webusers);
 	my ($i, $item, @files);
 
 	$listname = $q->param('list');
+	
+	if (! -e "$LIST_DIR/$listname/lock" ) {
+		$warning = 'ListDoesNotExist' if ($warning eq '');
+		return;
+	}
 	
 	# Work out the address of this list ...
 	$list = new Mail::Ezmlm("$LIST_DIR/$listname");
@@ -344,38 +416,44 @@ sub set_pagedata4list
 	my $item;
 	# TODO: use "pretty" output style for visible mail address
 	foreach $item ($list->subscribers($part_type)) {
-		$pagedata->setValue("Data.List.Subscribers." . $i, "$item");
+		$pagedata->setValue("Data.List.Subscribers." . $i, "$item") unless ($item eq '');
 		$i++;
 	}
-	$pagedata->setValue("Data.List.SubscribersCount", "$i");
 
-	$pagedata->setValue("Data.ConfigAvail.Extras", 1) if($list->ismodpost || $list->ismodsub || $list->isremote || $list->isdeny || $list->isallow || $list->isdigest);
-	$pagedata->setValue("Data.ConfigAvail.Moderation", 1) if ($list->ismodpost || $list->ismodsub || $list->isremote);
-	$pagedata->setValue("Data.ConfigAvail.DenyList", 1) if ($list->isdeny);
-	$pagedata->setValue("Data.ConfigAvail.AllowList", 1) if ($list->isallow);
-	$pagedata->setValue("Data.ConfigAvail.Digest", 1) if ($list->isdigest);
-	$pagedata->setValue("Data.ConfigAvail.WebArch", 1) if(&ezmlmcgirc);
+	$pagedata->setValue("Data.List.hasDenyList", 1) if ($list->isdeny);
+	$pagedata->setValue("Data.List.hasAllowList", 1) if ($list->isallow);
+	$pagedata->setValue("Data.List.hasDigestList", 1) if ($list->isdigest);
 
-	# Get the contents of the headeradd, headerremove, mimeremove and prefix files
-	$pagedata->setValue("Data.List.Prefix", $list->getpart('prefix'));
+	# Get the contents of some important files
+	$item = $list->getpart('prefix');
+	$pagedata->setValue("Data.List.Prefix", "$item");
 	$item = $list->getpart('headeradd');
 	$pagedata->setValue("Data.List.HeaderAdd", "$item");
 	$item = $list->getpart('headerremove');
 	$pagedata->setValue("Data.List.HeaderRemove", "$item");
 	$item = $list->getpart('mimeremove');
 	$pagedata->setValue("Data.List.MimeRemove", "$item");
+	$item = $list->getpart('mimereject');
+	$pagedata->setValue("Data.List.MimeReject", "$item");
+	$item = $list->getpart('text/trailer');
+	$pagedata->setValue("Data.List.TrailingText", "$item");
+	
+	# read message size limits
+	$list->getpart('msgsize') =~ m/^\s*(\d+)\s*:\s*(\d+)\s*$/;
+	$pagedata->setValue("Data.List.MsgSize.Max", "$1");
+	$pagedata->setValue("Data.List.MsgSize.Min", "$2");
 
 	# TODO: this is definitely ugly - create a new sub!
 	if(open(WEBUSER, "<$WEBUSERS_FILE")) {
-	      my($webusers);
-	      while(<WEBUSER>) {
-		 last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
-	      }
-	      close WEBUSER;
-	      $webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
-
-	      $pagedata->setValue("Data.List.WebUsers", "$webusers");
+		while(<WEBUSER>) {
+			last if (($webusers) = m{^$listname\s*\:\s*(.+)$});
+		}
+		close WEBUSER;
 	}
+	# set default if there was no list definition
+	$webusers ||= $ENV{'REMOTE_USER'} || 'ALL';
+
+    $pagedata->setValue("Data.List.WebUsers", "$webusers");
 
 	# get the names of the textfiles of this list
 	{
@@ -383,26 +461,28 @@ sub set_pagedata4list
 		$listDir = $LIST_DIR . '/' . $q->param('list');
 
 		# Read the list directory for text ...
-		opendir DIR, "$listDir/text" || &error_die($pagedata->getValue("Lang.ErrorMessages.TextDirAccessDenied","Unable to read DIR/text:") . " $listDir/text");
-		@files = grep !/^\./, readdir DIR; 
-		closedir DIR;
+		if (opendir DIR, "$listDir/text") {
+			@files = grep !/^\./, readdir DIR; 
+			closedir DIR;
+		} else {
+			$warning = 'TextDirAccessDenied' if ($warning eq '')
+		}
 
-		# TODO: find a better way to set a list ...
 		$i = 0;
 		my $item;
 		foreach $item (@files) {
-			$pagedata->setValue("Data.Files." . $i, "$item");
+			$pagedata->setValue("Data.List.Files." . $i, "$item");
 			$i++;
 		}
-		$pagedata->setValue("Data.FilesCount", "$i");
 
 		# text file specified?
 		if ($q->param('file') ne '')
 		{
 			my ($content);
 			$content = $list->getpart("text/" . $q->param('file'));
-			$pagedata->setValue("Data.File.Name", $q->param('file'));
-			$pagedata->setValue("Data.File.Content", "$content");
+			from_to($content,$TEXT_ENCODE,'utf8');	# by ooyama for multibyte
+			$pagedata->setValue("Data.List.File.Name", $q->param('file'));
+			$pagedata->setValue("Data.List.File.Content", "$content");
 		}
 	}
 	&set_pagedata4options($list->getconfig);   
@@ -411,35 +491,66 @@ sub set_pagedata4list
 # ---------------------------------------------------------------------------
 
 sub set_pagedata4options {
-   my($opts) = shift;
-   my($i, $j);
- 
-   # TODO: remove when migration to cs is done
-   $j = 0;
-   # convert EZMLM_LABELS to hdf-language values
-   foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
-	$pagedata->setValue("Data.ListOptions." . $i . ".name", "$i");
-	$pagedata->setValue("Data.ListOptions." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
-	$pagedata->setValue("Data.ListOptions." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
-	$pagedata->setValue("Data.ListOptions." . $i . ".state", ($opts =~ /^\w*$i\w*\s*/)? 1 : 0);
-	$j++;
-   }
-   $pagedata->setValue("Data.ListOptionsCount", "$j");
+	my($options) = shift;
+	my($i, $key, $state, $value, $dir_of_list);
 
-   $j = 0;
-   my $state;
-   # convert EZMLM_LABELS to hdf-language values
-   foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-	$pagedata->setValue("Data.ListSettings." . $i . ".name", "$i");
-	$pagedata->setValue("Data.ListSettings." . $i . ".short", "$EZMLM_LABELS{$i}[0]");
-	$pagedata->setValue("Data.ListSettings." . $i . ".long", "$EZMLM_LABELS{$i}[1]");
-	#$pagedata->setValue("Data.ListSettings." . $i . ".state", ($opts =~ /$i (?:'(.+?)')/)? 1 : 0);
-	$state = ($opts =~ /$i (?:'(.+?)')/);
-	$pagedata->setValue("Data.ListSettings." . $i . ".state", $state ? 1 : 0);
-	$pagedata->setValue("Data.ListSettings." . $i . ".value", $state ? $1 : "$EZMLM_LABELS{$i}[2]");
-	$j++;
-   }
-   $pagedata->setValue("Data.ListSettingsCount", "$j");
+	$dir_of_list = $LIST_DIR . '/' . $q->param('list');
+
+	$i = 0;
+	$key = lc(substr($options,$i,1));
+	# parse the first part of the options string
+	while ($key =~ m/\w/) {
+		# scan the first part of the options string for lower case letters
+		$state = ($options =~ /^\w*$key\w*\s*/);
+		$pagedata->setValue("Data.List.Options." . $key , ($state)? 1 : 0);
+		$i++;
+		$key = lc(substr($options,$i,1));
+	}
+
+	# the options "t", "p" and "x" are only used to create a default value
+	# they have no meaning, so we should adapt them to reality
+	$pagedata->setValue("Data.List.Options.t" , 1)
+		if (-e "$dir_of_list/text/trailer");
+	$pagedata->setValue("Data.List.Options.p" , 1)
+		if (-e "$dir_of_list/prefix");
+	$pagedata->setValue("Data.List.Options.x" , 1)
+		if ((-e "$dir_of_list/mimeremove") || (-e "$dir_of_list/mimereject"));
+
+	for ($i=0; $i<9; $i++) {
+		unless (($i eq 1) || ($i eq 2)) {
+			$state = ($options =~ /$i (?:'(.+?)')/);
+			unless ($state) {
+				if ($i eq 0) {
+					$value = 'mainlist@' . $DEFAULT_HOST;
+				} elsif ($i eq 3) {
+					$value = 'from_address@domain.org';
+				} elsif ($i eq 4) {
+					$value = '-t24 -m30 -k64';
+				} elsif ($i eq 5) {
+					$value = 'owner_address@domain.org';
+				} elsif ($i eq 6) {
+					$value = 'host:port:user:password:database:table';
+				} elsif ($i eq 7) {
+					$value = "$dir_of_list/mod";
+				} elsif ($i eq 8) {
+					$value = "$dir_of_list/mod";
+				}
+			} else {
+				# use the configured value (extracted by the pattern matching for 'state')
+				$value = $1;
+			}
+			$pagedata->setValue("Data.List.Settings." . $i . ".value", $value);
+			$pagedata->setValue("Data.List.Settings." . $i . ".state", $state ? 1 : 0);
+		}
+	}
+}
+
+# ---------------------------------------------------------------------------
+
+sub check_filename()
+{
+	my $filename = shift;
+	return ($filename =~ m/[^\w-]/) ? (1==0) : (0==0);
 }
 
 # ---------------------------------------------------------------------------
@@ -447,72 +558,69 @@ sub set_pagedata4options {
 sub get_list_part
 # return the name of the part list (deny, allow, mod, digest or '')
 {
-	return $q->param('part') if (defined($q->param('part')));
-
-	my $action = $q->param('action');
-
-	# moderators list?
-	return 'mod' if ($action eq $pagedata->getValue("Lang.Buttons.Moderators","unknown button"));
-
-	# deny list?
-	return 'deny' if ($action eq $pagedata->getValue("Lang.Buttons.DenyList","unknown button"));
-
-	# allow list?
-	return 'allow' if ($action eq $pagedata->getValue("Lang.Buttons.AllowList","unknown button"));
-
-	# digest list?
-	return 'digest' if ($action eq $pagedata->getValue("Lang.Buttons.DigestSubscribers","unknown button"));
+	$q->param('part') =~ m/^(allow|deny|digest|mod)$/;
+	return $1;
 }
 
 # ---------------------------------------------------------------------------
 
 sub delete_list {
-   # Delete a list ...
+	# Delete a list ...
 
-   # Fixes a bug from the previous version ... when the .qmail file has a
-   # different name to the list. We use outlocal to handle vhosts ...
-   my ($list, $listaddress, $listadd); 
-   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
-   if ($listadd = $list->getpart('outlocal')) {
-      chomp($listadd);
-   } else {
-      $listadd = $q->param('list');
-   }
-   $listaddress = $1 if ($listadd =~ /-?(\w+)$/);
-   
-   if ($UNSAFE_RM == 0) {
-      # This doesn't actually delete anything ... It just moves them so that
-      # they don't show up. That way they can always be recovered by a helpful
-      # sysadmin should he be in the mood :)
+	# Fixes a bug from the previous version ... when the .qmail file has a
+	# different name to the list. We use outlocal to handle vhosts ...
+	my ($list, $listaddress, $listadd); 
+	$list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+	if ($listadd = $list->getpart('outlocal')) {
+		chomp($listadd);
+	} else {
+		$listadd = $q->param('list');
+	}
+	$listaddress = $1 if ($listadd =~ /-?(\w+)$/);
 
-      my ($oldfile); $oldfile = "$LIST_DIR/" . $q->param('list');
-      my ($newfile); $newfile = "$LIST_DIR/." . $q->param('list'); 
-      move($oldfile, $newfile) or error_die($pagedata->getValue("Lang.ErrorMessages.SafeRemoveRenameDirFailed","Unable to rename list:") . " ($oldfile -> $newfile)");
-      mkdir "$HOME_DIR/deleted.qmail", 0700 if(!-e "$HOME_DIR/deleted.qmail");
+	if ($UNSAFE_RM == 0) {
+		# This doesn't actually delete anything ... It just moves them so that
+		# they don't show up. That way they can always be recovered by a helpful
+		# sysadmin should he/she be in the mood :)
 
-      opendir(DIR, "$HOME_DIR") or &error_die($pagedata->getValue("Lang.ErrorMessages.DotQmailDirAccessDenied","Unable to get directory listing:") . " $HOME_DIR");
-      my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
-      closedir DIR;
-      foreach (@files) {
-         unless (move($_, "$HOME_DIR/deleted.qmail/")) {
-            &error_die($pagedata->getValue("Lang.ErrorMessages.SafeRemoveMoveDotQmailFailed", "Unable to move .qmail files:") . " ($_ -> $HOME_DIR/deleted.qmail)"); 
-         }
-      }
-      warn "List '$oldfile' moved (deleted)";   
-   } else {
-      # This, however, does DELETE the list. I don't like the idea, but I was
-      # asked to include support for it so ...
-      if (!rmtree("$LIST_DIR/" . $q->param('list'))) {
-         &error_die($pagedata->getValue("Lang.ErrorMessages.UnsafeRemoveListDirFailed", "Unable to delete list:"). " $LIST_DIR/" . $q->param('list'));
-      }
-      opendir(DIR, "$HOME_DIR") or die "Unable to get directory listing: $!";
-      my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
-      closedir DIR;
-      if (unlink(@files) <= 0) {
-         &error_die($pagedata->getValue("Lang.ErrorMessages.UnsafeRemoveDotQmailFailed", "Unable to delete .qmail files:") . " $HOME_DIR");
-      }
-      warn "List '$list->thislist()' deleted";
-   }   
+		my ($oldfile); $oldfile = "$LIST_DIR/" . $q->param('list');
+		my ($newfile); $newfile = "$LIST_DIR/." . $q->param('list'); 
+		unless (move($oldfile, $newfile)) {
+			$warning = 'SafeRemoveRenameDirFailed';
+			return (1==0);
+		}
+		mkdir "$HOME_DIR/deleted.qmail", 0700 if(!-e "$HOME_DIR/deleted.qmail");
+
+		unless (opendir(DIR, "$HOME_DIR")) {
+			$warning = 'DotQmailDirAccessDenied';
+			return (1==0);
+		}
+		my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
+		closedir DIR;
+		foreach (@files) {
+			unless (move($_, "$HOME_DIR/deleted.qmail/")) {
+				$warning = 'SafeRemoveMoveDotQmailFailed';
+				return (1==0); 
+			}
+		}
+		warn "List '$oldfile' moved (deleted)";   
+	} else {
+		# This, however, does DELETE the list. I don't like the idea, but I was
+		# asked to include support for it so ...
+		unless (rmtree("$LIST_DIR/" . $q->param('list'))) {
+			$warning = 'UnsafeRemoveListDirFailed';
+			return (1==0);
+		}
+		opendir(DIR, "$HOME_DIR") or die "Unable to get directory listing: $!";
+		my @files = map { "$HOME_DIR/$1" if m{^(\.qmail.+)$} } grep { /^\.qmail-$listaddress/ } readdir DIR;
+		closedir DIR;
+		if (unlink(@files) <= 0) {
+			$warning = 'UnsafeRemoveDotQmailFailed';
+			return (1==0);
+		}
+		warn "List '$list->thislist()' deleted";
+	}
+	$q->param(-name=>'list', -values=>'');
 }
 
 # ------------------------------------------------------------------------
@@ -528,7 +636,7 @@ sub untaint {
    
    foreach $i (0 .. $#params) {
       my(@values);
-      next if($params[$i] eq 'addfile');
+      next if($params[$i] eq 'mailaddressfile');
       foreach $param ($q->param($params[$i])) {
          next if $param eq '';
          if ($param =~ /^([#-\@\w\.\/\[\]\:\n\r\>\< _]+)$/) {
@@ -539,7 +647,15 @@ sub untaint {
          $q->param(-name=>$params[$i], -values=>\@values);
       }
    } 
-   $q->import_names('Q');
+
+	# special stuff
+
+	# check the list name
+	if (($q->param('list') =~ /[^\w-]/) && ($q->param('list') !~ /^list_create_(do|ask)$/)) {
+		$warning = 'InvalidListName' if ($warning eq '');
+		$q->param(-name=>'list', -values=>'');
+	}
+	
 }
 
 # ------------------------------------------------------------------------
@@ -550,12 +666,12 @@ sub check_permission_for_action {
    # but the final creation is omitted
 
    my $ret;
-   if ($q->param('state') eq 'create') {
+   if ($action eq 'list_create_ask' || $action eq 'list_create_do') {
 	$ret = &webauth_create_allowed();
    } elsif (defined($q->param('list'))) {
 	$ret = &webauth($q->param('list'));
    } else {
-	$ret = 0;
+	$ret = (0==0);
    }
    return $ret;
 }
@@ -563,40 +679,45 @@ sub check_permission_for_action {
 # ------------------------------------------------------------------------
 
 sub add_address {
-   # Add an address to a list ..
+	# Add an address to a list ..
 
-   my ($address, $list, $part, @addresses, $count);
-   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
-   $part = &get_list_part();
+	my ($address, $list, $part, @addresses, $count);
+	$list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+	$part = &get_list_part();
 
-   if (($q->param('addfile')) && ($FILE_UPLOAD)) {
 
-      # Sanity check
-      &error_die("File upload must be of type text/*") unless($q->uploadInfo($q->param('addfile'))->{'Content-Type'} =~ m{^text/});
+	if (($q->param('mailaddressfile')) && ($FILE_UPLOAD)) {
+		# Sanity check
+		my $fileinfo = $q->uploadInfo($q->param('mailaddressfile'));
+		my $filetype = $fileinfo->{'Content-Type'};
+		unless($filetype =~ m{^text/}) {
+			$warning = 'InvalidFileFormat';
+			return (1==0);
+		}
 
-      # Handle file uploads of addresses
-      my($fh) = $q->param('addfile');
-      return unless (defined($fh));
-      while (<$fh>) {
-	next if (/^\s*$/ or /^#/); # blank, comments
-	next unless ( /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/ ); # email address ...
-	chomp();
-	push @addresses, "$_";
-      }
-
-   }
+		# Handle file uploads of addresses
+		my($fh) = $q->param('mailaddressfile');
+		while (<$fh>) {
+			next if (/^\s*$/ or /^#/); # blank, comments
+			next unless ( /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/ ); # email address ...
+			chomp();
+			push @addresses, "$_";
+		}
+	}
       
 	# User typed in an address
-	if ($q->param('addsubscriber') ne '') {
+	if ($q->param('mailaddress_add') ne '') {
 
-		$address = $q->param('addsubscriber');
-		$address .= $DEFAULT_HOST if ($q->param('addsubscriber') =~ /\@$/);
+		$address = $q->param('mailaddress_add');
+		$address .= $DEFAULT_HOST if ($q->param('mailaddress_add') =~ /\@$/);
 
 		# untaint
 		if ($address =~ /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/) {
 			push @addresses, "$1\@$2";
 		  } else {
-			warn "this address ($address) is not valid!";
+			warn "invalid address to add: $address to $part";
+			$warning = 'AddAddress';
+			return (1==0);
 		  }
 
 	}
@@ -611,14 +732,14 @@ sub add_address {
          $pretty{$add->address()} = $add->name();
          untie %pretty;
       }
-   
-      if ($list->sub($add->address(), $part) != 1) {
-         &error_die("Unable to subscribe to list: $!");
-      }
-      $count++;
-   }
 
-   $q->delete('addsubscriber');
+		if ($list->issub($add->address(), $part)) {
+			$warning = 'AddAddress';
+		} else {
+			$warning = 'AddAddress' unless ($list->sub($add->address(), $part));
+		}
+		$count++;
+	}
 }
 
 # ------------------------------------------------------------------------
@@ -629,12 +750,13 @@ sub delete_address {
    my ($list, @address);
    $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
    my $part = &get_list_part();
-   return if ($q->param('delsubscriber') eq '');
+   return (1==0) if ($q->param('mailaddress_del') eq '');
 
-   @address = $q->param('delsubscriber');
+   @address = $q->param('mailaddress_del');
 
    if ($list->unsub(@address, $part) != 1) {
-      &error_die("Unable to unsubscribe from list $list: $!");
+      $warning = 'DeleteAddress';
+	  return (1==0);
    }
    
    if($PRETTY_NAMES) {
@@ -646,7 +768,6 @@ sub delete_address {
       untie %pretty;
    }
 
-   $q->delete('delsubscriber');
 }
 
 # ------------------------------------------------------------------------
@@ -657,8 +778,6 @@ sub set_pagedata4part_list {
 
    my ($i, $list, $listaddress,);
    
-   $pagename = "list_subscribers";
-   
    # Work out the address of this list ...
    $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
    $listaddress = &this_listaddress();
@@ -666,148 +785,285 @@ sub set_pagedata4part_list {
    $pagedata->setValue("Data.List.PartType", "$part");
 
    if($part eq 'mod') {
-      # Lets know what is moderated :)
-
-      $pagedata->setValue("Data.isModerated",1);
-      
       # do we store things in different directories?
       my $config = $list->getconfig;
+	  # empty values represent default settings - everything else is considered as evil :)
       my($postpath) = $config =~ m{7\s*'([^']+)'};
       my($subpath) = $config =~ m{8\s*'([^']+)'};
       my($remotepath) = $config =~ m{9\s*'([^']+)'};
       
-      $pagedata->setValue("Data.isPostMod", ($list->ismodpost)? 1 : 0);
-      $pagedata->setValue("Data.PostModPathWarn", "$postpath");
+      $pagedata->setValue("Data.List.hasPostMod", ($list->ismodpost)? 1 : 0);
+      $pagedata->setValue("Data.List.PostModPath", "$postpath");
 
-      $pagedata->setValue("Data.isSubMod", ($list->ismodsub)? 1 : 0);
-      $pagedata->setValue("Data.SubModPathWarn", "$subpath");
+      $pagedata->setValue("Data.List.hasSubMod", ($list->ismodsub)? 1 : 0);
+      $pagedata->setValue("Data.List.SubModPath", "$subpath");
 
-      $pagedata->setValue("Data.isRemote", ($list->isremote)? 1 : 0);
-      $pagedata->setValue("Data.RemotePathWarn", "$remotepath");
+      $pagedata->setValue("Data.List.hasRemoteAdmin", ($list->isremote)? 1 : 0);
+      $pagedata->setValue("Data.List.RemoteAdminPath", "$remotepath");
    }
 }
 
 # ------------------------------------------------------------------------
 
 sub create_list {
-   # Create a list according to user selections ...
+	# Create a list according to user selections ...
 
-   # Check the list directory exists and create if necessary ...
-   if(!-e $LIST_DIR) {
-      die "Unable to create directory ($LIST_DIR): $!" unless mkdir $LIST_DIR, 0700;
-   }
+	# Check if the list directory exists and create if necessary ...
+	unless ((-e $LIST_DIR) || (mkdir $LIST_DIR, 0700)) {
+		warn "Unable to create directory ($LIST_DIR): $!";
+		$error = 'ListDirUnavailable';
+		return (1==0);
+	}
+
+	my ($qmail, $listname, $options, $i);
+
+	# Some taint checking ...
+	$qmail = $1 if $q->param('inlocal') =~ /(?:$USER-)?([^\<\>\\\/\s]+)$/;
+	$listname = $q->param('list');
+	if ($listname =~ m/[^\w\.-]/) {
+		$warning = 'InvalidListName';
+		return (1==0);
+   	}
+
+	# Sanity Checks ...
+	if ($listname eq '') {
+		$warning = 'EmptyListName';
+		return (1==0);
+   	}
+	if (($listname =~ m/^ALL$/i) || ($listname =~ m/^ALLOW_CREATE$/i)) {
+		$warning = 'ReservedListName';
+		return (1==0);
+   	}
+	if ($qmail eq '') {
+		$warning = 'InvalidLocalPart';
+		return (1==0);
+   	}
+	if(-e ("$LIST_DIR/$listname/lock") || -e ("$HOME_DIR/.qmail-$qmail")) {
+		$warning = 'ListAlreadyExists';
+		return (1==0);
+	}
+
+	$options = &extract_options_from_params();
+
+	my($list) = new Mail::Ezmlm;
+
+	unless ($list->make(-dir=>"$LIST_DIR/$listname",
+				-qmail=>"$HOME_DIR/.qmail-$qmail",
+				-name=>$q->param('inlocal'),
+				-host=>$q->param('inhost'),
+				-switches=>$options,
+				-user=>$USER)
+	) {
+		# fatal error
+		$customWarning = $list->errmsg();
+		return (1==0);
+	}
+
+	# handle MySQL stuff
+	if(defined($q->param('setting_state_6')) && $options =~ m/-6\s+/) {
+		$customWarning = $list->errmsg() unless($list->createsql());
+	}
    
-   my ($qmail, $listname, $options, $i);
-   
-   # Some taint checking ...
-   $qmail = $1 if $q->param('inlocal') =~ /(?:$USER-)?([^\<\>\\\/\s]+)$/;
-   $listname = $q->param('list'); $listname =~ s/ /_/g; # In case some git tries to put a space in the file name
+	# no error returned - just a warning
+	$warning = 'WebUsersUpdate' unless (&update_webusers());
 
-   # Sanity Checks ...
-   return 1 if ($listname eq '' || $qmail eq '');
-   if(-e ("$LIST_DIR/$listname/lock") || -e ("$HOME_DIR/.qmail-$qmail")) {
-      &error_die("Can't create list '$listname', as it already exists");
-      return 1;
-   }
-  
-   # Work out the command line options
-   foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
-      if (defined($q->param($i))) {
-         $options .= $i;
-      } else {
-         $options .= uc($i);
-      }
-   }
+	return (0==0);
+}
 
-   foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-      if (defined($q->param($i))) {
-         $options .= " -$i '" . $q->param("$i-value") . "'";
-      }
-   }
+# ------------------------------------------------------------------------
 
-   my($list) = new Mail::Ezmlm;
+sub extract_options_from_params()
+{
+	# Work out the command line options ...
+	my ($options, $avail_options, $settings, $avail_settings, $i);
+	my ($listname, $list, $old_options, $state, $old_key);
 
-   unless ($list->make(-dir=>"$LIST_DIR/$listname",
-               -qmail=>"$HOME_DIR/.qmail-$qmail",
-               -name=>$q->param('inlocal'),
-               -host=>$q->param('inhost'),
-               -switches=>$options,
-               -user=>$USER)
-   ) {
-      &error_die('List creation failed' , $list->errmsg());
-   }
+	# NOTE: we have to define _every_ (even unchanged) setting
+	# as ezmlm-make removes any undefined value
 
-   # handle MySQL stuff
-   if($q->param('sql') && $options =~ m/-6\s+/) {
-      unless($list->createsql()) {
-         error_die('SQL table creation failed: ' , $list->errmsg());
-      }
-   }
-   
-   &update_webusers();
+	$listname = $q->param('list');
+	$list = new Mail::Ezmlm("$LIST_DIR/$listname");
+	$old_options = $list->getconfig();
 
-   return 0;
+	################ options ################
+	$i = 0;
+	$old_key = substr($old_options,$i,1);
+	$avail_options = $q->param('options_available');
+	# parse the first part of the options string
+	while ($old_key =~ m/\w/) {
+		# scan the first part of the options string for lower case letters
+		if ($avail_options =~ m/$old_key/i) {
+			my $form_var_name = "option_" . lc($old_key);
+			# this option was visible for the user
+			if (defined($q->param($form_var_name))) {
+				$options .= lc($old_key);
+			} else {
+				$options .= uc($old_key);
+			}
+		} elsif ("cevz" =~ m/$old_key/i) {
+			# ignore invalid settings (the output of "getconfig" is really weird!)
+		} else {
+			# import the previous set option
+			$options .= $old_key;
+		}
+		$i++;
+		$old_key = substr($old_options,$i,1);
+	}
+
+
+	############### settings ################
+	$avail_settings = $q->param('settings_available');
+	for ($i=0; $i<9; $i++) {
+		if ($avail_settings =~ m/$i/) {
+			# this setting was visible for the user
+			$options .= " -$i '" . $q->param("setting_value_$i") . "'"
+				if (defined($q->param("setting_state_$i")));
+		} else {
+			# import the previous setting
+			$state = ($old_options =~ /$i (?:'(.+?)')/);
+			$options .= " -$i '$1'" if ($state);
+		}
+	}
+
+	return $options;
 }
 
 # ------------------------------------------------------------------------
 
 sub update_config {
-   # Save the new user entered config ...
+	# Save the new user entered config ...
    
-   my ($list, $options, $i, @inlocal, @inhost);
-   $list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+	my ($list, $options, @inlocal, @inhost, $dir_of_list);
+	my ($old_msgsize);
 
-   # Work out the command line options ...
-   foreach $i (grep {/\D/} keys %EZMLM_LABELS) {
-      if (defined($q->param($i))) {
-         $options .= $i;
-      } else {
-         $options .= uc($i);
-      }
-   }
+	$list = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
+	$dir_of_list = $LIST_DIR . '/' . $q->param('list');
 
-   foreach $i (grep {/\d/} keys %EZMLM_LABELS) {
-      if (defined($q->param($i))) {
-         $options .= " -$i '" . $q->param("$i-value") . "'";
-      }
-   }
+	$options = &extract_options_from_params();
 
-   # Actually update the list ...
-   unless($list->update($options)) {
-      die "List update failed";
-   }
+	# save the settings, that are generally overwritten by ezmlm-make :(((
+	# good candidates are: msgsize, inhost, inlocal and outhost
+	# maybe there are some others?
+	$old_msgsize = $list->getpart('msgsize');
 
-   # Update headeradd, headerremove, mimeremove and prefix ...
-   $list->setpart('headeradd', $q->param('headeradd'));
-   $list->setpart('headerremove', $q->param('headerremove'));
-   $list->setpart('mimeremove', $q->param('mimeremove')) if defined($q->param('mimeremove'));
-   $list->setpart('prefix', $q->param('prefix')) if defined($q->param('prefix'));
+	# Actually update the list ...
+	unless($list->update($options)) {
+		$warning = 'UpdateConfig';
+		return (1==0);
+	}
 
-   &update_webusers();
+	# update trailing text
+	# remove old one if the checkbox was not active
+	if (defined($q->param('trailing_text'))) {
+		if (defined($q->param('option_t'))) {
+			$list->setpart('text/trailer', $q->param('trailing_text'));
+		} else {
+			unlink("$dir_of_list/text/trailer");
+		}
+	}
+
+	# update prefix text
+	# remove old one if the checkbox was not active
+	if (defined($q->param('prefix'))) {
+		if (defined($q->param('option_f'))) {
+			$list->setpart('prefix', $q->param('prefix'))
+		} else {
+			unlink("$dir_of_list/prefix");
+		}
+	}
+
+	# update mimeremove
+	# remove old one if the checkbox was not active
+	if (defined($q->param('mimeremove'))) {
+		if (defined($q->param('option_x'))) {
+			$list->setpart('mimeremove', $q->param('mimeremove'))
+		} else {
+			unlink("$dir_of_list/mimeremove");
+		}
+	}
+
+	# update mimereject
+	# remove old one if the checkbox was not active
+	if (defined($q->param('mimereject'))) {
+		if (defined($q->param('option_x'))) {
+			$list->setpart('mimereject', $q->param('mimereject'))
+		} else {
+			unlink("$dir_of_list/mimereject");
+		}
+	}
+
+	# Update headeradd and headerremove if these options were visible
+	$list->setpart('headeradd', $q->param('headeradd'))
+		if (defined($q->param('headeradd')));
+	$list->setpart('headerremove', $q->param('headerremove'))
+		if (defined($q->param('headerremove')));
+	
+	if (defined($q->param('msgsize_max_value')) && defined($q->param('msgsize_min_value'))) {
+		my ($minsize, $maxsize);
+		$maxsize = (defined($q->param('msgsize_max_state'))) ?
+			$q->param('msgsize_max_value') : 0;
+		$minsize = (defined($q->param('msgsize_min_state'))) ?
+			$q->param('msgsize_min_value') : 0;
+		$list->setpart('msgsize', "$maxsize:$minsize");
+	} else {
+		# restore the original value, as ezmlm-make always overrides these values :(((
+		$list->setpart('msgsize', "$old_msgsize");
+	}
+	
+	unless (&update_webusers()) {
+		$warning = 'WebUsersUpdate';
+		return (1==0);
+	}
+
+	return (0==0);
 }
 
 # ------------------------------------------------------------------------
 
 sub update_webusers {
-   # replace existing webusers-line or add a new one
+	# replace existing webusers-line or add a new one
 
-   if($q->param('webusers')) {
-      # Back up web users file
-      open(TMP, ">/tmp/ezmlm-web.$$");
-      open(WU, "<$WEBUSERS_FILE");
-      while(<WU>) { print TMP; }
-      close TMP; close WU;
-      
-      open(TMP, "</tmp/ezmlm-web.$$");
-      open(WU, ">$WEBUSERS_FILE");
-      while(<TMP>) {
-		print WU unless (/^$Q::list\s*:/);
+	# return if there is no webusers entry
+	return (0==0) unless defined($q->param('webusers'));
+
+	# Back up web users file
+	my $temp_file;
+	my $fh;
+	# generate a temporary filename (as suggested by the Perl Cookbook)
+	do { $temp_file = tmpnam() }
+	    until $fh = IO::File->new($temp_file, O_RDWR|O_CREAT|O_EXCL);
+	close $fh; 
+	unless (open(TMP, ">$temp_file")) {
+		warn "could not open a temporary file";
+		return (1==0);;
 	}
-	print WU $q->param('list') . ': ' $q->param('webusers') . "\n";
-      close TMP; close WU;
-      unlink "/tmp/ezmlm-web.$$";
-   }
+	open(WU, "<$WEBUSERS_FILE");
+	while(<WU>) { print TMP; }
+	close WU; close TMP;
 
+	my $matched = 0;
+	my $listname = $q->param('list');
+	my $webusers_filtered = $q->param('webusers');
+	# remove any insecure characters (e.g. a line break :))
+	$webusers_filtered =~ s/[^\w_,-]/ /gs;
+	open(TMP, "<$temp_file");
+	unless (open(WU, ">$WEBUSERS_FILE")) {
+		warn "the webusers file ($WEBUSERS_FILE) is not writable";
+		return (0==1);
+	}
+	while(<TMP>) {
+		if ($_ =~ m/^$listname\s*:/i) {
+			print WU $listname . ': ' . $webusers_filtered . "\n" if ($matched == 0);
+			$matched = 1;
+		} else {
+			print WU $_;
+		}
+	}
+	# append the line, if there was no matching line found before
+	print WU $listname . ': ' . $webusers_filtered . "\n" if ($matched == 0);
+	
+	close TMP; close WU;
+	unlink "$temp_file";
 }
 
 # ------------------------------------------------------------------------
@@ -829,68 +1085,83 @@ sub save_text {
    # Save new text in DIR/text ...
 
    my ($list) = new Mail::Ezmlm("$LIST_DIR/" . $q->param('list'));
-   $list->setpart("text/" . $q->param('list'), $q->param('content'));
-   
+   my ($content) = $q->param('content');
+   # TODO: is "utf8" instead of "utf-8" correct?
+   from_to($content,'utf8',$TEXT_ENCODE);	# by ooyama for multibyte
+   unless ($list->setpart("text/" . $q->param('file'), $content)) {
+		$warning = 'SaveFile';
+		return (1==0);
+   }
 }   
 
 # ------------------------------------------------------------------------
 
 sub webauth {
+	my $listname = shift;
    
-   # Check if webusers file exists - if not, then access is granted
-   return 0 if (! -e "$WEBUSERS_FILE");
+	# Check if webusers file exists - if not, then access is granted
+	return (0==0) if (! -e "$WEBUSERS_FILE");
 
-   # Read authentication level from webusers file. Format of this file is
-   # somewhat similar to the unix groups file
-   my($listname) = @_;
-   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file ($WEBUSERS_FILE): $!";
-   while(<USERS>) {
-      if (/^($listname|ALL)\:/i) {
-         if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
-            close USERS; return 0;
-         }
-      }   
-   }
-   close USERS;
-   return 1;
+	# if there was no user authentication, then everything is allowed
+	return (0==0) if ($ENV{'REMOTE_USER'} eq '');
+
+	# Read authentication level from webusers file. Format of this file is
+	# somewhat similar to the unix groups file
+	unless (open (USERS, "<$WEBUSERS_FILE")) {
+		warn "Unable to read webusers file ($WEBUSERS_FILE): $!";
+		$warning = 'WebUsersRead';
+		return (1==0);
+	}
+
+	# TODO: check, why "directly after creating a new list" this does not
+	# work without the "m" switch for the regexp - very weird!
+	# the same goes for webauth_create_allowed
+	# maybe the creating action changed some file access defaults?
+	while(<USERS>) {
+		if (/^($listname|ALL):/im) {
+			# the following line should be synchronized with the webauth_create_allowed sub
+			if (/^[^:]*:(|.*[\s,])($ENV{'REMOTE_USER'}|ALL)(,|\s|$)/m) {
+				close USERS;
+				return (0==0);
+			}
+		}   
+	}
+	close USERS;
+	return (1==0);
 }
 
 # ---------------------------------------------------------------------------
 
 sub webauth_create_allowed {
 
-   # Check if we were called with the deprecated argument "-c" (allow to create lists)
-   return 0 if (defined($opt_c));
+	# Check if we were called with the deprecated argument "-c" (allow to create lists)
+	return (0==0) if (defined($opt_c));
 
-   # Check if webusers file exists - if not, then access is granted
-   return 0 if (! -e "$WEBUSERS_FILE");
+	# if there was no user authentication, then everything is allowed
+	return (0==0) if ($ENV{'REMOTE_USER'} eq '');
 
-   # Read create-permission from webusers file.
-   # the special listname "ALLOW_CREATE" controls, who is allowed to do it
-   open (USERS, "<$WEBUSERS_FILE") || die "Unable to read webusers file ($WEBUSERS_FILE): $!";
-   while(<USERS>) {
-      if (/^ALLOW_CREATE:/i) {
-         if (/(\:\s*|,\s+)((?:$ENV{'REMOTE_USER'})|(?:ALL))\s*(,|$)/) {
-            close USERS; return 0;
-         }
-      }   
-   }
-   close USERS;
-   return 1;
-}
+	# Check if webusers file exists - if not, then access is granted
+	return (0==0) if (! -e "$WEBUSERS_FILE");
 
-# ---------------------------------------------------------------------------
+	# Read create-permission from webusers file.
+	# the special listname "ALLOW_CREATE" controls, who is allowed to do it
+	unless (open (USERS, "<$WEBUSERS_FILE")) {
+		warn "Unable to read webusers file ($WEBUSERS_FILE): $!";
+		$warning = 'WebUsersRead';
+		return (1==0);
+	}
 
-sub ezmlmcgirc {
-   my($listno);
-   if(open(WWW, "<$EZMLM_CGI_RC")) {
-      while(<WWW>) {
-         last if (($listno) = m{(\d+)(\D)\d+\2$LIST_DIR/$Q::list\2});
-      }
-      close WWW;
-      return "$EZMLM_CGI_URL/$listno" if(defined($listno));
-   } return undef;
-
+	while(<USERS>) {
+		if (/^ALLOW_CREATE:/im) {
+			# the following line should be synchronized with the webauth sub
+			if (/[:\s,]($ENV{'REMOTE_USER'}|(ALL))(,|\s|$)/m) {
+				close USERS;
+				return (0==0);
+			}
+		}   
+	}
+	close USERS;
+	return (1==0);
 }
 
 # ---------------------------------------------------------------------------
@@ -926,15 +1197,6 @@ sub rmtree {
 
 # ------------------------------------------------------------------------
 
-sub error_die {
-	my $msg = @_;
-	$pagedata->setValue("Data.ErrorMessage", "$msg");
-	# TODO: besser waere eine Warnung in header.cs
-	$pagename = 'error';
-	&output_page;
-	die $msg;
-}
-                                                                                                                 
 # ------------------------------------------------------------------------
 # End of ezmlm-web.cgi v2.3
 # ------------------------------------------------------------------------
