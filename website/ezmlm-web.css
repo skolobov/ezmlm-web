@@ -19,7 +19,7 @@ font.feature {
 	font-weight: bold;
 	}
 
-#nav-bar {
+#nav_bar {
 	float: left;
 	width: 14%;
 	margin-right: 1%;
@@ -31,30 +31,30 @@ font.feature {
 	background-color: #c0c0b0;
 }
 
-.nav-group {
+.nav_group {
 	margin-top: 1%;
 	padding-bottom: 1%;
 	}
 
-#nav-bar ul {
+#nav_bar ul {
 	list-style: square;
 	color: #af8060;
 	margin: 0;
 	padding-left: 20px;
 	}
 
-#nav-bar li {
+#nav_bar li {
 	margin-top: 0;
 	border-bottom: solid 1px #606070;
 	}
 
-#nav-bar a {
+#nav_bar a {
 	font: bold 85% sans-serif;
 	color: #2f4860;
 	text-decoration: none;
 	}
 
-#nav-bar a:hover {
+#nav_bar a:hover {
 	background-color: #d8d8d8;
 	color: #2f4860;
 	}
@@ -97,7 +97,7 @@ h1.oben {
 	margin: 0;
 	}
 
-#perm-nav {
+#perm_nav {
 	float: right;
 	padding-right: 5px;
 	font-size: 100%;
@@ -105,7 +105,7 @@ h1.oben {
 	background-color: inherit;
 	}
 
-#perm-nav a {
+#perm_nav a {
 	font-weight: bold;
 	color: #ffffff;
 	padding-left: 2px;
@@ -113,7 +113,7 @@ h1.oben {
 	text-decoration: none;
 	}
 
-#perm-nav a:hover {
+#perm_nav a:hover {
 	color: #ffcc00;
 	} 
 
@@ -129,10 +129,12 @@ h1.oben {
 	color: #ffffff;
 	}
 
-#content {
-#	position: absolute;
-#	right: 0px;
-#	width: 85%;
+content {
+/*
+	position: absolute;
+	right: 0px;
+	width: 85%;
+*/
 	font: normal 82% sans-serif;
 	background-color: #ffffff;
 	padding: 2px;
@@ -156,7 +158,7 @@ h1.oben {
 	text-align: justify;
 	}
 
-#info-title {
+#info_title {
 	text-align: center;
 	background-color: #c0c0b0;
 	margin: 0.5%;
