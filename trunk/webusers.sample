@@ -1,5 +1,0 @@
-comm: guy, arb
-users: arb
-members: ALL
-ALL: root
-ALLOW_CREATE: root, guy
