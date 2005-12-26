@@ -39,7 +39,7 @@ EOM
       $ezmlm_path = prompt('Ezmlm binary directory?', '/usr/local/bin');
       last if (-e "$ezmlm_path/ezmlm-make");
       print "I can't find $ezmlm_path/ezmlm-make. Please try again\n";
-      if ($_ >= 10) {
+      if (! -e "$ezmlm_path/ezmlm-make") {
          print STDERR "No correct input after $_ attempts.  Exiting Makefile.PL.\n";
          exit (2);
       }
@@ -57,7 +57,7 @@ EOM
       $qmail_path = prompt('Qmail base directory?', '/var/qmail');
       last if (-d "$qmail_path/control");
       print "I can't find $qmail_path/control. Please try again\n";   
-      if ($_ >= 10) {
+      if (! -e "$qmail_path/control") {
          print STDERR "No correct input after $_ attempts.  Exiting Makefile.PL.\n";
          exit (2);
       }
@@ -81,7 +81,7 @@ EOM
          last if (-e "$mysql_path/mysql" || $mysql_path eq '');
          print "I can't find $mysql_path/mysql. Please enter the full path\n";
          print "or leave this option blank if you don't want to use MySQL\n";
-         if ($_ >= 10) {
+         if ((! -e "$mysql_path/mysql") && ($mysql_path ne '')) {
             print STDERR "No correct input after $_ attempts.  Exiting Makefile.PL.\n";
             exit (2);
          }

@@ -144,7 +144,8 @@ sub update {
 
 	# can we actually alter this list;
 	($self->_seterror(-1, 'must setlist() before you update()') && return 0) unless(defined($self->{'LIST_NAME'}));
-	($self->_seterror(-1, "$self->{'LIST_NAME'} does not appear to be a valid list in update()") && return 0) unless(-e "$self->{'LIST_NAME'}/config");
+	# check for important files: 'config' (idx < v5.0) or 'flags' (idx >= 5.0)
+	($self->_seterror(-1, "$self->{'LIST_NAME'} does not appear to be a valid list in update()") && return 0) unless((-e "$self->{'LIST_NAME'}/config") || (-e "$self->{'LIST_NAME'}/flags"));
 
 	# Work out if this is a vhost.
 	open(OUTHOST, "<$self->{'LIST_NAME'}/outhost") || ($self->_seterror(-1, 'unable to read outhost in update()') && return 0);
@@ -176,15 +177,15 @@ sub update {
 # == Get a list of options for the current list ==
 sub getconfig {
 	my($self) = @_;
-	my($options, $i);
+	my($options);
 
 	# Read the config file
-	if(open(CONFIG, "<$self->{'LIST_NAME'}/dot")) { 
+	if(-e "$self->{'LIST_NAME'}/flags") { 
 		# this file exists since ezmlm-idx-5.0.0
-		# 'config' is not authorative anymore since this version
-		$option = $self->_getconfigmanual_idx5();
+		# 'config' is not authorative anymore since that version
+		$options = $self->_getconfig_idx5();
 	} elsif(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
-			# 'config' contains the authorative information
+		# 'config' contains the authorative information
 		while(<CONFIG>) {
 			if (/^F:-(\w+)/) {
 				$options = $1;
@@ -194,19 +195,13 @@ sub getconfig {
 		}
 		close CONFIG;
 	} else {
-		# Try manually
-		$options = $self->_getconfigmanual_idx4(); 
+		# Try manually - this will ignore all string settings, that can only be found
+		# in the config file
+		$options = $self->_getconfigmanual(); 
 	}
 
 	($self->_seterror(-1, 'unable to read configuration in getconfig()') && return undef) unless (defined($options));   
 
-	# Add the unselected options too
-	# TODO: this is not especially great, as some options are undefined and cause an
-	# error, if you use it for update
-	foreach $i ('a' .. 'z') {
-		$options .= uc($i) unless ($options =~ /$i/i)
-	}
-   
 	$self->_seterror(undef);
 	return $options;
 }
@@ -514,10 +509,45 @@ sub _checkaddress {
 	return 1;
 }
 
-# == Internal function to work out a list configuration ==
-sub _getconfigmanual_idx4 {
+# == Internal function to work out a list configuration (idx >= v5.0) ==
+sub _getconfig_idx5 {
 	my($self) = @_;
-	my ($savedollarslash, $options, $manager, $editor);
+	my ($options, %optionfiles);
+	my ($file, $opt_num, $temp);
+
+	# read flag file (available since ezmlm-idx 5.0.0)
+	$options = chomp($self->getpart('flags'));
+	# remove prefixed '-'
+	$options =~ s/^-//;
+   
+	# since ezmlm-idx v5, we have to read the config
+	# values from different files
+	# first: preset a array with "filename" and "option_number"
+	%optionfiles = (
+		'sublist', '0',
+		'fromheader', '3',
+		'tstdigopts', '4',
+		'owner', '5',
+		'sql', '6',
+		'modpost', '7',
+		'modsub', '8');
+		# "-9" seems to be ignored - this is a good change (tm)
+	while (($file, $opt_num) = each(%optionfiles)) {
+		if (-e "$self->{'LIST_NAME'}/$file") {
+			$temp = chomp($self->getpart($file));
+			$options .= " -$opt_num '$temp'" if ($temp ne '');
+		}
+	}
+
+	return $options;
+}
+
+# == Internal function to work out a list configuration manually (idx < v5.0.0 ) ==
+sub _getconfigmanual {
+	# use this function for strange lists without
+	# 'config' (idx < v5.0) and 'flags' (idx >= v5.0)
+	my($self) = @_;
+	my ($savedollarslash, $options, $manager, $editor, $i);
 
 	# Read the whole of DIR/editor and DIR/manager in
 	$savedollarslash = $/;
@@ -550,6 +580,15 @@ sub _getconfigmanual_idx4 {
                       || $editor =~ /ezmlm-gate/ );
 	$options .= 'x' if (-e "$self->{'LIST_NAME'}/extra" || -e "$self->{'LIST_NAME'}/allow");
 
+	# Add the unselected options too
+	# but we will skip invalid options (any of 'cevz')
+	foreach $i ('a' .. 'z') {
+		$options .= uc($i) unless (('cevz' =~ /$i/) || ($options =~ /$i/i))
+	}
+   
+	# there is no way to get the other string settings, that are only
+	# defined in 'config' - sorry ...
+   
 	return $options;
 }
 
@@ -723,9 +762,10 @@ See the ezmlm-make(1) man page for more details
 
 getconfig() returns a string that contains the command line switches that
 would be necessary to re-create the current list. It does this by reading the
-DIR/config file if it exists. If it can't find this file it attempts to work
-things out for itself (with varying degrees of success). If both these
-methods fail, then getconfig() returns undefined.
+DIR/config file (idx < v5.0) or DIR/flags (idx >= v5.0) if one of them exists.
+If it can't find these files it attempts to work things out for itself (with
+varying degrees of success). If both these methods fail, then getconfig()
+returns undefined.
 
    $list->ismodpost;
    $list->ismodsub;
