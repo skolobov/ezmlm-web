@@ -51,7 +51,7 @@ require Exporter;
 @EXPORT = qw(
    
 );
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 require 5.005;
 
@@ -175,27 +175,34 @@ sub update {
 
 # == Get a list of options for the current list ==
 sub getconfig {
-   my($self) = @_;
-   my($options, $i);
+	my($self) = @_;
+	my($options, $i);
 
-   # Read the config file
-   if(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
-      while(<CONFIG>) {
-         if (/^F:-(\w+)/) {
-            $options = $1;
-         } elsif (/^(\d):(.+)$/) {
-            $options .= " -$1 '$2'";
-         }
-      }
-      close CONFIG;
-   } else {
-      # Try manually
-      $options = $self->_getconfigmanual(); 
-   }
+	# Read the config file
+	if(open(CONFIG, "<$self->{'LIST_NAME'}/dot")) { 
+		# this file exists since ezmlm-idx-5.0.0
+		# 'config' is not authorative anymore since this version
+		$option = $self->_getconfigmanual_idx5();
+	} elsif(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
+   		# 'config' contains the authorative information
+		while(<CONFIG>) {
+			if (/^F:-(\w+)/) {
+				$options = $1;
+			} elsif (/^(\d):(.+)$/) {
+				$options .= " -$1 '$2'";
+			}
+		}
+		close CONFIG;
+	} else {
+		# Try manually
+		$options = $self->_getconfigmanual_idx4(); 
+	}
 
    ($self->_seterror(-1, 'unable to read configuration in getconfig()') && return undef) unless (defined($options));   
 
    # Add the unselected options too
+   # TODO: this is not especially great, as some options are undefined and cause an
+   # error, if you use it for update
    foreach $i ('a' .. 'z') {
       $options .= uc($i) unless ($options =~ /$i/i)
    }
@@ -508,7 +515,7 @@ sub _checkaddress {
 }
 
 # == Internal function to work out a list configuration ==
-sub _getconfigmanual {
+sub _getconfigmanual_idx4 {
    my($self) = @_;
    my ($savedollarslash, $options, $manager, $editor);
 
