@@ -516,7 +516,8 @@ sub _getconfig_idx5 {
 	my ($file, $opt_num, $temp);
 
 	# read flag file (available since ezmlm-idx 5.0.0)
-	$options = chomp($self->getpart('flags'));
+	$options = $self->getpart('flags');
+	$options = chomp($options);
 	# remove prefixed '-'
 	$options =~ s/^-//;
    
@@ -534,7 +535,8 @@ sub _getconfig_idx5 {
 		# "-9" seems to be ignored - this is a good change (tm)
 	while (($file, $opt_num) = each(%optionfiles)) {
 		if (-e "$self->{'LIST_NAME'}/$file") {
-			$temp = chomp($self->getpart($file));
+			$temp = $self->getpart($file);
+			$temp = chomp($temp);
 			$options .= " -$opt_num '$temp'" if ($temp ne '');
 		}
 	}
