@@ -56,9 +56,9 @@ $VERSION = '0.06';
 require 5.005;
 
 # == Begin site dependant variables ==
-$EZMLM_BASE = '/usr/local/bin'; #Autoinserted by Makefile.PL 
-$QMAIL_BASE = '/var/qmail'; #Autoinserted by Makefile.PL 
-$MYSQL_BASE = ''; #Autoinserted by Makefile.PL 
+$EZMLM_BASE = '/usr/local/bin'; #Autoinserted by Makefile.PL
+$QMAIL_BASE = '/var/qmail'; #Autoinserted by Makefile.PL
+$MYSQL_BASE = ''; #Autoinserted by Makefile.PL
 # == End site dependant variables ==
 
 use Carp;
@@ -139,7 +139,9 @@ sub update {
 	# UGLY!
 	foreach (split(/["'](.+?)["']|(-\w+)/, $switches)) {
 		next if (!defined($_) or !$_ or $_ eq ' ');
-		push @switches, $_;
+		# untaint input
+		$_ =~ m/^([\w _\/,\.@:'"-]*)$/;
+		push @switches, $1;
 	}
 
 	# can we actually alter this list;
@@ -435,21 +437,30 @@ sub errno {
 # == Test the compatiblity of the module ==
 sub check_version {
 	my($self) = @_;
+	my ($ezmlm, $idx);
 	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
 	$self->_seterror(undef);
 
-	my ($ezmlm, $idx) = $version =~ m/^ezmlm-make\s+version:\s+ezmlm-([\d.]+)(?:\+ezmlm-idx-([\d.]+))?/;
-	if($ezmlm >= 0.53) {
-		if (defined($idx)) {
-			if ($idx >= 0.40) {
-            return 0;
-			} else {
-            return $version;
-			}
+	#my ($ezmlm, $idx) = $version =~ m/^ezmlm-make\s+version:\s+(ezmlm-([\d\.])+|ezmlm-idx-([\d\.]+))$/;
+	$version = $1 if ($version =~ m/^[^:]*:\s+(.*)$/);
+	$ezmlm = $1 if ($version =~ m/ezmlm-([\d\.]+)$/);
+	$idx = $1 if ($version =~ m/ezmlm-idx-([\d\.]+)$/);
+	# ezmlm-idx is required
+	if(defined($ezmlm)) {
+		return $version;
+	} elsif (defined($idx)) {
+		if (($idx =~ m/^(\d)/) && ($1 >= 5)) {
+			# version 5.0 or higher
+			return 0;
+		} elsif (($idx =~ m/^0\.(\d)/) && ($1 >= 0)) {
+			# version 0.4 or higher
+			return 0;
+		} else {
+			return $version;
 		}
-		return 0;
+	} else {
+		return $version;
 	}
-	return $version;
 }
 
 # == Create SQL Database tables if defined for a list ==
@@ -516,8 +527,7 @@ sub _getconfig_idx5 {
 	my ($file, $opt_num, $temp);
 
 	# read flag file (available since ezmlm-idx 5.0.0)
-	$options = $self->getpart('flags');
-	$options = chomp($options);
+	chomp($options = $self->getpart('flags'));
 	# remove prefixed '-'
 	$options =~ s/^-//;
    
@@ -535,8 +545,7 @@ sub _getconfig_idx5 {
 		# "-9" seems to be ignored - this is a good change (tm)
 	while (($file, $opt_num) = each(%optionfiles)) {
 		if (-e "$self->{'LIST_NAME'}/$file") {
-			$temp = $self->getpart($file);
-			$temp = chomp($temp);
+			chomp($temp = $self->getpart($file));
 			$options .= " -$opt_num '$temp'" if ($temp ne '');
 		}
 	}
