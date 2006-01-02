@@ -34,3 +34,8 @@ Revision history for Perl extension Mail::Ezmlm.
 0.06 Mon Dec 26 18:55:12 CET 2005
    - support for ezmlm-idx-5.0.0 added
    - fixed version check
+
+0.07 Mon Jan  2 22:12:32 CET 2006
+   - new functions for text management (idx >= 5.0)
+   - new functions for language setting (idx >= 5.0)
+   - new functions for config directory setting (idx >= 5.0)

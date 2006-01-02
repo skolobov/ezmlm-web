@@ -140,7 +140,7 @@ sub update {
 	foreach (split(/["'](.+?)["']|(-\w+)/, $switches)) {
 		next if (!defined($_) or !$_ or $_ eq ' ');
 		# untaint input
-		$_ =~ m/^([\w _\/,\.@:'"-]*)$/;
+		$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
 		push @switches, $1;
 	}
 
@@ -344,6 +344,7 @@ sub issub {
 }
 
 # == Is the list posting moderated ==
+# DEPRECATED: useless - you should better check the appropriate config flag
 sub ismodpost {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before ismodpost()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -352,6 +353,7 @@ sub ismodpost {
 }
 
 # == Is the list subscriber moderated ==
+# DEPRECATED: useless - you should better check the appropriate config flag
 sub ismodsub {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before ismodsub()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -360,6 +362,7 @@ sub ismodsub {
 }
 
 # == Is the list remote adminable ==
+# DEPRECATED: useless - you should better check the appropriate config flag
 sub isremote {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before isremote()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -368,6 +371,7 @@ sub isremote {
 }
 
 # == Does the list have a kill list ==
+# DEPRECATED: useless - you should better check the appropriate config flag
 sub isdeny {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before isdeny()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -376,6 +380,7 @@ sub isdeny {
 }
 
 # == Does the list have an allow list ==
+# DEPRECATED: useless - the allow list is always created automatically
 sub isallow {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before isallow()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -384,6 +389,7 @@ sub isallow {
 }
 
 # == Is this a digested list ==
+# DEPRECATED: useless - you should better check the appropriate config flag
 sub isdigest {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before isdigest()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -423,6 +429,187 @@ sub setpart {
 	} ($self->_seterror($?) && return undef);
 }
 
+# == get the configuration directory for this list (idx >= 5.0) ==
+# return '/etc/ezmlm' for idx < 5.0
+sub get_config_dir {
+	my ($self) = shift;
+	my $conf_dir;
+	if (($self->_get_version() >= 5) && (-e "$self->{'LIST_NAME'}/conf-etc")) {
+		chomp($conf_dir = $self->getpart('conf-etc'));
+	} else {
+		$conf_dir = '/etc/ezmlm';
+	}
+	return $conf_dir;
+}
+
+# == set the configuration directory for this list (idx >= 5.0) ==
+# return without error for idx < 5.0
+sub set_config_dir {
+	my ($self, $conf_dir) = @_;
+	return (0==0) if ($self->_get_version() < 5);
+	$self->setpart('conf-etc', "$conf_dir");
+}
+
+
+# == get list of available languages (for idx >= 5.0) ==
+# return empty list for idx < 5.0
+sub get_available_languages {
+	my ($self) = shift;
+	my @langs = ();
+	return @langs if ($self->_get_version() < 5);
+
+	$self->_seterror(undef);
+
+	# check for language directories
+	my $conf_dir;
+	($self->_seterror(-1, 'could not retrieve configuration directory') && return 0)
+		unless ($conf_dir = $self->get_config_dir());
+	if (opendir DIR, "$conf_dir") {
+		my @dirs;
+		@dirs = grep !/^\./, readdir DIR;
+		closedir DIR;
+		my $item;
+		foreach $item (@dirs) {
+			push (@langs, $item) if (-e "$conf_dir/$item/text");
+		}
+		return @langs;
+	} else {
+		$self->_seterror(-1, 'could not access configuration directory');
+		return 0;
+	}
+}
+
+
+# == get the selected language of the list (idx >= 5.0) ==
+# return empty string for idx < 5.0
+sub get_lang {
+	my ($self) = shift;
+	my $lang;
+	return '' if ($self->_get_version() < 5);
+	if (-e "$self->{'LIST_NAME'}/conf-lang") {
+		chomp($lang = $self->getpart('conf-lang'));
+	} else {
+		$lang = 'default';
+	}
+	return $lang;
+}
+
+
+# == set the selected language of the list (idx >= 5.0) ==
+# return without error for idx < 5.0
+sub set_lang {
+	my ($self, $lang) = @_;
+	return (0==0) if ($self->_get_version() < 5);
+	$self->setpart('conf-lang', "$lang");
+}
+
+
+# == get list of available text files ==
+sub get_available_text_files {
+	my ($self) = shift;
+	my @files;
+	my $item;
+	my %seen = ();
+	
+	# customized text files of this list (idx >= 5.0)
+	# OR text files of this list (idx < 5.0)
+	if (opendir DIR, "$self->{'LIST_NAME'}/text") {
+		my @local_files = grep !/^\./, readdir DIR;
+		closedir DIR;
+		foreach $item (@local_files) {
+			unless ($seen{$item}) {
+				push (@files, $item);
+				$seen{$item} = 1;
+			}
+		}
+	}
+
+	# default text files (only idx >= 5.0)
+	if (($self->_get_version() >= 5) && (opendir GLOBDIR, $self->get_config_dir . '/' . $self->get_lang())) {
+		my @global_files = grep !/^\./, readdir GLOBDIR;
+		closedir GLOBDIR;
+		foreach $item (@global_files) {
+			unless ($seen{$item}) {
+				push (@files, $item);
+				$seen{$item} = 1;
+			}
+		}
+	}
+
+	if ($#files > 0) {
+		return @files;
+	} else {
+		$self->_seterror(-1, 'no textfiles found');
+		return undef;
+	}
+}
+
+# == get text file content ==
+sub get_text_content {
+	my ($self, $textfile) = @_;
+
+	if (-e "$self->{'LIST_NAME'}/text/$textfile") {
+		return $self->getpart("text/$textfile");
+	} elsif ($self->_get_version >= 5) {
+		my $filename = $self->get_config_dir() . '/' . $self->get_lang() . "/text/$textfile";
+		my @contents;
+		my $content;
+		if (open(PART, "<$filename")) {
+			while(<PART>) {
+				chomp($contents[$#contents++] = $_);
+				$content .= $_;
+			}
+			close PART;
+			if(wantarray) {
+				return @contents;
+			} else {
+				return $content;
+			}
+		} else {
+			$self->_seterror($?, "could not open $filename");
+			return undef;
+		}
+	} else {
+		$self->_seterror(-1, "could not get the text file ($textfile)");
+		return undef;
+	}
+}
+
+
+# == set text file content ==
+sub set_text_content {
+	my ($self, $textfile, @content) = @_;
+	mkdir "$self->{'LIST_NAME'}/text" unless (-e "$self->{'LIST_NAME'}/text");
+	$self->setpart("text/$textfile", @content);
+}
+
+
+# == check if specified text file is customized or default (for idx >= 5.0) ==
+# return whether the text file exists in the list's directory (false) or not (true)
+sub is_text_default {
+	my ($self, $textfile) = @_;
+	return (0==1) if ($textfile eq '');
+	if (-e "$self->{'LIST_NAME'}/text/$textfile") {
+		return (1==0);
+	} else {
+		return (0==0);
+	}
+}
+
+# == remove non-default text file (for idx >= 5.0) ==
+# return without error for idx < 5
+# otherwise: remove customized text file from the list's directory
+sub reset_text {
+	my ($self, $textfile) = @_;
+	return if ($self->_get_version() < 5);
+	return if ($textfile eq '');
+	return if ($textfile =~ /[^\w_\.-]/);
+	return if ($self->is_text_default($textfile));
+	($self->_seterror(-1, "could not remove customized text file ($textfile)") && return 0)
+		unless unlink("$self->{'LIST_NAME'}/text/$textfile");
+}
+
+
 # == return an error message if appropriate ==
 sub errmsg {
 	my($self) = @_;
@@ -437,29 +624,47 @@ sub errno {
 # == Test the compatiblity of the module ==
 sub check_version {
 	my($self) = @_;
+	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
+	$self->_seterror(undef);
+
+	# ezmlm-idx is necessary
+	if ($self->_get_version() >= 4) {
+		return 0;
+	} else {
+		return $version;
+	}
+}
+
+# == get the major ezmlm version ==
+# return values:
+#	0 => unknown version
+# 	3 => ezmlm v0.53
+# 	4 => ezmlm-idx v0.4*
+# 	5 => ezmlm-idx v5.*
+sub _get_version {
+	my($self) = @_;
 	my ($ezmlm, $idx);
 	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
 	$self->_seterror(undef);
 
-	#my ($ezmlm, $idx) = $version =~ m/^ezmlm-make\s+version:\s+(ezmlm-([\d\.])+|ezmlm-idx-([\d\.]+))$/;
 	$version = $1 if ($version =~ m/^[^:]*:\s+(.*)$/);
 	$ezmlm = $1 if ($version =~ m/ezmlm-([\d\.]+)$/);
 	$idx = $1 if ($version =~ m/ezmlm-idx-([\d\.]+)$/);
-	# ezmlm-idx is required
+
 	if(defined($ezmlm)) {
-		return $version;
+		return 3;
 	} elsif (defined($idx)) {
 		if (($idx =~ m/^(\d)/) && ($1 >= 5)) {
 			# version 5.0 or higher
-			return 0;
+			return 5;
 		} elsif (($idx =~ m/^0\.(\d)/) && ($1 >= 0)) {
 			# version 0.4 or higher
-			return 0;
+			return 4;
 		} else {
-			return $version;
+			return 0;
 		}
 	} else {
-		return $version;
+		return 0;
 	}
 }
 
@@ -785,7 +990,8 @@ returns undefined.
    $list->isallow;
 
 The above five functions test various features of the list, and return a 1
-if the list has that feature, or a 0 if it doesn't.
+if the list has that feature, or a 0 if it doesn't. These functions are
+considered DEPRECATED as their result is not reliable. Use "getconfig" instead.
 
 =head2 Updating the configuration of the current list:
 
@@ -801,6 +1007,39 @@ Note that you do not need to supply the '-' or the 'e' command line switch.
 
 getpart() and setpart() can be used to retrieve and set the contents of
 various text files such as headeradd, headerremove, mimeremove, etc.
+
+=head2 Manage language dependent text files
+
+   $list->get_available_text_files;
+   $list->get_text_content('sub-ok');
+   $list->set_text_content('sub-ok', @content);
+
+These functions allow you to manipulate the text files, that are used for
+automatic replies by ezmlm.
+
+   $list->is_text_default('sub-ok');
+   $list->reset_text('sub-ok');
+
+These two functions are available if you are using ezmlm-idx v5.0 or higher.
+is_text_default() checks, if there is a customized text file defined for this list.
+reset_text() removes the customized text file from this list. Ezmlm-idx will use
+system-wide default text file, if there is no customized text file for this list.
+
+=head2 Change the list's settings (for ezmlm-idx >= 5.0)
+
+   $list->get_config_dir;
+   $list->set_config_dir('/etc/ezmlm-local');
+
+These function access the file 'conf-etc' in the mailing list's directory.
+
+   $list->get_available_languages;
+   $list->get_lang;
+   $list->set_lang('de');
+
+These functions allow you to change the language of the text files, that are used
+for automatic replies of ezmlm-idx (v5.0 or higher, the configured language is stored
+in 'conf-lang' within the mailing list's directory). Customized files (in the 'text'
+directory of a mailing list directory) override the default language setting.
 
 =head2 Creating MySQL tables:
 
