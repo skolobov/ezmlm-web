@@ -1,0 +1,5 @@
+how to take a screenshot:
+ * grab it
+ * resize it to 600x450
+ * add a one-picel border(red) -> 602x452
+ * upload it
