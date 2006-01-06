@@ -720,7 +720,7 @@ sub add_address {
 		my($fh) = $q->param('mailaddressfile');
 		while (<$fh>) {
 			next if (/^\s*$/ or /^#/); # blank, comments
-			if ( /(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/ ) {
+			if ( /(\w[\w\.\!\#\$\%\&\'\`\*\+\-\/\=\?\^\{\|\}\~]*)@(\w[\-\w_\.]+)/) {
 					chomp();
 					push @addresses, "$_";
 				} else {
@@ -736,7 +736,7 @@ sub add_address {
 		$address .= $DEFAULT_HOST if ($q->param('mailaddress_add') =~ /\@$/);
 
 		# untaint
-		if ($address =~ m/(\w[\-\w_\.]*)@(\w[\-\w_\.]+)/) {
+		if ($address =~ m/(\w[\w\.\!\#\$\%\&\'\`\*\+\-\/\=\?\^\{\|\}\~]*)@(\w[\-\w_\.]+)/) {
 			push @addresses, "$address";
 		  } else {
 			warn "invalid address to add: $address to $part";
@@ -752,7 +752,8 @@ sub add_address {
 	foreach $address (@addresses) {
 
 		($add) = Mail::Address->parse($address);
-		if (($add->address() =~ /^\w[\w_-]*\@/) && !($list->issub($add->address(), $part))) {
+		if (($add->address() =~ m/^(\w[\w\.\!\#\$\%\&\'\`\*\+\-\/\=\?\^\{\|\}\~]*)@(\w[\-\w_\.]+)$/)
+				&& !($list->issub($add->address(), $part))) {
 			# it seems, that we cannot trust the return value of "$list->sub"
 			$list->sub($add->address(), $part);
 			if(defined($add->name()) && $PRETTY_NAMES) {
