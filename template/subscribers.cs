@@ -104,30 +104,29 @@
 		</ul></form></td>
 	<?cs /if ?>
 
-	<td><form method="post" action="<?cs var:ScriptName ?>" enctype="multipart/form-data">
+	<td><td><form method="post" action="<?cs var:ScriptName ?>" enctype="multipart/form-data">
 		<!-- this form has to be "multipart/form-data" to make file upload work -->
 		<input type="hidden" name="list" value="<?cs var:Data.List.Name ?>" />
 		<?cs if:Data.List.PartType ?>
 			<input type="hidden" name="part" value="<?cs var:Data.List.PartType ?>" />
 		<?cs /if ?>
+		<ul>
 
-		<fieldset>
-			<ul>
-				<li><?cs var:html_escape(Lang.Misc.AddSubscriberAddress) ?>
-					<ul><li><input type="text" name="mailaddress_add" size="40" /></li>
-					</ul></li>
-				<?cs if:Data.Permissions.FileUpload ?>
-					<li><?cs var:html_escape(Lang.Misc.AddSubscriberFile) ?>
-					<ul><li><input type="file" name="mailaddressfile" size="20"
-						maxlength="200" /></li>
-					</ul></li>
-				<?cs /if ?>
-			</ul>
-		</fieldset>
+			<li><?cs var:html_escape(Lang.Misc.AddSubscriberAddress) ?>
+				<ul><li><input type="text" name="mailaddress_add" size="40" /></li>
+				</ul></li>
+			<?cs if:Data.Permissions.FileUpload ?>
+				<li><?cs var:html_escape(Lang.Misc.AddSubscriberFile) ?>
+				<ul><li><input type="file" name="mailaddressfile" size="20"
+					maxlength="200" /></li>
+				</ul></li>
+			<?cs /if ?>
 
-		<input type="hidden" name="action" value="address_add" />
-		<button type="submit" name="send" value="do"><?cs var:html_escape(Lang.Buttons.AddAddress) ?></button>
-	</form></td></tr>
+			<li><input type="hidden" name="action" value="address_add" />
+			<button type="submit" name="send" value="do"><?cs var:html_escape(Lang.Buttons.AddAddress) ?></button></li>
+		</ul>
+		</form>
+	</td></tr>
 	</table>
 
 	</fieldset>

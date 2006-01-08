@@ -51,7 +51,3 @@
 		var:string.slice(text,len - limit / #2 + #3 - #1, len) ?><?cs 
 	else ?><?cs var:text ?><?cs /if ?><?cs
  /def ?>
-
-<?cs def:display_option(optname)
-	?><?cs linclude:TemplateDir + "/config_options/" + optname + ".cs" ?><?cs
- /def ?>

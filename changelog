@@ -1,3 +1,6 @@
+Version 3.0.2 - 01/08/02006
+ * small language fix
+
 Version 3.0.1 - 01/06/02006
  * allow several special characters in local part of mail address (RFC2822)
 
