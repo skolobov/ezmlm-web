@@ -34,9 +34,17 @@ ezmlm-make, ezmlm-sub, etc).
 EOM
 
    *prompt = \&ExtUtils::MakeMaker::prompt;
+   
+   # guess default
+   $ezmlm_path = '/usr/local/bin';
+   $ezmlm_path = '/usr/local/bin/ezmlm' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/local/bin/ezmlm-idx' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin/ezmlm' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin/ezmlm-idx' unless (-e "$ezmlm_path/ezmlm-make");
 
    foreach (1..10) {
-      $ezmlm_path = prompt('Ezmlm binary directory?', '/usr/local/bin');
+      $ezmlm_path = prompt('Ezmlm binary directory?', "$ezmlm_path");
       last if (-e "$ezmlm_path/ezmlm-make");
       print "I can't find $ezmlm_path/ezmlm-make. Please try again\n";
       if (! -e "$ezmlm_path/ezmlm-make") {

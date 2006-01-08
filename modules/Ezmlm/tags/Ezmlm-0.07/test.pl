@@ -148,7 +148,7 @@ if ($list->get_text_content('sub-ok') eq "testing message\n") {
 }
 
 print 'Testing if text file is marked as customized (only idx >= 5.0): ';
-if ($list->_get_version >= 5) {
+if ($list->get_version() >= 5) {
 	if ($list->is_text_default('sub-ok')) {
 		print 'not ok 12 [', $list->errmsg(), "]\n";
 		$failed++;
@@ -160,7 +160,7 @@ if ($list->_get_version >= 5) {
 }
 
 print 'Testing resetting text files (only idx >= 5.0): ';
-if ($list->_get_version >= 5) {
+if ($list->get_version() >= 5) {
 	$list->reset_text('sub-ok');
 	if ($list->is_text_default('sub-ok')) {
 		print "ok 13\n";
@@ -173,7 +173,7 @@ if ($list->_get_version >= 5) {
 }
 
 print 'Testing retrieving available languages (only idx >= 5.0): ';
-if ($list->_get_version >= 5) {
+if ($list->get_version() >= 5) {
 	my @avail_langs = $list->get_available_languages();
 	if ($#avail_langs > 0) {
 		print "ok 14\n";
@@ -186,7 +186,7 @@ if ($list->_get_version >= 5) {
 }
 
 print 'Testing changing the configured language (only idx >= 5.0): ';
-if ($list->_get_version >= 5) {
+if ($list->get_version() >= 5) {
 	my @avail_langs = $list->get_available_languages();
 	$list->set_lang($avail_langs[$#avail_langs-1]);
 	if ($list->get_lang() eq $avail_langs[$#avail_langs-1]) {
@@ -200,7 +200,7 @@ if ($list->_get_version >= 5) {
 }
 
 print 'Testing getting the configuration directory (only idx >= 5.0): ';
-if ($list->_get_version >= 5) {
+if ($list->get_version() >= 5) {
 	if ($list->get_config_dir() ne '') {
 		print "ok 16\n";
 	} else {
@@ -212,7 +212,7 @@ if ($list->_get_version >= 5) {
 }
 
 print 'Testing changing the configuration directory (only idx >= 5.0): ';
-if ($list->_get_version >= 5) {
+if ($list->get_version() >= 5) {
 	$list->set_config_dir('/etc/ezmlm-local');
 	if ($list->get_config_dir() eq '/etc/ezmlm-local') {
 		print "ok 17\n";

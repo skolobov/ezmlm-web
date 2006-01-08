@@ -401,7 +401,14 @@ sub isdigest {
 sub getpart {
 	my($self, $part) = @_;
 	my(@contents, $content);
-	if(open(PART, "<$self->{'LIST_NAME'}/$part")) {
+	# check for the file in the list directory first
+	my $filename = $self->{'LIST_NAME'} . "/$part";
+	# check for default file in config directory, if necessary
+	# BEWARE: get_config_dir and get_lang may _not_ cause an eternal loop :)
+	$filename = $self->get_config_dir() . '/' . $self->get_lang() . "/$part"
+		if (!(-e "$filename") && (get_version() >= 5) &&
+			($part ne 'conf-etc') && ($part ne 'conf-lang'));
+	if (open(PART, "<$filename")) {
 		while(<PART>) {
 			chomp($contents[$#contents++] = $_);
 			$content .= $_;
@@ -432,9 +439,9 @@ sub setpart {
 # == get the configuration directory for this list (idx >= 5.0) ==
 # return '/etc/ezmlm' for idx < 5.0
 sub get_config_dir {
-	my ($self) = shift;
+	my $self = shift;
 	my $conf_dir;
-	if (($self->_get_version() >= 5) && (-e "$self->{'LIST_NAME'}/conf-etc")) {
+	if ((get_version() >= 5) && (ref $self) && (-e "$self->{'LIST_NAME'}/conf-etc")) {
 		chomp($conf_dir = $self->getpart('conf-etc'));
 	} else {
 		$conf_dir = '/etc/ezmlm';
@@ -446,7 +453,7 @@ sub get_config_dir {
 # return without error for idx < 5.0
 sub set_config_dir {
 	my ($self, $conf_dir) = @_;
-	return (0==0) if ($self->_get_version() < 5);
+	return (0==0) if (get_version() < 5);
 	$self->setpart('conf-etc', "$conf_dir");
 }
 
@@ -454,16 +461,20 @@ sub set_config_dir {
 # == get list of available languages (for idx >= 5.0) ==
 # return empty list for idx < 5.0
 sub get_available_languages {
-	my ($self) = shift;
+	my $self = shift;
 	my @langs = ();
-	return @langs if ($self->_get_version() < 5);
+	return @langs if (get_version() < 5);
 
-	$self->_seterror(undef);
+	$self->_seterror(undef) if (ref $self);
 
 	# check for language directories
 	my $conf_dir;
-	($self->_seterror(-1, 'could not retrieve configuration directory') && return 0)
-		unless ($conf_dir = $self->get_config_dir());
+	if (ref $self) {
+		($self->_seterror(-1, 'could not retrieve configuration directory') && return 0)
+			unless ($conf_dir = $self->get_config_dir());
+	} else {
+		$conf_dir = get_config_dir();
+	}
 	if (opendir DIR, "$conf_dir") {
 		my @dirs;
 		@dirs = grep !/^\./, readdir DIR;
@@ -474,8 +485,8 @@ sub get_available_languages {
 		}
 		return @langs;
 	} else {
-		$self->_seterror(-1, 'could not access configuration directory');
-		return 0;
+		$self->_seterror(-1, 'could not access configuration directory') if (ref $self);
+		return undef;
 	}
 }
 
@@ -485,7 +496,7 @@ sub get_available_languages {
 sub get_lang {
 	my ($self) = shift;
 	my $lang;
-	return '' if ($self->_get_version() < 5);
+	return '' if (get_version() < 5);
 	if (-e "$self->{'LIST_NAME'}/conf-lang") {
 		chomp($lang = $self->getpart('conf-lang'));
 	} else {
@@ -499,8 +510,13 @@ sub get_lang {
 # return without error for idx < 5.0
 sub set_lang {
 	my ($self, $lang) = @_;
-	return (0==0) if ($self->_get_version() < 5);
-	$self->setpart('conf-lang', "$lang");
+	return (0==0) if (get_version() < 5);
+	if ($lang eq 'default') {
+		return 1 if (unlink "$self->{'LIST_NAME'}/conf-lang");
+	} else {
+		return 1 if ($self->setpart('conf-lang', "$lang"));
+	}
+	return 0;
 }
 
 
@@ -525,13 +541,17 @@ sub get_available_text_files {
 	}
 
 	# default text files (only idx >= 5.0)
-	if (($self->_get_version() >= 5) && (opendir GLOBDIR, $self->get_config_dir . '/' . $self->get_lang())) {
-		my @global_files = grep !/^\./, readdir GLOBDIR;
-		closedir GLOBDIR;
-		foreach $item (@global_files) {
-			unless ($seen{$item}) {
-				push (@files, $item);
-				$seen{$item} = 1;
+	if (get_version() >= 5) {
+		my $dirname = $self->get_config_dir . '/' . $self->get_lang() . '/text';
+		$dirname = $self->get_config_dir . '/default/text' unless (-e $dirname);
+		if (opendir GLOBDIR, $dirname) {
+			my @global_files = grep !/^\./, readdir GLOBDIR;
+			closedir GLOBDIR;
+			foreach $item (@global_files) {
+				unless ($seen{$item}) {
+					push (@files, $item);
+					$seen{$item} = 1;
+				}
 			}
 		}
 	}
@@ -550,8 +570,9 @@ sub get_text_content {
 
 	if (-e "$self->{'LIST_NAME'}/text/$textfile") {
 		return $self->getpart("text/$textfile");
-	} elsif ($self->_get_version >= 5) {
+	} elsif (get_version() >= 5) {
 		my $filename = $self->get_config_dir() . '/' . $self->get_lang() . "/text/$textfile";
+		$filename = "/etc/ezmlm/default/$textfile" unless (-e "$filename");
 		my @contents;
 		my $content;
 		if (open(PART, "<$filename")) {
@@ -580,12 +601,14 @@ sub get_text_content {
 sub set_text_content {
 	my ($self, $textfile, @content) = @_;
 	mkdir "$self->{'LIST_NAME'}/text" unless (-e "$self->{'LIST_NAME'}/text");
-	$self->setpart("text/$textfile", @content);
+	return 1 if ($self->setpart("text/$textfile", @content));
+	return 0;
 }
 
 
 # == check if specified text file is customized or default (for idx >= 5.0) ==
 # return whether the text file exists in the list's directory (false) or not (true)
+# empty filename returns false
 sub is_text_default {
 	my ($self, $textfile) = @_;
 	return (0==1) if ($textfile eq '');
@@ -596,17 +619,19 @@ sub is_text_default {
 	}
 }
 
+
 # == remove non-default text file (for idx >= 5.0) ==
 # return without error for idx < 5
 # otherwise: remove customized text file from the list's directory
 sub reset_text {
 	my ($self, $textfile) = @_;
-	return if ($self->_get_version() < 5);
+	return if (get_version() < 5);
 	return if ($textfile eq '');
 	return if ($textfile =~ /[^\w_\.-]/);
 	return if ($self->is_text_default($textfile));
 	($self->_seterror(-1, "could not remove customized text file ($textfile)") && return 0)
 		unless unlink("$self->{'LIST_NAME'}/text/$textfile");
+	return 1;
 }
 
 
@@ -623,12 +648,12 @@ sub errno {
 
 # == Test the compatiblity of the module ==
 sub check_version {
-	my($self) = @_;
+	my $self = shift;
 	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
-	$self->_seterror(undef);
+	$self->_seterror(undef) if (ref $self);
 
 	# ezmlm-idx is necessary
-	if ($self->_get_version() >= 4) {
+	if (get_version() >= 4) {
 		return 0;
 	} else {
 		return $version;
@@ -641,11 +666,9 @@ sub check_version {
 # 	3 => ezmlm v0.53
 # 	4 => ezmlm-idx v0.4*
 # 	5 => ezmlm-idx v5.*
-sub _get_version {
-	my($self) = @_;
+sub get_version {
 	my ($ezmlm, $idx);
 	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
-	$self->_seterror(undef);
 
 	$version = $1 if ($version =~ m/^[^:]*:\s+(.*)$/);
 	$ezmlm = $1 if ($version =~ m/ezmlm-([\d\.]+)$/);
@@ -1027,10 +1050,13 @@ system-wide default text file, if there is no customized text file for this list
 
 =head2 Change the list's settings (for ezmlm-idx >= 5.0)
 
+   Mail::Ezmlm->get_config_dir;
    $list->get_config_dir;
    $list->set_config_dir('/etc/ezmlm-local');
 
-These function access the file 'conf-etc' in the mailing list's directory.
+These function access the file 'conf-etc' in the mailing list's directory. The
+static function always returns the default configuration directory of ezmlm-idx
+(/etc/ezmlm).
 
    $list->get_available_languages;
    $list->get_lang;
@@ -1040,6 +1066,16 @@ These functions allow you to change the language of the text files, that are use
 for automatic replies of ezmlm-idx (v5.0 or higher, the configured language is stored
 in 'conf-lang' within the mailing list's directory). Customized files (in the 'text'
 directory of a mailing list directory) override the default language setting.
+
+=head2 Get the installed version of ezmlm
+
+   Mail::Ezmlm->get_version;
+
+The result is one of the following:
+ 0 - unknown
+ 3 - ezmlm 0.53
+ 4 - ezmlm-idx 0.4xx
+ 5 - ezmlm-idx 5.x
 
 =head2 Creating MySQL tables:
 
