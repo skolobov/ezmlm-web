@@ -1,0 +1,23 @@
+<h2>Source installation</h2>
+<ul>
+	<li>download a <i>.tar.gz</i> archive</li>
+	<li>extract it (<tt>tar xzf FILENAME.tar.gz</tt>)</li>
+	<li>follow the instructions in the INSTALL file</li>
+</ul>
+
+<h2>Debian packages</h2>
+<h3>Manual installation</h3>
+<ul>
+	<li>download a debian package file (.deb)</li>
+	<li>run <tt>dpkg -i FILENAME.deb</tt></li>
+</ul>
+
+<h3>Debian package repository</h3>
+You may use the debian package repository at <a href="https://systemausfall.org/toolforge" title="toolforge">toolforge</a>:
+<ul>
+	<li>add <tt>deb http://systemausfall.org/toolforge/debian testing main contrib non-free</tt> to your <i>/etc/apt/sources.list</i> file</li>
+	<li>run <tt>apt-get update</tt></li>
+	<li>install (or upgrade) the package with <tt>apt-get install ezmlm-web</tt></li>
+</ul>
+Besides <i>testing</i> you may also use the <i>stable</i> or <i>unstable</i> package - read <a href="https://systemausfall.org/toolforge/DebianRepository" title="descriptions of the toolforge repository">DebianRepository</a> for details.
+
