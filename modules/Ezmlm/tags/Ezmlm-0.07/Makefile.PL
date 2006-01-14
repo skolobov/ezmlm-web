@@ -36,22 +36,23 @@ EOM
    *prompt = \&ExtUtils::MakeMaker::prompt;
    
    # guess default
-   $ezmlm_path = '/usr/local/bin';
-   $ezmlm_path = '/usr/local/bin/ezmlm' unless (-e "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/local/bin/ezmlm-idx' unless (-e "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/bin' unless (-e "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/bin/ezmlm' unless (-e "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/bin/ezmlm-idx' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/local/bin/ezmlm';
+   $ezmlm_path = '/usr/local/bin' unless (-x "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/local/bin/ezmlm-idx' unless (-x "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin' unless (-x "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin/ezmlm' unless (-x "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin/ezmlm-idx' unless (-x "$ezmlm_path/ezmlm-make");
+   # return to default, if nothing can be found
+   $ezmlm_path = '/usr/local/bin/ezmlm' unless (-x "$ezmlm_path/ezmlm-make");
 
    foreach (1..10) {
       $ezmlm_path = prompt('Ezmlm binary directory?', "$ezmlm_path");
-      last if (-e "$ezmlm_path/ezmlm-make");
+      last if (-x "$ezmlm_path/ezmlm-make");
       print "I can't find $ezmlm_path/ezmlm-make. Please try again\n";
-      if (! -e "$ezmlm_path/ezmlm-make") {
-         print STDERR "No correct input after $_ attempts.  Exiting Makefile.PL.\n";
-         exit (2);
-      }
    }
+	if (! -e "$ezmlm_path/ezmlm-make") {
+		print STDERR "Warning: No correct input after $_ attempts.  Continue with warnings ...\n";
+	}
 
    print << 'EOM';
 
@@ -65,10 +66,9 @@ EOM
       $qmail_path = prompt('Qmail base directory?', '/var/qmail');
       last if (-d "$qmail_path/control");
       print "I can't find $qmail_path/control. Please try again\n";   
-      if (! -e "$qmail_path/control") {
-         print STDERR "No correct input after $_ attempts.  Exiting Makefile.PL.\n";
-         exit (2);
-      }
+   }
+   if (! -e "$qmail_path/control") {
+      print STDERR "Warning: No correct input after $_ attempts. Continuing with warnings ...\n";
    }
 
    if(`strings $ezmlm_path/ezmlm-sub | grep -i 'MySQL'`) {
@@ -84,16 +84,20 @@ Mail::Ezmlm module.
 
 EOM
 
+	$mysql_path = '/usr/bin';
+	$mysql_path = '/usr/local/bin' unless (-x "$mysql_path/mysql");
+	# return to default - if nothing works
+	$mysql_path = '/usr/bin' unless (-x "$mysql_path/mysql");
+	  
       foreach (1..10) {
-         $mysql_path = prompt('MySQL binary directory?', '');
-         last if (-e "$mysql_path/mysql" || $mysql_path eq '');
+         $mysql_path = prompt('MySQL binary directory?', "$mysql_path");
+         last if (-x "$mysql_path/mysql" || $mysql_path eq '');
          print "I can't find $mysql_path/mysql. Please enter the full path\n";
          print "or leave this option blank if you don't want to use MySQL\n";
-         if ((! -e "$mysql_path/mysql") && ($mysql_path ne '')) {
-            print STDERR "No correct input after $_ attempts.  Exiting Makefile.PL.\n";
-            exit (2);
          }
-      }
+		unless ((-x "$mysql_path/mysql") || ($mysql_path eq '')) {
+			print STDERR "Warning: No correct input after $_ attempts.  Continuing with warnings ...\n";
+		}
 
    }
 
@@ -113,9 +117,9 @@ EOM
    open(EZMLM, '>Ezmlm.pm') or die "Unable to open Ezmlm.pm for write: $!";
    open(TMP, "<Ezmlm.pm.tmp.$$") or die "Unable to read temp file: $!";
    while(<TMP>) {
-      s{^\$EZMLM_BASE\s*=\s*['"].+?['"]\s*;}{\$EZMLM_BASE = '$ezmlm_path'; #Autoinserted by Makefile.PL};
-      s{^\$QMAIL_BASE\s*=\s*['"].+?['"]\s*;}{\$QMAIL_BASE = '$qmail_path'; #Autoinserted by Makefile.PL}; 
-      s{^\$MYSQL_BASE\s*=\s*['"].*?['"]\s*;}{\$MYSQL_BASE = '$mysql_path'; #Autoinserted by Makefile.PL}; 
+      s{^\$EZMLM_BASE\s*=\s*['"].+?['"]\s*;\s*(#.*|)$}{\$EZMLM_BASE = '$ezmlm_path'; #Autoinserted by Makefile.PL};
+      s{^\$QMAIL_BASE\s*=\s*['"].+?['"]\s*;\s*(#.*|)$}{\$QMAIL_BASE = '$qmail_path'; #Autoinserted by Makefile.PL}; 
+      s{^\$MYSQL_BASE\s*=\s*['"].*?['"]\s*;\s*(#.*|)$}{\$MYSQL_BASE = '$mysql_path'; #Autoinserted by Makefile.PL}; 
      print EZMLM;
    }
    close TMP; close EZMLM;
