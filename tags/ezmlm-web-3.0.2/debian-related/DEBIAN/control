@@ -1,9 +1,10 @@
 Package: ezmlm-web
-Version: 3.0-2
+Version: 3.0-3
 Section: admin
 Priority: extra
 Architecture: all
 Depends: perl, httpd-cgi
+Recommends: libemail-ezmlm-perl (>= 0.03)
 Suggests: qmail-src, bash (>=2.0), gcc
 Maintainer: Lars Kruse <devel@sumpfralle.de>
 Description: Web interface for ezmlm-idx mailing list administration
