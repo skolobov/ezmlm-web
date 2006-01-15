@@ -37,21 +37,21 @@ EOM
    
    # guess default
    $ezmlm_path = '/usr/local/bin/ezmlm';
-   $ezmlm_path = '/usr/local/bin' unless (-x "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/local/bin/ezmlm-idx' unless (-x "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/bin' unless (-x "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/bin/ezmlm' unless (-x "$ezmlm_path/ezmlm-make");
-   $ezmlm_path = '/usr/bin/ezmlm-idx' unless (-x "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/local/bin/ezmlm-idx' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/local/bin' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin/ezmlm' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin/ezmlm-idx' unless (-e "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/bin' unless (-e "$ezmlm_path/ezmlm-make");
    # return to default, if nothing can be found
-   $ezmlm_path = '/usr/local/bin/ezmlm' unless (-x "$ezmlm_path/ezmlm-make");
+   $ezmlm_path = '/usr/local/bin/ezmlm' unless (-e "$ezmlm_path/ezmlm-make");
 
    foreach (1..10) {
       $ezmlm_path = prompt('Ezmlm binary directory?', "$ezmlm_path");
-      last if (-x "$ezmlm_path/ezmlm-make");
+      last if (-e "$ezmlm_path/ezmlm-make");
       print "I can't find $ezmlm_path/ezmlm-make. Please try again\n";
    }
-	if (! -e "$ezmlm_path/ezmlm-make") {
-		print STDERR "Warning: No correct input after $_ attempts.  Continue with warnings ...\n";
+	unless (-e "$ezmlm_path/ezmlm-make") {
+		print STDERR "Warning: No correct input after $_ attempts.  Continuing with warnings ...\n";
 	}
 
    print << 'EOM';
@@ -64,7 +64,7 @@ EOM
 
    foreach (1..10) {
       $qmail_path = prompt('Qmail base directory?', '/var/qmail');
-      last if (-d "$qmail_path/control");
+      last if (-e "$qmail_path/control");
       print "I can't find $qmail_path/control. Please try again\n";   
    }
    if (! -e "$qmail_path/control") {
@@ -85,17 +85,17 @@ Mail::Ezmlm module.
 EOM
 
 	$mysql_path = '/usr/bin';
-	$mysql_path = '/usr/local/bin' unless (-x "$mysql_path/mysql");
+	$mysql_path = '/usr/local/bin' unless (-e "$mysql_path/mysql");
 	# return to default - if nothing works
-	$mysql_path = '/usr/bin' unless (-x "$mysql_path/mysql");
+	$mysql_path = '/usr/bin' unless (-e "$mysql_path/mysql");
 	  
       foreach (1..10) {
          $mysql_path = prompt('MySQL binary directory?', "$mysql_path");
-         last if (-x "$mysql_path/mysql" || $mysql_path eq '');
+         last if (-e "$mysql_path/mysql" || $mysql_path eq '');
          print "I can't find $mysql_path/mysql. Please enter the full path\n";
          print "or leave this option blank if you don't want to use MySQL\n";
          }
-		unless ((-x "$mysql_path/mysql") || ($mysql_path eq '')) {
+		unless ((-e "$mysql_path/mysql") || ($mysql_path eq '')) {
 			print STDERR "Warning: No correct input after $_ attempts.  Continuing with warnings ...\n";
 		}
 

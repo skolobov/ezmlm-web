@@ -41,6 +41,7 @@ package Mail::Ezmlm;
 use strict;
 use vars qw($QMAIL_BASE $EZMLM_BASE $MYSQL_BASE $VERSION @ISA @EXPORT @EXPORT_OK);
 use Carp;
+use Text::ParseWords;
 
 require Exporter;
 
@@ -61,7 +62,13 @@ $QMAIL_BASE = '/var/qmail'; #Autoinserted by Makefile.PL
 $MYSQL_BASE = ''; #Autoinserted by Makefile.PL
 # == End site dependant variables ==
 
-use Carp;
+# == check the ezmlm-make path ==
+$EZMLM_BASE = '/usr/local/bin/ezmlm' unless (-e "$EZMLM_BASE/ezmlm-make");
+$EZMLM_BASE = '/usr/local/bin/ezmlm-idx' unless (-e "$EZMLM_BASE/ezmlm-make");
+$EZMLM_BASE = '/usr/local/bin' unless (-e "$EZMLM_BASE/ezmlm-make");
+$EZMLM_BASE = '/usr/bin/ezmlm' unless (-e "$EZMLM_BASE/ezmlm-make");
+$EZMLM_BASE = '/usr/bin/ezmlm-idx' unless (-e "$EZMLM_BASE/ezmlm-make");
+$EZMLM_BASE = '/usr/bin' unless (-e "$EZMLM_BASE/ezmlm-make");
 
 # == clean up the path for taint checking ==
 local $ENV{'PATH'} = $EZMLM_BASE;
@@ -134,14 +141,25 @@ sub update {
 	# Do we have the command line switches
 	($self->_seterror(-1, 'nothing to update()') && return 0) unless(defined($switches));
 	$switches = '-e' . $switches;
-	my @switches;
+	my @switch_list;
 
 	# UGLY!
-	foreach (split(/["'](.+?)["']|(-\w+)/, $switches)) {
-		next if (!defined($_) or !$_ or $_ eq ' ');
+	#foreach (split(/["'](.+?)["']|(-\w+)/, $switches)) {
+	#	next if (!defined($_));
+	#	# untaint input
+	#	$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
+	#	push @switches, $1;
+	#}
+	foreach (&quotewords('\s+', 1, $switches)) {
+		next if (!defined($_));
 		# untaint input
+		$_ =~ s/['"]//g;
 		$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
-		push @switches, $1;
+		if ($_ eq '') {
+			push @switch_list, " ";
+		} else {
+			push @switch_list, $1;
+		}
 	}
 
 	# can we actually alter this list;
@@ -162,9 +180,9 @@ sub update {
 	}
 
 	# Attempt to update the list if we can.
-	system("$EZMLM_BASE/ezmlm-make", @switches, $self->{'LIST_NAME'}) == 0
+	system("$EZMLM_BASE/ezmlm-make", @switch_list, $self->{'LIST_NAME'}) == 0
 		|| ($self->_seterror($?) && return undef);
-
+	
 	# Sort out the DIR/inlocal problem if necessary
 	if(defined($inlocal)) {
 		open(INLOCAL, ">$self->{'LIST_NAME'}/inlocal") || ($self->_seterror(-1, 'unable to write inlocal in update()') && return 0);
@@ -410,8 +428,10 @@ sub getpart {
 			($part ne 'conf-etc') && ($part ne 'conf-lang'));
 	if (open(PART, "<$filename")) {
 		while(<PART>) {
-			chomp($contents[$#contents++] = $_);
-			$content .= $_;
+			unless ( /^#/ ) {
+				chomp($contents[$#contents++] = $_);
+				$content .= $_;
+			}
 		}
 		close PART;
 		if(wantarray) {
@@ -511,10 +531,46 @@ sub get_lang {
 sub set_lang {
 	my ($self, $lang) = @_;
 	return (0==0) if (get_version() < 5);
-	if ($lang eq 'default') {
+	if (($lang eq 'default') || ($lang eq '')) {
 		return 1 if (unlink "$self->{'LIST_NAME'}/conf-lang");
 	} else {
 		return 1 if ($self->setpart('conf-lang', "$lang"));
+	}
+	return 0;
+}
+
+
+# == get the selected charset of the list (idx >= 5.0) ==
+# return empty string for idx < 5.0
+sub get_charset {
+	my ($self) = shift;
+	my $charset;
+	return '' if (get_version() < 5);
+	chomp($charset = $self->getpart('charset'));
+	# default if no 'charset' file exists
+	$charset = 'us-ascii' if ($charset eq '');
+	return $charset;
+}
+
+
+# == set the selected charset of the list (idx >= 5.0) ==
+# return without error for idx < 5.0
+# remove list' specific charset file, if the default charset of the current language
+# was chosen
+sub set_charset {
+	my ($self, $charset) = @_;
+	return (0==0) if (get_version() < 5);
+	# first: remove current charset
+	unlink "$self->{'LIST_NAME'}/charset";
+	# second: get default value of the current language
+	my $default_charset = $self->getpart('charset');
+	# last: create new charset file only if the selected charset is not the default anyway
+	if (($charset eq $default_charset) || ($charset !~ /\S/)) {
+		# do not write the specific charset, as the default charset of the language is
+		# sufficient
+		return 1;
+	} else {
+		return 1 if ($self->setpart('charset', "$charset"));
 	}
 	return 0;
 }
@@ -769,12 +825,14 @@ sub _getconfig_idx5 {
 		'owner', '5',
 		'sql', '6',
 		'modpost', '7',
-		'modsub', '8');
-		# "-9" seems to be ignored - this is a good change (tm)
+		'modsub', '8',
+		'remote', '9');
 	while (($file, $opt_num) = each(%optionfiles)) {
 		if (-e "$self->{'LIST_NAME'}/$file") {
 			chomp($temp = $self->getpart($file));
-			$options .= " -$opt_num '$temp'" if ($temp ne '');
+			$temp =~ m/^(.*)$/m;	# take only the first line
+			$temp = $1;
+			$options .= " -$opt_num '$temp'" if ($temp =~ /\S/);
 		}
 	}
 
@@ -880,7 +938,7 @@ the ezmlm mailing list manager software. See the ezmlm web page
 (http://www.ezmlm.org/) for a complete description of the software.
 
 This version of the module is designed to work with ezmlm version 0.53.
-It is fully compatible with ezmlm's IDX extensions (version 0.40). Both
+It is fully compatible with ezmlm's IDX extensions (version 0.4xx and 5.0 ). Both
 of these can be obtained via anon ftp from ftp://ftp.ezmlm.org/pub/patches/
 
 =head1 DESCRIPTION
@@ -1061,11 +1119,14 @@ static function always returns the default configuration directory of ezmlm-idx
    $list->get_available_languages;
    $list->get_lang;
    $list->set_lang('de');
+   $list->get_charset;
+   $list->set_charset('iso-8859-1:Q');
 
 These functions allow you to change the language of the text files, that are used
-for automatic replies of ezmlm-idx (v5.0 or higher, the configured language is stored
+for automatic replies of ezmlm-idx (since v5.0 the configured language is stored
 in 'conf-lang' within the mailing list's directory). Customized files (in the 'text'
-directory of a mailing list directory) override the default language setting.
+directory of a mailing list directory) override the default language files.
+Empty strings for set_lang() and set_charset() reset the setting to its default value.
 
 =head2 Get the installed version of ezmlm
 
@@ -1129,12 +1190,14 @@ that they know about nothing :)
 =head1 AUTHOR
 
  Guy Antony Halse <guy-ezmlm@rucus.net>
+ Lars Kruse <devel@sumpfralle.de>
 
 =head1 BUGS
 
- May have problems with newer versions of Perl.
+ There are no known bugs.
 
- Please report bugs to the author.
+ Please report bugs to the author or use the bug tracking system at
+ https://systemausfall.org/trac/ezmlm-web.
 
 =head1 SEE ALSO
 
@@ -1142,6 +1205,7 @@ that they know about nothing :)
  ezmlm-unsub(1), ezmlm-list(1), ezmlm-issub(1)
 
  http://rucus.ru.ac.za/~guy/ezmlm/
+ https://systemausfall.org/toolforge/ezmlm-web
  http://www.ezmlm.org/
  http://www.qmail.org/
 
