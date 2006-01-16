@@ -1,18 +1,42 @@
-<h2>Source installation</h2>
+<a name="toc" />
+<h1>Table of Contents</h1>
+<ol>
+	<li><a href="#ezmlm-web">ezmlm-web</a>
+		<ol><li><a href="#ezmlm-web-source">source installation</a></li>
+			<li><a href="#ezmlm-web-debian">debian packages</a>
+				<ol><li><a href="#ezmlm-web-debian-manual">manual installation</a></li>
+					<li><a href="#ezmlm-web-debian-apt">debian package repository</a></li>
+				</ol>
+			</li>
+		</ol>
+	</li>
+	<li><a href="#mail_ezmlm-perl">Mail::Ezmlm (perl module)</a></li>
+</ol>
+
+<hr/>
+
+<a name="ezmlm-web" />
+<h1>ezmlm-web</h1>
+
+<a name="ezmlm-web-source" />
+<h2>source installation</h2>
 <ul>
 	<li>download a <i>.tar.gz</i> archive</li>
 	<li>extract it (<tt>tar xzf FILENAME.tar.gz</tt>)</li>
 	<li>follow the instructions in the INSTALL file</li>
 </ul>
 
-<h2>Debian packages</h2>
-<h3>Manual installation</h3>
+<a name="ezmlm-web-debian" />
+<h2>debian packages</h2>
+<a name="ezmlm-web-debian-manual" />
+<h3>manual installation</h3>
 <ul>
 	<li>download a debian package file (.deb)</li>
 	<li>run <tt>dpkg -i FILENAME.deb</tt></li>
 </ul>
 
-<h3>Debian package repository</h3>
+<a name="ezmlm-web-debian-apt" />
+<h3>debian package repository</h3>
 You may use the debian package repository at <a href="https://systemausfall.org/toolforge" title="toolforge">toolforge</a>:
 <ul>
 	<li>add <tt>deb http://systemausfall.org/toolforge/debian testing main contrib non-free</tt> to your <i>/etc/apt/sources.list</i> file</li>
@@ -21,3 +45,7 @@ You may use the debian package repository at <a href="https://systemausfall.org/
 </ul>
 Besides <i>testing</i> you may also use the <i>stable</i> or <i>unstable</i> packages - read <a href="https://systemausfall.org/toolforge/DebianRepository" title="descriptions of the toolforge repository">DebianRepository</a> for details.
 
+<a name="mail_ezmlm-perl" />
+<h1>Mail::Ezmlm</h1>
+<p>This perl module is required for <a href="https://systemausfall.org/toolforge/ezmlm-web">ezmlm-web</a>.</p>
+<p>You may download it from the <a href="https://systemausfall.org/toolforge/ezmlm-web/download/Ezmlm">Ezmlm</a> directory above or you can use the <a href="#ezmlm-web-debian-apt">debian package</a> repository.</p>
