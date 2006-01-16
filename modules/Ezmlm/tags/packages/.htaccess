@@ -1,0 +1,5 @@
+Options +Indexes
+IndexOptions	FancyIndexing
+IndexOrderDefault	Ascending	Date
+ReadmeName	README.html
+IndexIgnore README.html .htaccess
