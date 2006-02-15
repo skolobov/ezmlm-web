@@ -1,0 +1,7 @@
+#order deny,allow
+#deny from all
+#allow from .ru.ac.za
+AuthName	"EZ Mailing List Manager"
+AuthType	Basic
+AuthUserFile	/etc/ezmlm/.htusers
+require		valid-user
