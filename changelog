@@ -1,3 +1,7 @@
+Version 3.1.2 - 02/15/02006
+ * honour DEFAULT_OPTIONS for new lists
+ * fixed portability issue of the suid-wrapper
+
 Version 3.1.1 - 01/19/02006
  * more careful removal of dotmail files
  * allow dots in webuser names

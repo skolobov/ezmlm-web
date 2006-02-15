@@ -1,7 +1,3 @@
-ezmlm-idx5: modsub and modpost are ignored, if the flag is not set
-
-check relevance of "t", "f" and "x" flag for idx5
-
 "cancel" button during text editing (simple "reset" input button)
 
 restore user input after failed list_create (especially options)
