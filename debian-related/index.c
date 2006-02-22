@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 
 /* C wrapper to allow ezmlm-web.cgi to run suid */
 /* Copyright (C) 1999/2000, Guy Antony Halse, All Rights Reserved */
@@ -6,5 +7,5 @@
 
 int main(void) {
    /* Change this path to wherever you decided to put ezmlm-web.cgi */
-   execv("/usr/lib/ezmlm-web/ezmlm-web.pl"); 
+   execv("/usr/lib/ezmlm-web/ezmlm-web.pl", NULL); 
 }
