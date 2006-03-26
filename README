@@ -4,6 +4,7 @@ This repository contains the development code of ezmlm-web
 * tags		- released versions since 2.1
 * website	- the website for https://systemausfall.org/toolforge/ezmlm-web
 * contrib-patches - incoming patches from users (including the ones, that were sent to Guy)
+* modules	- recommended modules (e.g. Mail::Ezmlm)
 
 the website of ezmlm-web can be found at:
 https://systemausfall.org/toolforge/ezmlm-web
@@ -11,4 +12,4 @@ https://systemausfall.org/toolforge/ezmlm-web
 the original website of ezmlm-web's creator Guy Antony Halse is available at:
 http://rucus.ru.ac.za/~guy/ezmlm/
 
-send questions and recommondations to ezmlm-web@sumpfralle.de
+send questions and recommendations to ezmlm-web@sumpfralle.de
