@@ -1,3 +1,11 @@
-ezmlm-web (0.3.1-1) unstable; urgency=low
-  * Initial release
- -- Lars Kruse <devel@sumpfralle.de>  Sat, 07 Jan 2006 00:45:47 +0100
+ezmlm-web (0.3.4-1) unstable; urgency=low
+  * upstream update
+ -- Lars Kruse <devel@sumpfralle.de>  Sun, 26 Mar 2006 22:28:15 +0100
+
+ezmlm-web (0.3.3-1) unstable; urgency=low
+  * upstream update
+ -- Lars Kruse <devel@sumpfralle.de>  Wed, 22 Feb 2006 04:12:42 +0100
+
+ezmlm-web (0.3.2-1) unstable; urgency=low
+  * upstream update
+ -- Lars Kruse <devel@sumpfralle.de>  Wed, 15 Feb 2006 17:23:51 +0100
