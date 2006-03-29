@@ -20,7 +20,7 @@
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# Neither name Guy Lars Kruse nor the names of any contributors
+# Neither name Lars Kruse nor the names of any contributors
 # may be used to endorse or promote products derived from this software
 # without specific prior written permission.
 #
@@ -41,9 +41,10 @@
 package Mail::Ezmlm::Gpg;
 
 use strict;
-use vars qw($GPG_EZMLM_BASE $VERSION @ISA @EXPORT @EXPORT_OK);
+use vars qw($GPG_EZMLM_BASE $GPG_BIN $VERSION @ISA @EXPORT @EXPORT_OK);
+use vars qw(@GPG_LIST_OPTIONS);
 use Carp;
-use Text::ParseWords;
+use Crypt::GPG;
 
 require Exporter;
 
@@ -60,6 +61,7 @@ require 5.005;
 
 # == Begin site dependant variables ==
 $GPG_EZMLM_BASE = '/usr/local/bin'; #Autoinserted by Makefile.PL
+$GPG_BIN = '/usr/bin/gpg';
 # == End site dependant variables ==
 
 # == check the ezmlm-make path ==
@@ -70,8 +72,21 @@ $GPG_EZMLM_BASE = '/usr/bin/ezmlm' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.
 $GPG_EZMLM_BASE = '/usr/bin/ezmlm-idx' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
 $GPG_EZMLM_BASE = '/usr/bin' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
 
+# == check the gpg path ==
+$GPG_BIN = '/usr/local/bin/gpg' unless (-e "$GPG_BIN");
+$GPG_BIN = '/bin/gpg' unless (-e "$GPG_BIN");
+
 # == clean up the path for taint checking ==
 local $ENV{'PATH'} = $GPG_EZMLM_BASE;
+
+# == define the available (supported) GPG_LIST_OPTIONS ==
+@GPG_LIST_OPTIONS = (
+		"RequireSub",
+		"NokeyNocrypt",
+		"signMessages",
+		"encryptToAll",
+		"VerifiedKeyReq",
+		"allowKeySubmission");
 
 # == Initialiser - Returns a reference to the object ==
 sub new { 
@@ -86,9 +101,6 @@ sub new {
 sub convert {
 	my($self, %list) = @_;
 
-	# Do we want to use command line switches
-
-	# These three variables are essential
 	($self->_seterror(-1, 'must define -dir in a make()') && return 0) unless(defined($list{'-dir'}));
 
 	# Attempt to make the list if we can.
@@ -105,17 +117,86 @@ sub convert {
 
 # == Update the current list ==
 sub update {
-	my($self, %switches) = @_;
+	my($self, %switches, %ok_switches) = @_;
 	   
 	# check for important files: 'config'
 	($self->_seterror(-1, "$self->{'LIST_NAME'} does not appear to be a valid list in update()") && return 0) unless((-e "$self->{'LIST_NAME'}/config") || (-e "$self->{'LIST_NAME'}/flags"));
 
-	# Attempt to update the list if we can.
-	# TODO: put the changer code here
-	
+	# check if all supplied settings are supported
+	# btw we change the case (upper/lower) of the setting to the default one
+	my $one_key;
+	foreach $one_key (keys %switches) {
+		my $ok_key;
+		foreach $ok_key (@GPG_LIST_OPTIONS) {
+			if ($ok_key =~ /^$one_key$/i) {
+				$ok_switches{$ok_key} = $switches{$one_key};
+				delete $switches{$one_key};
+			}
+		}
+	}
+	# %switches should be empty now
+	if (%switches) {
+		foreach $one_key (keys %switches) {
+			warn "unsupported setting: $one_key";
+		}
+	}
+
+	my $config_file_old = "$self->{'LIST_NAME'}/config";
+	my $config_file_new = "$self->{'LIST_NAME'}/config.new";
+	if(open(CONFIG_OLD, "<$config_file_old")) { 
+		if(open(CONFIG_NEW, ">$config_file_new")) { 
+			my ($in_line, $one_opt, $one_val, $new_setting);
+			while (<CONFIG_OLD>) {
+				$in_line = $_;
+				if (%ok_switches) {
+					while (($one_opt, $one_val) = each(%ok_switches)) {
+						# is this the right line (maybe commented out)?
+						if ($in_line =~ m/^#?\w*$one_opt/i) {
+							print CONFIG_NEW "$one_opt ";
+							print CONFIG_NEW ($one_val)? "yes" : "no";
+							print CONFIG_NEW "\n";
+							delete $ok_switches{$one_opt};
+						} else {
+							print CONFIG_NEW $in_line;
+						}
+					}
+				} else {
+					# just print the remaining config file if no other settings are left
+					print CONFIG_NEW $in_line;
+				}
+			}
+			# write the remaining settings to the end of the file
+			while (($one_opt, $one_val) = each(%ok_switches)) {
+				print CONFIG_NEW "\n$one_opt ";
+				print CONFIG_NEW ($one_val)? "yes" : "no";
+				print CONFIG_NEW "\n";
+			}
+		} else {
+			my $errorstring = "failed to write to temporary config file: $config_file_new";
+			$self->_seterror(-1, $errorstring);
+			warn $errorstring;
+			close CONFIG_OLD;
+			return (1==0);
+		}
+		close CONFIG_NEW;
+	} else {
+		my $errorstring = "failed to read the config file: $config_file_old";
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
+	close CONFIG_OLD;
+	unless (rename($config_file_new, $config_file_old)) {
+		my $errorstring = "failed to move new config file ($config_file_new) " 
+			. "to original config file ($config_file_old)";
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
 	$self->_seterror(undef);
-	return $self->{'LIST_NAME'};
+	return (0==0);
 }
+
 
 # == Get a list of options for the current list ==
 sub getconfig {
@@ -126,7 +207,20 @@ sub getconfig {
 	if(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
 		# 'config' contains the authorative information
 		while(<CONFIG>) {
-			$options{$1} = $2 if (/^(\w+)\s(.*)$/);
+			if (/^(\w+)\s(.*)$/) {
+				my $optname = $1;
+				my $optvalue = $2;
+				my $one_opt;
+				foreach $one_opt (@GPG_LIST_OPTIONS) {
+					if ($one_opt =~ m/^$optname$/i) {
+						if ($optvalue =~ /^yes$/i) {
+							$options{$one_opt} = 1;
+						} else {
+							$options{$one_opt} = 0;
+						}
+					}
+				}
+			}
 		}
 		close CONFIG;
 	} else {
@@ -137,12 +231,14 @@ sub getconfig {
 	return %options;
 }
 
-# == Return the name of the current list ==
+
+# == Return the directory of the current list ==
 sub thislist {
 	my($self) = shift;
 	$self->_seterror(undef);
 	return $self->{'LIST_NAME'};
 }
+
 
 # == Set the current mailing list ==
 sub setlist {
@@ -150,7 +246,7 @@ sub setlist {
 	if ($list =~ m/^([\w\d\_\-\.\/]+)$/) {
 		$list = $1;
 		if (-e "$list/lock") {
-          $self->_seterror(undef);
+			$self->_seterror(undef);
 			return $self->{'LIST_NAME'} = $list;
 		} else {
 			$self->_seterror(-1, "$list does not appear to be a valid list in setlist()");
@@ -169,7 +265,8 @@ sub is_gpg {
 	($self->_seterror(-1, 'must setlist() before is_gpg()') && return 0) unless(defined($self->{'LIST_NAME'}));
 	$self->_seterror(undef);
 	return (0==1) unless (-e "$self->{'LIST_NAME'}/config");
-	my $content = getpart("config");
+	my $content = $self->getpart("config");
+	# return false if we encounter the usual ezmlm-idx-v0.4-header
 	return (0==1) if ($content =~ /^F:/m);
 	return (0==0);
 }
@@ -179,9 +276,7 @@ sub is_gpg {
 sub getpart {
 	my($self, $part) = @_;
 	my(@contents, $content);
-	# check for the file in the list directory first
 	my $filename = $self->{'LIST_NAME'} . "/$part";
-	# check for default file in config directory, if necessary
 	if (open(PART, "<$filename")) {
 		while(<PART>) {
 			unless ( /^#/ ) {
@@ -197,6 +292,7 @@ sub getpart {
 		}
 	} ($self->_seterror($?) && return undef);
 }
+
 
 # == set files contents ==
 sub setpart {
@@ -215,31 +311,95 @@ sub setpart {
 
 # == import a new public key for a subscriber ==
 sub import_public_key {
-}
-
-
-# == sign a public key ==
-sub sign_public_key {
+	my ($self, $key) = @_;
+	my $gpg = $self->_get_gpg_object();
+	my @imported_keys = $gpg->addkey($key);
+	if ($#imported_keys > 0) {
+		return (0==0);
+	} else {
+		return (1==0);
+	}
 }
 
 
 # == delete a public key ==
 sub delete_public_key {
-}
-
-
-# == list_public_keys ==
-sub list_public_keys {
+	my ($self, $keyid) = @_;
+	my $gpg = $self->_get_gpg_object();
+	if (undef($gpg->delkey($keyid))) {
+		return (1==0);
+	} else {
+		return (0==0);
+	}
 }
 
 
 # == generate new private key ==
 sub generate_private_key {
+	my ($self, $name, $email, $keysize, $expire) = @_;
+	my $gpg = $self->_get_gpg_object();
+	return (1==0) if undef($gpg->genkey($name, $email, 'ELG-E', $keysize, $expire));
+	return (0==0);
 }
 
 
-# == list_private_keys ==
-sub list_private_keys {
+# == get_public_keys ==
+sub get_public_keys {
+	my ($self) = @_;
+	my @keys = $self->_get_keys("pub");
+	my $key;
+	foreach $key (@keys) {
+		print "$key->{uid} - $key->{id}\n";
+	}
+}
+
+
+# == get_private_keys ==
+sub get_secret_keys {
+	my ($self) = @_;
+	my @keys = $self->_get_keys("sec");
+	my $key;
+	foreach $key (@keys) {
+		print "$key->{uid} - $key->{id}\n";
+	}
+}
+
+# == internal function for creating a gpg object ==
+sub _get_gpg_object() {
+	my ($self) = @_;
+	my $gpg = new Crypt::GPG();
+	$gpg->gpgbin($GPG_BIN);
+	$gpg->gpgopts("--lock-multiple --homedir '" . $self->{'LIST_NAME'} . "/.gnupg'");
+	return $gpg;
+}
+
+
+# == internal function to list keys ==
+sub _get_keys() {
+	# type can be "pub" or "sec"
+	my ($self, $keyType) = @_;
+	my $gpg = $self->_get_gpg_object();
+	my ($flag, $gpgoption, @keys, $key);
+	if ($keyType eq "pub") {
+		$flag = "pub";
+		$gpgoption = "--list-keys";
+	} elsif ($keyType eq "sec") {
+		$flag = "sec";
+		$gpgoption = "--list-secret-keys";
+	} else {
+		warn "wrong keyType: $keyType";
+		return undef;
+	}
+	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " --with-colons $gpgoption";
+	my @read_keys = grep /^$flag/, `$gpgcommand`;
+	foreach $key (@read_keys) {
+		my ($type, $trust, $size, $algorithm, $id, $created,
+			$expires, $u2, $ownertrust, $uid) = split ":", $key;
+			# stupid way of "decoding" utf8 (at least it works for ":")
+			$uid =~ s/\\x3a/:/g;
+		push @keys, {uid => $uid, id => $id};
+	}
+	return @keys;
 }
 
 
