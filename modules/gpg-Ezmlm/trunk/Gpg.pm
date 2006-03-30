@@ -347,10 +347,7 @@ sub generate_private_key {
 sub get_public_keys {
 	my ($self) = @_;
 	my @keys = $self->_get_keys("pub");
-	my $key;
-	foreach $key (@keys) {
-		print "$key->{uid} - $key->{id}\n";
-	}
+	return @keys;
 }
 
 
@@ -358,10 +355,7 @@ sub get_public_keys {
 sub get_secret_keys {
 	my ($self) = @_;
 	my @keys = $self->_get_keys("sec");
-	my $key;
-	foreach $key (@keys) {
-		print "$key->{uid} - $key->{id}\n";
-	}
+	return @keys;
 }
 
 # == internal function for creating a gpg object ==
@@ -369,7 +363,7 @@ sub _get_gpg_object() {
 	my ($self) = @_;
 	my $gpg = new Crypt::GPG();
 	$gpg->gpgbin($GPG_BIN);
-	$gpg->gpgopts("--lock-multiple --homedir '" . $self->{'LIST_NAME'} . "/.gnupg'");
+	$gpg->gpgopts("--lock-multiple --batch --no-tty --no-secmem-warning --homedir '" . $self->{'LIST_NAME'} . "/.gnupg'");
 	return $gpg;
 }
 
