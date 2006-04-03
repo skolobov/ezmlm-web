@@ -391,7 +391,10 @@ sub _get_keys() {
 			$expires, $u2, $ownertrust, $uid) = split ":", $key;
 			# stupid way of "decoding" utf8 (at least it works for ":")
 			$uid =~ s/\\x3a/:/g;
-		push @keys, {uid => $uid, id => $id};
+			$uid =~ /^(.*) <([^<]*)>/;
+			my $name = $1;
+			my $email = $2;
+		push @keys, {name => $name, email => $email, id => $id, expires => $expires};
 	}
 	return @keys;
 }
