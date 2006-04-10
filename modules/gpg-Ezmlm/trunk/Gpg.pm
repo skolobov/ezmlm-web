@@ -118,7 +118,8 @@ sub convert {
 
 # == Update the current list ==
 sub update {
-	my($self, %switches, %ok_switches) = @_;
+	my($self, %switches) = @_;
+	my %ok_switches;
 	   
 	# check for important files: 'config'
 	($self->_seterror(-1, "$self->{'LIST_NAME'} does not appear to be a valid list in update()") && return 0) unless((-e "$self->{'LIST_NAME'}/config") || (-e "$self->{'LIST_NAME'}/flags"));
@@ -150,6 +151,7 @@ sub update {
 			while (<CONFIG_OLD>) {
 				$in_line = $_;
 				if (%ok_switches) {
+					my $found = 0;
 					while (($one_opt, $one_val) = each(%ok_switches)) {
 						# is this the right line (maybe commented out)?
 						if ($in_line =~ m/^#?\w*$one_opt/i) {
@@ -157,10 +159,10 @@ sub update {
 							print CONFIG_NEW ($one_val)? "yes" : "no";
 							print CONFIG_NEW "\n";
 							delete $ok_switches{$one_opt};
-						} else {
-							print CONFIG_NEW $in_line;
+							$found = 1;
 						}
 					}
+					print CONFIG_NEW $in_line if ($found == 0);
 				} else {
 					# just print the remaining config file if no other settings are left
 					print CONFIG_NEW $in_line;
