@@ -82,6 +82,7 @@ local $ENV{'PATH'} = $GPG_EZMLM_BASE;
 # == define the available (supported) GPG_LIST_OPTIONS ==
 @GPG_LIST_OPTIONS = (
 		"RequireSub",
+		"requireSigs",
 		"NokeyNocrypt",
 		"signMessages",
 		"encryptToAll",
@@ -202,6 +203,16 @@ sub update {
 sub getconfig {
 	my($self) = @_;
 	my(%options);
+
+	# define defaults
+	$options{signMessages} = 1;
+	$options{NokeyNocrypt} = 0;
+	$options{allowKeySubmission} = 1;
+	$options{encryptToAll} = 0;
+	$options{VerifiedKeyReq} = 0;
+	$options{RequireSub} = 0;
+	$options{requireSigs} = 0;
+
 
 	# Read the config file
 	if(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
