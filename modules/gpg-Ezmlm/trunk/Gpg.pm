@@ -322,12 +322,26 @@ sub setpart {
 }
 
 
-# == import a new public key for a subscriber ==
-sub import_public_key {
+# == export a key ==
+sub export_key {
+	my ($self, $keyid) = @_;
+	my $gpg = $self->_get_gpg_object();
+	my $gpgoption = "--armor --export $keyid";
+	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
+	my $output = `$gpgcommand 2>/dev/null`;
+	if ($output) {
+		return $output;
+	} else {
+		return undef;
+	}
+}
+
+
+# == import a new key ==
+sub import_key {
 	my ($self, $key) = @_;
 	my $gpg = $self->_get_gpg_object();
-	my @imported_keys = $gpg->addkey($key);
-	if ($#imported_keys > 0) {
+	if ($gpg->addkey($key)) {
 		return (0==0);
 	} else {
 		return (1==0);
@@ -335,11 +349,15 @@ sub import_public_key {
 }
 
 
-# == delete a public key ==
-sub delete_public_key {
+# == delete a key ==
+sub delete_key {
 	my ($self, $keyid) = @_;
 	my $gpg = $self->_get_gpg_object();
-	if (undef($gpg->delkey($keyid))) {
+	my $fprint = $self->_get_fingerprint($keyid);
+	return (1==0) unless (defined($fprint));
+	my $gpgoption = "--delete-secret-and-public-key $fprint";
+	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
+	if (system($gpgcommand)) {
 		return (1==0);
 	} else {
 		return (0==0);
@@ -349,9 +367,22 @@ sub delete_public_key {
 
 # == generate new private key ==
 sub generate_private_key {
-	my ($self, $name, $email, $keysize, $expire) = @_;
+	my ($self, $name, $comment, $email, $keysize, $expire) = @_;
 	my $gpg = $self->_get_gpg_object();
-	return (1==0) if undef($gpg->genkey($name, $email, 'ELG-E', $keysize, $expire));
+	#my $return = $gpg->keygen($name , $email, 'ELG-E', $keysize, $expire, '');
+	my $gpgoption = "--gen-key";
+	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
+	my $pid = open(INPUT, "| $gpgcommand");
+	print INPUT "Key-Type: DSA\n";
+	print INPUT "Key-Length: 1024\n";
+	print INPUT "Subkey-Type: ELG-E\n";
+	print INPUT "Subkey-Length: $keysize\n";
+	print INPUT "Name-Real: $name\n";
+	print INPUT "Name-Comment: $comment\n" if ($comment);
+	print INPUT "Name-Email: $email\n";
+	print INPUT "Expire-Date: $expire\n";
+	close INPUT;
+
 	return (0==0);
 }
 
@@ -375,8 +406,11 @@ sub get_secret_keys {
 sub _get_gpg_object() {
 	my ($self) = @_;
 	my $gpg = new Crypt::GPG();
+	my $dirname = $self->{'LIST_NAME'} . '/.gnupg';
+	# fix spaces in filename
+	$dirname =~ s/ /\\ /g;
 	$gpg->gpgbin($GPG_BIN);
-	$gpg->gpgopts("--lock-multiple --batch --no-tty --no-secmem-warning --homedir '" . $self->{'LIST_NAME'} . "/.gnupg'");
+	$gpg->gpgopts("--lock-multiple --no-tty --no-secmem-warning --batch --quiet --homedir $dirname");
 	return $gpg;
 }
 
@@ -410,6 +444,32 @@ sub _get_keys() {
 		push @keys, {name => $name, email => $email, id => $id, expires => $expires};
 	}
 	return @keys;
+}
+
+
+# == internal function to retrieve the fingerprint of a key ==
+sub _get_fingerprint()
+{
+	my ($self, $key_id) = @_;
+	my $gpg = $self->_get_gpg_object();
+	$key_id =~ /^([0-9A-Z]*)$/;
+	$key_id = $1;
+	return undef unless ($key_id);
+	my $gpgoption = "--fingerprint $key_id";
+
+	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " --with-colons $gpgoption";
+	
+	my @fingerprints = grep /^fpr:/, `$gpgcommand`;
+	if (@fingerprints > 1) {
+		warn "[Mail::Ezmlm::Gpg] more than one key matched ($key_id)!";
+		return undef;
+	}
+	return undef if (@fingerprints < 1);
+	my $fpr = $fingerprints[0];
+	$fpr =~ /^fpr:*([0-9A-Z]*):*$/;
+	$fpr = $1;
+	return undef unless $1;
+	return $1;
 }
 
 
