@@ -98,22 +98,48 @@ sub new {
 	return $self;
 }
 
-# == Make a new mailing list and set it to current ==
+# == convert an existing list to gpg-ezmlm ==
 sub convert {
-	my($self, %list) = @_;
+	my($self) = @_;
 
-	($self->_seterror(-1, 'must define -dir in a make()') && return 0) unless(defined($list{'-dir'}));
+	my $list_dir = $self->{'LIST_NAME'};
+	($self->_seterror(-1, 'must define directory in convert()') && return 0) unless(defined($list_dir));
+	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0) unless(-d $list_dir);
+	my $tlist = new Mail::Ezmlm::Gpg($list_dir);
+	($self->_seterror(-1, 'list is already encrypted: ' . $list_dir) && return 0) if ($tlist->is_gpg());
 
-	# Attempt to make the list if we can.
-	unless(-e $list{'-dir'}) {
-		system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pm", $list{'-dir'}) == 0
-			|| ($self->_seterror($?) && return undef);
+	# retrieve location of dotqmail-files
+	my $dot_loc;
+	if (-r "$list_dir/dot") {
+		open DOT, "<$list_dir/dot";
+		$dot_loc = <DOT>;
+		close DOC;
 	} else {
-		($self->_seterror(-1, '-dir must be defined in make()') && return 0);
-	}   
+		open CONFIG, "<$list_dir/config";
+		my @lines = <CONFIG>;
+		my $one_line;
+		foreach $one_line (@lines) {
+			$dot_loc = $1 if( $one_line =~ m/^T:(.*)$/);
+		}
+		close CONFIG;
+	}
+	chomp($dot_loc);
+
+	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0) unless(($dot_loc ne '') && (-e $dot_loc));
+
+	# fixes incompatibility of gpg-ezmlm with ezmlm-idx 5.0
+	mkdir("$list_dir/text") unless (-d "$list_dir/text");
+
+	unless (-e "$list_dir/config") {
+		open CONFIG, ">$list_dir/config";
+		close CONFIG;
+	}
+
+	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl '$list_dir' '$dot_loc' >&2") == 0
+			|| ($self->_seterror($?) && return undef);
 
 	$self->_seterror(undef);
-	return $self->setlist($list{'-dir'});
+	return $self->setlist($list_dir);
 }
 
 # == Update the current list ==
@@ -143,6 +169,7 @@ sub update {
 		}
 	}
 
+	my $errorstring;
 	my $config_file_old = "$self->{'LIST_NAME'}/config";
 	my $config_file_new = "$self->{'LIST_NAME'}/config.new";
 	if(open(CONFIG_OLD, "<$config_file_old")) { 
@@ -175,7 +202,7 @@ sub update {
 				print CONFIG_NEW "\n";
 			}
 		} else {
-			my $errorstring = "failed to write to temporary config file: $config_file_new";
+			$errorstring = "failed to write to temporary config file: $config_file_new";
 			$self->_seterror(-1, $errorstring);
 			warn $errorstring;
 			close CONFIG_OLD;
@@ -183,14 +210,14 @@ sub update {
 		}
 		close CONFIG_NEW;
 	} else {
-		my $errorstring = "failed to read the config file: $config_file_old";
+		$errorstring = "failed to read the config file: $config_file_old";
 		$self->_seterror(-1, $errorstring);
 		warn $errorstring;
 		return (1==0);
 	}
 	close CONFIG_OLD;
 	unless (rename($config_file_new, $config_file_old)) {
-		my $errorstring = "failed to move new config file ($config_file_new) " 
+		$errorstring = "failed to move new config file ($config_file_new) " 
 			. "to original config file ($config_file_old)";
 		$self->_seterror(-1, $errorstring);
 		warn $errorstring;
