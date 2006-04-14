@@ -94,12 +94,14 @@ sub new {
 	my($class, $list) = @_;
 	my $self = {};
 	bless $self, ref $class || $class || 'Mail::Ezmlm::Gpg';
+	$list =~ m/^([\w\._\/-]*)$/;
+	$list = $1;
 	$self->setlist($list) if(defined($list) && $list);      
 	return $self;
 }
 
 # == convert an existing list to gpg-ezmlm ==
-sub convert {
+sub convert_to_encrypted {
 	my($self) = @_;
 
 	my $list_dir = $self->{'LIST_NAME'};
@@ -114,7 +116,7 @@ sub convert {
 		open DOT, "<$list_dir/dot";
 		$dot_loc = <DOT>;
 		close DOC;
-	} else {
+	} elsif (-r "$list_dir/config") {
 		open CONFIG, "<$list_dir/config";
 		my @lines = <CONFIG>;
 		my $one_line;
@@ -122,20 +124,60 @@ sub convert {
 			$dot_loc = $1 if( $one_line =~ m/^T:(.*)$/);
 		}
 		close CONFIG;
+	} else {
+		$self->_seterror(-1, 'list configuration file not found: ' . $list_dir);
+		return 0;
 	}
+		
 	chomp($dot_loc);
+	$dot_loc =~ m/^([\w\._\/-]*)$/;
+	$dot_loc = $1;
 
 	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0) unless(($dot_loc ne '') && (-e $dot_loc));
 
-	# fixes incompatibility of gpg-ezmlm with ezmlm-idx 5.0
-	mkdir("$list_dir/text") unless (-d "$list_dir/text");
+	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--skip-keygen", $list_dir, $dot_loc) == 0
+			|| ($self->_seterror($?) && return undef);
 
-	unless (-e "$list_dir/config") {
-		open CONFIG, ">$list_dir/config";
+	$self->_seterror(undef);
+	return $self->setlist($list_dir);
+}
+
+# == convert an encrypted list back to plaintext ==
+sub convert_to_plaintext {
+	my($self) = @_;
+
+	my $list_dir = $self->{'LIST_NAME'};
+	($self->_seterror(-1, 'must define directory in convert_to_plaintext()') && return 0) unless(defined($list_dir));
+	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0) unless(-d $list_dir);
+	my $tlist = new Mail::Ezmlm::Gpg($list_dir);
+	($self->_seterror(-1, 'list is not encrypted: ' . $list_dir) && return 0) unless ($tlist->is_gpg());
+
+
+	# retrieve location of dotqmail-files
+	my $dot_loc;
+	if (-r "$list_dir/dot") {
+		open DOT, "<$list_dir/dot";
+		$dot_loc = <DOT>;
+		close DOC;
+	} elsif (-r "$list_dir/config.no-gpg") {
+		open CONFIG, "<$list_dir/config.no-gpg";
+		my @lines = <CONFIG>;
+		my $one_line;
+		foreach $one_line (@lines) {
+			$dot_loc = $1 if( $one_line =~ m/^T:(.*)$/);
+		}
 		close CONFIG;
+	} else {
+		$self->_seterror(-1, 'list configuration file not found: ' . $list_dir);
+		return 0;
 	}
+	chomp($dot_loc);
+	$dot_loc =~ m/^([\w\._\/-]*)$/;
+	$dot_loc = $1;
 
-	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl '$list_dir' '$dot_loc' >&2") == 0
+	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0) unless(($dot_loc ne '') && (-e $dot_loc));
+
+	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--revert", $list_dir, $dot_loc) == 0
 			|| ($self->_seterror($?) && return undef);
 
 	$self->_seterror(undef);
