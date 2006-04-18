@@ -22,7 +22,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 #
 # ==========================================================================
-# POD is at the end of this file. Search for '=head' to find it
+
 package Mail::Ezmlm::Gpg;
 
 use strict;
@@ -40,14 +40,33 @@ require Exporter;
 @EXPORT = qw(
    
 );
-$VERSION = '0.01';
+$VERSION = '0.1';
 
 require 5.005;
 
+=head1 NAME
+
+Mail::Ezmlm::Gpg - Object Methods for encrypted Ezmlm Mailing Lists
+
+=head1 SYNOPSIS
+
+ use Mail::Ezmlm::Gpg;
+ $list = new Mail::Ezmlm::Gpg(DIRNAME);
+
+The rest is a bit complicated for a Synopsis, see the description.
+
+=head1 DESCRIPTION
+
+Mail::Ezmlm::Gpg is a Perl module that is designed to provide an object
+interface to encrypted mailing lists based upon gpg-ezmlm.
+See the ezmlm web page (http://www.synacklabs.net/projects/crypt-ml/) for
+a this software.
+
+=cut
+
 # == Begin site dependant variables ==
-$GPG_EZMLM_BASE = '/usr/local/bin'; #Autoinserted by Makefile.PL
-$GPG_BIN = '/usr/bin/gpg';
-# == End site dependant variables ==
+$GPG_EZMLM_BASE = '/usr/bin';	# Autoinserted by Makefile.PL
+$GPG_BIN = '/usr/bin/gpg';	# Autoinserted by Makefile.PL
 
 # == check the ezmlm-make path ==
 $GPG_EZMLM_BASE = '/usr/local/bin/ezmlm'
@@ -66,6 +85,18 @@ $GPG_EZMLM_BASE = '/usr/bin'
 # == check the gpg path ==
 $GPG_BIN = '/usr/local/bin/gpg'
 	unless (-e "$GPG_BIN");
+$GPG_BIN = '/usr/bin/gpg'
+	unless (-e "$GPG_BIN");
+$GPG_BIN = '/bin/gpg'
+	unless (-e "$GPG_BIN");
+$GPG_BIN = '/usr/local/bin/gpg2'
+	unless (-e "$GPG_BIN");
+$GPG_BIN = '/usr/bin/gpg2'
+	unless (-e "$GPG_BIN");
+$GPG_BIN = '/bin/gpg2'
+	unless (-e "$GPG_BIN");
+$GPG_BIN = '/usr/local/bin/gpg'
+	unless (-e "$GPG_BIN");
 $GPG_BIN = '/bin/gpg'
 	unless (-e "$GPG_BIN");
 
@@ -82,7 +113,19 @@ local $ENV{'PATH'} = $GPG_EZMLM_BASE;
 		"VerifiedKeyReq",
 		"allowKeySubmission");
 
+
 # == Initialiser - Returns a reference to the object ==
+
+=head2 Setting up a new Ezmlm::Gpg object:
+
+   use Mail::Ezmlm::Gpg;
+   $list = new Mail::Ezmlm::Gpg('/home/user/lists/moolist');
+
+new() returns the value of thislist() for success, undefined if there was a
+problem.
+
+=cut
+
 sub new { 
 	my($class, $list) = @_;
 	my $self = {};
@@ -94,6 +137,16 @@ sub new {
 }
 
 # == convert an existing list to gpg-ezmlm ==
+
+=head2 Converting a plaintext mailing list to an encrypted list:
+
+You have to create a normal list before you can convert it.
+Use Mail::Ezmlm to do this.
+
+   $list->convert_to_encrypted();
+
+=cut
+
 sub convert_to_encrypted {
 	my($self) = @_;
 
@@ -140,6 +193,13 @@ sub convert_to_encrypted {
 }
 
 # == convert an encrypted list back to plaintext ==
+
+=head2 Converting an encryted mailing list to a plaintext list:
+
+   $list->convert_to_plaintext();
+
+=cut
+
 sub convert_to_plaintext {
 	my($self) = @_;
 
@@ -186,6 +246,13 @@ sub convert_to_plaintext {
 }
 
 # == Update the current list ==
+
+=head2 Updating the configuration of the current list:
+
+   $list->update({ 'allowKeySubmission' => 1 });
+
+=cut
+
 sub update {
 	my($self, %switches) = @_;
 	my %ok_switches;
@@ -272,6 +339,16 @@ sub update {
 
 
 # == Get a list of options for the current list ==
+
+=head2 Getting the current configuration of the current list:
+
+   $list->getconfig;
+
+getconfig() returns a hash including all available settings
+(undefined settings are returned with their default value).
+
+=cut
+
 sub getconfig {
 	my($self) = @_;
 	my(%options);
@@ -316,6 +393,14 @@ sub getconfig {
 
 
 # == Return the directory of the current list ==
+
+=head2 Determining which list we are currently altering:
+
+   $whichlist = $list->thislist;
+   print $list->thislist;
+
+=cut
+
 sub thislist {
 	my($self) = shift;
 	$self->_seterror(undef);
@@ -324,6 +409,13 @@ sub thislist {
 
 
 # == Set the current mailing list ==
+
+=head2 Changing which list the Mail::Ezmlm::Gpg object points at:
+ 
+   $list->setlist('/home/user/lists/moolist');
+
+=cut
+
 sub setlist {
 	my($self, $list) = @_;
 	if ($list =~ m/^([\w\d\_\-\.\/]+)$/) {
@@ -343,6 +435,15 @@ sub setlist {
 
 
 # == is the list encrypted? ==
+
+=head2 Checking the state of a list:
+
+To determine, if a list is encrypted or not, call is_gpg().
+
+	$list->is_gpg();
+
+=cut
+
 sub is_gpg {
 	my($self) = @_;
 	($self->_seterror(-1, 'must setlist() before is_gpg()') && return 0) unless(defined($self->{'LIST_NAME'}));
@@ -356,6 +457,17 @@ sub is_gpg {
 
 
 # == retrieve file contents ==
+
+=head2 Getting the content of file in a mailing list directory:
+
+   @part = $list->getpart('headeradd');
+   $part = $list->getpart('headeradd');
+
+getpart() can be used to retrieve the contents of various text files such as
+headeradd, headerremove, mimeremove, etc.
+
+=cut
+
 sub getpart {
 	my($self, $part) = @_;
 	my(@contents, $content);
@@ -378,6 +490,21 @@ sub getpart {
 
 
 # == export a key ==
+
+=head2 Export a key:
+
+You may export public keys of the keyring of a list.
+
+The key can be identified by its id or other (unique) patterns (like the
+gnupg program).
+
+	$list->export_key($key_id);
+	$list->export_key($email_address);
+
+The return value is a string containing the ascii armored key data.
+
+=cut
+
 sub export_key {
 	my ($self, $keyid) = @_;
 	my $gpg = $self->_get_gpg_object();
@@ -393,6 +520,17 @@ sub export_key {
 
 
 # == import a new key ==
+
+=head2 Import a key:
+
+You can import public or secret keys into the keyring of the list.
+
+The key should be ascii armored.
+
+	$list->import_key($ascii_armored_key_date);
+
+=cut
+
 sub import_key {
 	my ($self, $key) = @_;
 	my $gpg = $self->_get_gpg_object();
@@ -405,6 +543,18 @@ sub import_key {
 
 
 # == delete a key ==
+
+=head2 Delete a key:
+
+Remove a public key (and the matching secret key if it exists) from the keyring
+of the list.
+
+The argument is the id of the key or any other unique pattern.
+
+	$list->delete_key($keyid);
+
+=cut
+
 sub delete_key {
 	my ($self, $keyid) = @_;
 	my $gpg = $self->_get_gpg_object();
@@ -421,6 +571,15 @@ sub delete_key {
 
 
 # == generate new private key ==
+
+=head2 Generate a new key:
+
+	$list->generate_key($name, $comment, $email_address, $keysize, $expire);
+
+Refer to the documentation of gnupg for the format of the arguments.
+
+=cut
+
 sub generate_private_key {
 	my ($self, $name, $comment, $email, $keysize, $expire) = @_;
 	my $gpg = $self->_get_gpg_object();
@@ -440,6 +599,32 @@ sub generate_private_key {
 
 
 # == get_public_keys ==
+
+=head2 Getting public keys:
+
+Return an array of key hashes each containing the following elements:
+
+=over
+
+=item *
+name
+
+=item *
+email
+
+=item *
+id
+
+=item *
+expires
+
+=back
+
+	$list->get_public_keys();
+	$list->get_secret_keys();
+
+=cut
+
 sub get_public_keys {
 	my ($self) = @_;
 	my @keys = $self->_get_keys("pub");
@@ -448,11 +633,13 @@ sub get_public_keys {
 
 
 # == get_private_keys ==
+# for POD see above (get_public_keys)
 sub get_secret_keys {
 	my ($self) = @_;
 	my @keys = $self->_get_keys("sec");
 	return @keys;
 }
+
 
 # == internal function for creating a gpg object ==
 sub _get_gpg_object() {
@@ -567,246 +754,6 @@ sub _checkaddress {
 
 
 1;
-__END__
-
-=head1 NAME
-
-Ezmlm - Object Methods for Ezmlm Mailing Lists
-
-=head1 SYNOPSIS
-
- use Mail::Ezmlm;
- $list = new Mail::Ezmlm;
- 
-The rest is a bit complicated for a Synopsis, see the description.
-
-=head1 ABSTRACT
-
-Ezmlm is a Perl module that is designed to provide an object interface to
-the ezmlm mailing list manager software. See the ezmlm web page
-(http://www.ezmlm.org/) for a complete description of the software.
-
-This version of the module is designed to work with ezmlm version 0.53.
-It is fully compatible with ezmlm's IDX extensions (version 0.4xx and 5.0 ). Both
-of these can be obtained via anon ftp from ftp://ftp.ezmlm.org/pub/patches/
-
-=head1 DESCRIPTION
-
-=head2 Setting up a new Ezmlm object:
-
-   use Mail::Ezmlm;
-   $list = new Mail::Ezmlm;
-   $list = new Mail::Ezmlm('/home/user/lists/moolist');
-
-=head2 Changing which list the Ezmlm object points at:
- 
-
-   $list->setlist('/home/user/lists/moolist');
-
-=head2 Getting a list of current subscribers:
-
-=item Two methods of listing subscribers is provided. The first prints a list
-of subscribers, one per line, to the supplied FILEHANDLE. If no filehandle is
-given, this defaults to STDOUT. An optional second argument specifies the
-part of the list to display (mod, digest, allow, deny). If the part is
-specified, then the FILEHANDLE must be specified.
-
-   $list->list;
-   $list->list(\*STDERR);
-   $list->list(\*STDERR, 'deny');
-
-=item The second method returns an array containing the subscribers. The
-optional argument specifies which part of the list to display (mod, digest,
-allow, deny).
-
-   @subscribers = $list->subscribers;
-   @subscribers = $list->subscribers('allow');
-
-=head2 Testing for subscription:
-
-   $list->issub('nobody@on.web.za');
-   $list->issub(@addresses);
-   $list->issub(@addresses, 'mod');
-
-issub() returns 1 if all the addresses supplied are found as subscribers 
-of the current mailing list, otherwise it returns undefined. The optional
-argument specifies which part of the list to check (mod, digest, allow,
-deny).
-
-=head2 Subscribing to a list:
-
-   $list->sub('nobody@on.web.za');
-   $list->sub(@addresses);
-   $list->sub(@addresses, 'digest');
-
-sub() takes a LIST of addresses and subscribes them to the current mailing list.
-The optional argument specifies which part of the list to subscribe to (mod,
-digest, allow, deny).
-
-
-=head2 Unsubscribing from a list:
-
-   $list->unsub('nobody@on.web.za');
-   $list->unsub(@addresses);
-   $list->unsub(@addresses, 'mod');
-
-unsub() takes a LIST of addresses and unsubscribes them (if they exist) from the
-current mailing list. The optional argument specifies which part of the list
-to unsubscribe from (mod, digest, allow, deny).
-
-
-=head2 Creating a new list:
-
-   $list->make(-dir=>'/home/user/list/moo',
-         -qmail=>'/home/user/.qmail-moo',
-         -name=>'user-moo',
-         -host=>'on.web.za',
-         -user=>'onwebza',
-         -switches=>'mPz');
-
-make() creates the list as defined and sets it to the current list. There are
-three variables which must be defined in order for this to occur; -dir, -qmail and -name.
-
-=over 6
-
-=item -dir is the full path of the directory in which the mailing list is to
-be created.
-
-=item -qmail is the full path and name of the .qmail file to create.
-
-=item -name is the local part of the mailing list address (eg if your list
-was user-moo@on.web.za, -name is 'user-moo').
-
-=item -host is the name of the host that this list is being created on. If
-this item is omitted, make() will try to determine your hostname. If -host is
-not the same as your hostname, then make() will attempt to fix DIR/inlocal for
-a virtual host.
-
-=item -user is the name of the user who owns this list. This item only needs to
-be defined for virtual domains. If it exists, it is prepended to -name in DIR/inlocal.
-If it is not defined, the make() will attempt to work out what it should be from
-the qmail control files.
-
-=item -switches is a list of command line switches to pass to ezmlm-make(1).
-Note that the leading dash ('-') should be ommitted from the string.
-
-=back
-
-make() returns the value of thislist() for success, undefined if there was a
-problem with the ezmlm-make system call and 0 if there was some other problem.
-
-See the ezmlm-make(1) man page for more details
-
-=head2 Determining which list we are currently altering:
-
-   $whichlist = $list->thislist;
-   print $list->thislist;
-
-=head2 Getting the current configuration of the current list:
-
-   $list->getconfig;
-
-getconfig() returns a string that contains the command line switches that
-would be necessary to re-create the current list. It does this by reading the
-DIR/config file (idx < v5.0) or DIR/flags (idx >= v5.0) if one of them exists.
-If it can't find these files it attempts to work things out for itself (with
-varying degrees of success). If both these methods fail, then getconfig()
-returns undefined.
-
-   $list->ismodpost;
-   $list->ismodsub;
-   $list->isremote;
-   $list->isdeny;
-   $list->isallow;
-
-The above five functions test various features of the list, and return a 1
-if the list has that feature, or a 0 if it doesn't. These functions are
-considered DEPRECATED as their result is not reliable. Use "getconfig" instead.
-
-=head2 Updating the configuration of the current list:
-
-   $list->update('msPd');
-
-update() can be used to rebuild the current mailing list with new command line
-options. These options can be supplied as a string argument to the procedure.
-Note that you do not need to supply the '-' or the 'e' command line switch.
-
-   @part = $list->getpart('headeradd');
-   $part = $list->getpart('headeradd');
-
-getpart() can be used to retrieve the contents of various text files such as
-headeradd, headerremove, mimeremove, etc.
-
-=head2 Manage language dependent text files
-
-   $list->get_available_text_files;
-   $list->get_text_content('sub-ok');
-   $list->set_text_content('sub-ok', @content);
-
-These functions allow you to manipulate the text files, that are used for
-automatic replies by ezmlm.
-
-   $list->is_text_default('sub-ok');
-   $list->reset_text('sub-ok');
-
-These two functions are available if you are using ezmlm-idx v5.0 or higher.
-is_text_default() checks, if there is a customized text file defined for this list.
-reset_text() removes the customized text file from this list. Ezmlm-idx will use
-system-wide default text file, if there is no customized text file for this list.
-
-=head2 Change the list's settings (for ezmlm-idx >= 5.0)
-
-   Mail::Ezmlm->get_config_dir;
-   $list->get_config_dir;
-   $list->set_config_dir('/etc/ezmlm-local');
-
-These function access the file 'conf-etc' in the mailing list's directory. The
-static function always returns the default configuration directory of ezmlm-idx
-(/etc/ezmlm).
-
-   $list->get_available_languages;
-   $list->get_lang;
-   $list->set_lang('de');
-   $list->get_charset;
-   $list->set_charset('iso-8859-1:Q');
-
-These functions allow you to change the language of the text files, that are used
-for automatic replies of ezmlm-idx (since v5.0 the configured language is stored
-in 'conf-lang' within the mailing list's directory). Customized files (in the 'text'
-directory of a mailing list directory) override the default language files.
-Empty strings for set_lang() and set_charset() reset the setting to its default value.
-
-=head2 Get the installed version of ezmlm
-
-   Mail::Ezmlm->get_version;
-
-The result is one of the following:
- 0 - unknown
- 3 - ezmlm 0.53
- 4 - ezmlm-idx 0.4xx
- 5 - ezmlm-idx 5.x
-
-=head2 Creating MySQL tables:
-
-   $list->createsql();
-
-Currently only works for MySQL.
-
-createsql() will attempt to create the table specified in the SQL connect
-options of the current mailing list. It will return an error if the current
-mailing list was not configured to use SQL, or is Ezmlm was not compiled
-with MySQL support. See the MySQL info pages for more information.
-
-=head2 Checking the Mail::Ezmlm and ezmlm version numbers
-
-The version number of the Mail::Ezmlm module is stored in the variable
-$Mail::Ezmlm::VERSION. The compatibility of this version of Mail::Ezmlm
-with your system installed version of ezmlm can be checked with
-
-   $list->check_version();
-
-This returns 0 for compatible, or the version string of ezmlm-make(2) if
-the module is incompatible with your set up.
 
 =head1 RETURN VALUES
 
@@ -837,7 +784,6 @@ that they know about nothing :)
 
 =head1 AUTHOR
 
- Guy Antony Halse <guy-ezmlm@rucus.net>
  Lars Kruse <devel@sumpfralle.de>
 
 =head1 BUGS
@@ -852,8 +798,8 @@ that they know about nothing :)
  ezmlm(5), ezmlm-make(2), ezmlm-sub(1), 
  ezmlm-unsub(1), ezmlm-list(1), ezmlm-issub(1)
 
- http://rucus.ru.ac.za/~guy/ezmlm/
- https://systemausfall.org/toolforge/ezmlm-web
+ https://systemausfall.org/toolforge/ezmlm-web/
+ http://www.synacklabs.net/projects/crypt-ml/
  http://www.ezmlm.org/
  http://www.qmail.org/
 
