@@ -7,34 +7,19 @@
 # Copyright (C) 2006, Lars Kruse, All Rights Reserved.
 # Please send bug reports and comments to devel@sumpfralle.de
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met: 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-# TODO: change to GPL
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
-#
-# Redistributions in binary form must reproduce the above copyright notice,
-# this list of conditions and the following disclaimer in the documentation
-# and/or other materials provided with the distribution.
-#
-# Neither name Lars Kruse nor the names of any contributors
-# may be used to endorse or promote products derived from this software
-# without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS
-# IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 #
 # ==========================================================================
 # POD is at the end of this file. Search for '=head' to find it
@@ -65,16 +50,24 @@ $GPG_BIN = '/usr/bin/gpg';
 # == End site dependant variables ==
 
 # == check the ezmlm-make path ==
-$GPG_EZMLM_BASE = '/usr/local/bin/ezmlm' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/local/bin/ezmlm-idx' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/local/bin' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/bin/ezmlm' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/bin/ezmlm-idx' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/bin' unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
+$GPG_EZMLM_BASE = '/usr/local/bin/ezmlm'
+	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
+$GPG_EZMLM_BASE = '/usr/local/bin/ezmlm-idx'
+	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
+$GPG_EZMLM_BASE = '/usr/local/bin'
+	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
+$GPG_EZMLM_BASE = '/usr/bin/ezmlm'
+	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
+$GPG_EZMLM_BASE = '/usr/bin/ezmlm-idx'
+	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
+$GPG_EZMLM_BASE = '/usr/bin'
+	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
 
 # == check the gpg path ==
-$GPG_BIN = '/usr/local/bin/gpg' unless (-e "$GPG_BIN");
-$GPG_BIN = '/bin/gpg' unless (-e "$GPG_BIN");
+$GPG_BIN = '/usr/local/bin/gpg'
+	unless (-e "$GPG_BIN");
+$GPG_BIN = '/bin/gpg'
+	unless (-e "$GPG_BIN");
 
 # == clean up the path for taint checking ==
 local $ENV{'PATH'} = $GPG_EZMLM_BASE;
@@ -105,10 +98,13 @@ sub convert_to_encrypted {
 	my($self) = @_;
 
 	my $list_dir = $self->{'LIST_NAME'};
-	($self->_seterror(-1, 'must define directory in convert()') && return 0) unless(defined($list_dir));
-	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0) unless(-d $list_dir);
+	($self->_seterror(-1, 'must define directory in convert_to_encrypted()') && return 0)
+		unless(defined($list_dir));
+	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0)
+		unless(-d $list_dir);
 	my $tlist = new Mail::Ezmlm::Gpg($list_dir);
-	($self->_seterror(-1, 'list is already encrypted: ' . $list_dir) && return 0) if ($tlist->is_gpg());
+	($self->_seterror(-1, 'list is already encrypted: ' . $list_dir) && return 0)
+		if ($tlist->is_gpg());
 
 	# retrieve location of dotqmail-files
 	my $dot_loc;
@@ -133,10 +129,11 @@ sub convert_to_encrypted {
 	$dot_loc =~ m/^([\w\._\/-]*)$/;
 	$dot_loc = $1;
 
-	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0) unless(($dot_loc ne '') && (-e $dot_loc));
+	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0)
+		unless(($dot_loc ne '') && (-e $dot_loc));
 
 	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--skip-keygen", $list_dir, $dot_loc) == 0
-			|| ($self->_seterror($?) && return undef);
+		|| ($self->_seterror($?) && return undef);
 
 	$self->_seterror(undef);
 	return $self->setlist($list_dir);
@@ -147,10 +144,13 @@ sub convert_to_plaintext {
 	my($self) = @_;
 
 	my $list_dir = $self->{'LIST_NAME'};
-	($self->_seterror(-1, 'must define directory in convert_to_plaintext()') && return 0) unless(defined($list_dir));
-	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0) unless(-d $list_dir);
+	($self->_seterror(-1, 'must define directory in convert_to_plaintext()') && return 0)
+		unless(defined($list_dir));
+	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0)
+		unless(-d $list_dir);
 	my $tlist = new Mail::Ezmlm::Gpg($list_dir);
-	($self->_seterror(-1, 'list is not encrypted: ' . $list_dir) && return 0) unless ($tlist->is_gpg());
+	($self->_seterror(-1, 'list is not encrypted: ' . $list_dir) && return 0)
+		unless ($tlist->is_gpg());
 
 
 	# retrieve location of dotqmail-files
@@ -175,10 +175,11 @@ sub convert_to_plaintext {
 	$dot_loc =~ m/^([\w\._\/-]*)$/;
 	$dot_loc = $1;
 
-	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0) unless(($dot_loc ne '') && (-e $dot_loc));
+	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0)
+		unless(($dot_loc ne '') && (-e $dot_loc));
 
 	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--revert", $list_dir, $dot_loc) == 0
-			|| ($self->_seterror($?) && return undef);
+		|| ($self->_seterror($?) && return undef);
 
 	$self->_seterror(undef);
 	return $self->setlist($list_dir);
@@ -376,21 +377,6 @@ sub getpart {
 }
 
 
-# == set files contents ==
-sub setpart {
-	my($self, $part, @content) = @_;
-	my($line);
-	if(open(PART, ">$self->{'LIST_NAME'}/$part")) {
-		foreach $line (@content) {
-			$line =~ s/[\r]//g; $line =~ s/\n$//;
-			print PART "$line\n";
-		}
-		close PART;
-		return 1;
-	} ($self->_seterror($?) && return undef);
-}
-
-
 # == export a key ==
 sub export_key {
 	my ($self, $keyid) = @_;
@@ -438,7 +424,6 @@ sub delete_key {
 sub generate_private_key {
 	my ($self, $name, $comment, $email, $keysize, $expire) = @_;
 	my $gpg = $self->_get_gpg_object();
-	#my $return = $gpg->keygen($name , $email, 'ELG-E', $keysize, $expire, '');
 	my $gpgoption = "--gen-key";
 	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
 	my $pid = open(INPUT, "| $gpgcommand");
@@ -450,9 +435,7 @@ sub generate_private_key {
 	print INPUT "Name-Comment: $comment\n" if ($comment);
 	print INPUT "Name-Email: $email\n";
 	print INPUT "Expire-Date: $expire\n";
-	close INPUT;
-
-	return (0==0);
+	return close INPUT;
 }
 
 
@@ -750,10 +733,9 @@ Note that you do not need to supply the '-' or the 'e' command line switch.
 
    @part = $list->getpart('headeradd');
    $part = $list->getpart('headeradd');
-   $list->setpart('headerremove', @part);
 
-getpart() and setpart() can be used to retrieve and set the contents of
-various text files such as headeradd, headerremove, mimeremove, etc.
+getpart() can be used to retrieve the contents of various text files such as
+headeradd, headerremove, mimeremove, etc.
 
 =head2 Manage language dependent text files
 
