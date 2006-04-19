@@ -15,7 +15,9 @@
 
 
 use Test;
-BEGIN { plan tests => 5 }
+use strict;
+
+BEGIN { plan tests => 13 }
 
 print "Trying to load the Mail::Ezmlm module: ";
 eval { require Mail::Ezmlm; return 1;};
@@ -23,22 +25,25 @@ ok($@,'');
 croak() if $@;  # If Mail::Ezmlm didn't load... bail hard now
 
 print "Trying to load the Mail::Ezmlm::Gpg module: ";
-eval { require Mail::Ezmlm::Gpg; return 1;};
+eval { require "Gpg.pm"; return 1;};
 ok($@,'');
 croak() if $@;	# Mail::Ezmlm::Gpg is essential ...
 
 
-######################### End of black magic.
+print "Checking version of gpg-ezmlm: ";
+my $version_check = Mail::Ezmlm::Gpg->check_gpg_ezmlm_version();
+ok($version_check);
+croak() unless ($version_check);	# the version of gpg-ezmlm is important
 
 use Cwd;
-$list = new Mail::Ezmlm;
+my $list = new Mail::Ezmlm;
 
 # create a temp directory if necessary
-$TMP = cwd() . '/gpg-ezmlmtmp';
+my $TMP = cwd() . '/gpg-ezmlmtmp';
 mkdir $TMP, 0755 unless (-d $TMP);
 
 print 'Checking list creation with Mail::Ezmlm: ';
-$test1 = $list->make(-name=>"ezmlm-test1-$$", 
+my $test1 = $list->make(-name=>"ezmlm-test1-$$", 
             -qmail=>"$TMP/.qmail-ezmlm-test1-$$", 
             -dir=>"$TMP/ezmlm-test1-$$"); 
 
@@ -49,7 +54,7 @@ system("cp", "-a", $list->{'LIST_NAME'}, $list->{'LIST_NAME'} . ".backup");
 
 
 print 'Testing list conversion from plaintext to encryption: ';
-$gpg_list = new Mail::Ezmlm::Gpg($list->{'LIST_NAME'});
+my $gpg_list = new Mail::Ezmlm::Gpg($list->{'LIST_NAME'});
 ok($gpg_list->convert_to_encrypted() && $gpg_list->is_gpg());
 
 
@@ -80,7 +85,7 @@ ok(!$update_failed);
 
 
 print 'Testing key generation: ';
-ok($gpg_list->generate_private_key("Name", "Comment", "mail@addr.ess", 1024, 0));
+ok($gpg_list->generate_private_key('Name', 'Comment', 'mail@addr.ess', 1024, 0));
 
 
 print 'Testing key retrieval: ';
@@ -91,7 +96,7 @@ ok((@pub_keys == 1) && (@sec_keys == 1));
 
 print 'Testing key export: ';
 my $keyid = $pub_keys[0]{id};
-ok($gpg_list->export_key($keyid));
+ok($keyid && $gpg_list->export_key($keyid));
 
 
 print 'Testing key deletion: ';

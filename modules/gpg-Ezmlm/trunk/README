@@ -1,4 +1,4 @@
-Ezmlm.pm
+Mail::Ezmlm:Gpg
 
 Object methods for gpg-ezmlm mailing lists
 (see http://www.synacklabs.net/projects/crypt-ml)
@@ -9,9 +9,8 @@ Install by doing the following ...
 # make install
 
 One thing. For some reason MakeMaker doesn't like symlinks. Please make sure
-you use the full cantonical path for the qmail and ezmlm binaries.
+you use the full cantonical path for the gnupg and gpg-ezmlm binaries.
 
-Documentation is in pod format. Please run perldoc Mail::Ezmlm::Gpg after you have
-installed it.
+Read the documentation by running "man Mail::Ezmlm::Gpg".
 
 - Lars Kruse <devel@sumpfralle.de>

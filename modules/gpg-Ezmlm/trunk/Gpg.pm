@@ -633,13 +633,24 @@ sub get_public_keys {
 
 
 # == get_private_keys ==
-# for POD see above (get_public_keys)
+# see above for POD (get_public_keys)
 sub get_secret_keys {
 	my ($self) = @_;
 	my @keys = $self->_get_keys("sec");
 	return @keys;
 }
 
+
+# == check version of gpg-ezmlm ==
+sub check_gpg_ezmlm_version {
+	my $ret_value = system("'$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl' --version &>/dev/null"); 
+	# for now we do not need a specific version of gpg-ezmlm - it just has to
+	# know the "--version" argument (available since gpg-ezmlm 0.3.4)
+	return ($ret_value == 0);
+}
+
+
+############ some internal functions ##############
 
 # == internal function for creating a gpg object ==
 sub _get_gpg_object() {
