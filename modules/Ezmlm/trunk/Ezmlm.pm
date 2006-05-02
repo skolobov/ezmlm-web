@@ -110,12 +110,17 @@ sub make {
 		$list{'-host'} = $hostname;
 	}
 
+	# does the mailing list directory already exist?
+	if (-e $list{'-dir'}) {
+		$self->_seterror(-1,
+			'-the mailing list directory already exists: ' . $list{'-dir'});
+		return undef;
+	}
+
 	# Attempt to make the list if we can.
-	unless(-e $list{'-dir'}) {
-		system("$EZMLM_BASE/ezmlm-make", @commandline, $list{'-dir'}, $list{'-qmail'}, $list{'-name'}, $list{'-host'}) == 0
-			|| ($self->_seterror($?) && return undef);
-	} else {
-		($self->_seterror(-1, '-dir must be defined in make()') && return 0);
+	if (system("$EZMLM_BASE/ezmlm-make", @commandline, $list{'-dir'}, $list{'-qmail'}, $list{'-name'}, $list{'-host'}) != 0) {
+		$self->_seterror($?, '-failed to create mailing list - check your webserver\'s log file for details');
+		return undef;
 	}   
 
 	# Sort out the DIR/inlocal problem if necessary
