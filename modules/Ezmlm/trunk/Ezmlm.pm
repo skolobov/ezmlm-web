@@ -91,10 +91,16 @@ sub make {
 	my $commandline = '';
 	$commandline = '-' . $list{'-switches'} if(defined($list{'-switches'}));
 	my @commandline;
-	# UGLY!
-	foreach (split(/["'](.+?)["']|(\s-\w+)/, $commandline)) {
-		next if (!defined($_) or !$_ or $_ eq ' ');
-		push @commandline, $_;
+	foreach (&quotewords('\s+', 1, $commandline)) {
+		next if (!defined($_));
+		# untaint input
+		$_ =~ s/['"]//g;
+		$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
+		if ($_ =~ /^\s*$/) {
+			push @commandline, "";
+		} else {
+			push @commandline, $1;
+		}
 	}
 
 	# These three variables are essential
@@ -148,19 +154,12 @@ sub update {
 	$switches = '-e' . $switches;
 	my @switch_list;
 
-	# UGLY!
-	#foreach (split(/["'](.+?)["']|(-\w+)/, $switches)) {
-	#	next if (!defined($_));
-	#	# untaint input
-	#	$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
-	#	push @switches, $1;
-	#}
 	foreach (&quotewords('\s+', 1, $switches)) {
 		next if (!defined($_));
 		# untaint input
 		$_ =~ s/['"]//g;
 		$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
-		if ($_ eq '') {
+		if ($_ =~ /^\s*$/) {
 			push @switch_list, "";
 		} else {
 			push @switch_list, $1;
