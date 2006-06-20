@@ -91,16 +91,10 @@ sub make {
 	my $commandline = '';
 	$commandline = '-' . $list{'-switches'} if(defined($list{'-switches'}));
 	my @commandline;
-	foreach (&quotewords('\s+', 1, $commandline)) {
-		next if (!defined($_));
-		# untaint input
-		$_ =~ s/['"]//g;
-		$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
-		if ($_ =~ /^\s*$/) {
-			push @commandline, "";
-		} else {
-			push @commandline, $1;
-		}
+	# UGLY!
+	foreach (split(/["'](.+?)["']|(\s-\w+)/, $commandline)) {
+		next if (!defined($_) or !$_ or $_ eq ' ');
+		push @commandline, $_;
 	}
 
 	# These three variables are essential
@@ -116,17 +110,12 @@ sub make {
 		$list{'-host'} = $hostname;
 	}
 
-	# does the mailing list directory already exist?
-	if (-e $list{'-dir'}) {
-		$self->_seterror(-1,
-			'-the mailing list directory already exists: ' . $list{'-dir'});
-		return undef;
-	}
-
 	# Attempt to make the list if we can.
-	if (system("$EZMLM_BASE/ezmlm-make", @commandline, $list{'-dir'}, $list{'-qmail'}, $list{'-name'}, $list{'-host'}) != 0) {
-		$self->_seterror($?, '-failed to create mailing list - check your webserver\'s log file for details');
-		return undef;
+	unless(-e $list{'-dir'}) {
+		system("$EZMLM_BASE/ezmlm-make", @commandline, $list{'-dir'}, $list{'-qmail'}, $list{'-name'}, $list{'-host'}) == 0
+			|| ($self->_seterror($?) && return undef);
+	} else {
+		($self->_seterror(-1, '-dir must be defined in make()') && return 0);
 	}   
 
 	# Sort out the DIR/inlocal problem if necessary
@@ -154,12 +143,19 @@ sub update {
 	$switches = '-e' . $switches;
 	my @switch_list;
 
+	# UGLY!
+	#foreach (split(/["'](.+?)["']|(-\w+)/, $switches)) {
+	#	next if (!defined($_));
+	#	# untaint input
+	#	$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
+	#	push @switches, $1;
+	#}
 	foreach (&quotewords('\s+', 1, $switches)) {
 		next if (!defined($_));
 		# untaint input
 		$_ =~ s/['"]//g;
 		$_ =~ m/^([\w _\/,\.\@:'"-]*)$/;
-		if ($_ =~ /^\s*$/) {
+		if ($_ eq '') {
 			push @switch_list, "";
 		} else {
 			push @switch_list, $1;
