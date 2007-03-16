@@ -1,0 +1,278 @@
+#!/usr/bin/env python2.4
+#
+# This file is part of gpgpy-ezmlm - an encryption filter for the
+# ezmlm-idx mailinglist manager.
+#
+# Copyright 02007 Sense.Lab e.V. <info@senselab.org>
+#
+# This script converts an existing plaintext ezmlm mailing list into an
+# encrypted mailing list. This change does not interfere with the useal
+# operation of ezmlm-idx.
+# 
+# Syntax:
+#  gpgpy-ezmlm-manage MAILINGLIST_DIRECTORY [enable|disable] 
+#    enable or disable encryption for the list
+#
+#  gpgpy-ezmlm-manage MAILINGLIST_DIRECTORY is_encrypted
+#    check if encryption for this mailing list is enabled (exitcode = 0)
+#
+#  gpgpy-ezmlm-manage MAILINGLIST_DIRECTORY genkey [NAME [COMMENT [MAIL_ADDRESS]]]
+#    generate the secret key of a list
+#    NAME, COMMENT and MAIL_ADDRESS are optional parameters - otherwise
+#      reasonable default values are generated
+#
+#  gpgpy-ezmlm-manage MAILINGLIST_DIRECTORY gnupg_dir
+#    return the directory containing the keys of this list
+#
+# If no MAILINGLIST_DIRECTORY is given, then it will only run some self-tests.
+#
+#
+# gpgpy-ezmlm is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# gpgpy-ezmlm is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with the CryptoBox; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+## config file inside of a mailing list directory
+CONF_FILE = "conf-gpgpy"
+
+## default gnupg directory relative to a mailing list directory
+DEFAULT_GNUPG_DIR = ".gnupg"
+
+## default settings for mailing lists
+CONFIG_SETTINGS = """plain_without_key = no
+sign_messages = no
+gnupg_dir = %s
+""" % DEFAULT_GNUPG_DIR
+
+## settings for new keys
+GENERATE_KEY_SETTINGS = """
+	<GnupgKeyParms format="internal">
+		Key-Type: DSA
+		Key-Length: 1024
+		Subkey-Type: ELG-E
+		Subkey-Length: 4096
+		Name-Real: %(name)s
+		Name-Comment: %(comment)s
+		Name-Email: %(mail)s
+	</GnupgKeyParms>
+	"""
+
+
+import sys, os
+
+
+def check_for_errors():
+	"""Check for environmental problems
+	"""
+	errors = False
+	try:
+		import pyme
+	except ImportError:
+		sys.stderr.write("Failed to import the python module 'pyme'.\n")
+		errors = True
+	return errors == False
+
+
+def enable_encryption(list_dir):
+	"""Turn on encryption for a mailing list
+	"""
+	conf_file = os.path.join(list_dir, CONF_FILE)
+	if not os.path.isfile(conf_file):
+		try:
+			new_file = file(conf_file, "w")
+			new_file.write(CONFIG_SETTINGS)
+			new_file.close()
+		except IOError, err_msg:
+			sys.stderr.write("Failed to write the gpgpy-ezmlm configuration " \
+					+ "file (%s): %s\n" % (conf_file, err_msg))
+			return False
+	return True
+
+
+def disable_encryption(list_dir):
+	"""Turn off encryption for a mailing list
+
+	Secret and public keys are not removed.
+	"""
+	conf_file = os.path.join(list_dir, CONF_FILE)
+	if os.path.isfile(conf_file):
+		try:
+			os.remove(conf_file)
+		except OSError, err_msg:
+			sys.stderr.write("Failed to delete the gpgpy-ezmlm configuration" \
+					+ " file (%s): %s\n" % (conf_file, err_msg))
+			return False
+	return True
+
+
+def is_encrypted(list_dir):
+	"""Check if the mailing list is encrypted or not
+	"""
+	conf_file = os.path.join(list_dir, CONF_FILE)
+	return os.path.isfile(conf_file)
+
+
+def get_gnupg_setting(list_dir):
+	conf_file = os.path.join(list_dir, CONF_FILE)
+	gnupg_setting = DEFAULT_GNUPG_DIR
+	if os.path.isfile(conf_file):
+		for line in file(conf_file).readlines():
+			key, value = line.split("=", 1)
+			key, value = (key.strip().lower(), value.strip())
+			if key == 'gnupg_dir':
+				gnupg_setting = value
+				break
+	if os.path.isabs(gnupg_setting):
+		return gnupg_setting
+	else:
+		return os.path.realpath(os.path.join(list_dir, gnupg_setting))
+
+
+def get_mail_address_of_list(list_dir):
+	local_file = os.path.join(list_dir, "outlocal")
+	host_file = os.path.join(list_dir, "outhost")
+	local_mail = ""
+	host_mail = ""
+	if os.access(local_file, os.R_OK):
+		try:
+			local_mail = file(local_file).read().strip()
+		except IOError:
+			pass
+	if os.access(host_file, os.R_OK):
+		try:
+			host_mail = file(host_file).read().strip()
+		except IOError:
+			pass
+	if local_mail and host_mail:
+		return "%s@%s" % (local_mail, host_mail)
+	elif local_mail:
+		return local_mail
+	elif host_mail:
+		return host_mail
+	else:
+		return "unknown"
+
+
+def generate_key(list_dir, name, comment, mail):
+	os.environ["GNUPGHOME"] = get_gnupg_setting(list_dir)
+	import pyme
+	import pyme.core
+	import re
+	context = pyme.core.Context()
+	context.set_armor(1)
+	context.set_progress_cb(None, None)
+	values = { "name": name, "comment": comment, "mail": mail }
+	if not name:
+		values["name"] = "Mailing list %s" % os.path.basename(list_dir)
+	if not comment:
+		values["comment"] = "encrypted"
+	if not mail:
+		values["mail"] = get_mail_address_of_list(list_dir)
+	bad_characters = re.compile("([\(\)<>])")
+	for key, value in values.items():
+		if bad_characters.search(value):
+			sys.stderr.write("The description (%s) of the key to be " % key \
+					+ "generated contains invalid characters: '%s'\n" % \
+					str(bad_characters.search(value).groups()[0]))
+			return False
+	key_settings = GENERATE_KEY_SETTINGS % values
+	try:
+		context.op_genkey(key_settings, None, None)
+	except pyme.errors.GPGMEError, err_msg:
+		sys.stderr.write("Failed to create the gnupg key: %s\n" % err_msg)
+		return False
+	return True
+
+
+def check_mailinglist_directory(list_dir):
+	"""Check if the given directory contains an ezmlm mailing list
+	"""
+	## does the mailing list directory exist?
+	if not os.path.isdir(list_dir):
+		sys.stderr.write("The mailing list directory does not exist: %s\n" % list_dir)
+		return False
+	## is the mailing list directory accessible?
+	if not os.access(list_dir, os.X_OK):
+		sys.stderr.write("Could not access the mailing list directory: %s\n" % list_dir)
+		return False
+	if not os.path.isfile(os.path.join(list_dir, 'lock')):
+		sys.stderr.write("The directory (%s) does not seem to" % list_dir \
+				+ " contain an ezmlm mailing list.\n")
+		return False
+	return True
+
+
+def output_help():
+	prog_name = os.path.basename(sys.argv[0])
+	print "Syntax:"
+	print "\t%s MAILINGLIST_DIRECTORY [enable|disable]" % prog_name
+	print "\t%s MAILINGLIST_DIRECTORY is_encrypted" % prog_name
+	print "\t%s MAILINGLIST_DIRECTORY genkey [NAME [COMMENT [MAIL]]]" % prog_name
+	print "\t%s MAILINGLIST_DIRECTORY gnupg_dir" % prog_name
+	print
+
+
+if __name__ == "__main__":
+	if not check_for_errors():
+		sys.exit(1)
+	else:
+		## no parameters - only self-testing was requested - we quit now
+		if len(sys.argv) == 1:
+			print "OK"
+			sys.exit(0)
+	if len(sys.argv) == 2:
+		if sys.argv[1] == "--help":
+			output_help()
+			sys.exit(0)
+		else:
+			sys.stderr.write("Not enough parameters: %s\n" % sys.argv[1])
+			output_help()
+			sys.exit(2)
+	else:
+		list_dir = sys.argv[1]
+		if not check_mailinglist_directory(list_dir):
+			sys.exit(3)
+		## is the action valid?
+		action = sys.argv[2]
+		if action == "enable":
+			enable_encryption(list_dir)
+		elif action == "disable":
+			disable_encryption(list_dir)
+		elif action == "is_encrypted":
+			if is_encrypted(list_dir):
+				print "The mailing list in %s is encrypted." % list_dir
+				sys.exit(0)
+			else:
+				print "The mailing list in %s is not encrypted." % list_dir
+				sys.exit(100)
+		elif action == "gnupg_dir":
+			print get_gnupg_setting(list_dir)
+		elif action == "genkey":
+			name, comment, mail = None, None, None
+			if len(sys.argv) > 6:
+				sys.stderr.write("Too many arguments (%d) - try '--help' for details.\n" % len(sys.argv)-1 )
+				sys.exit(2)
+			if len(sys.argv) > 5:
+				mail = sys.argv[5]
+			if len(sys.argv) > 4:
+				comment = sys.argv[4]
+			if len(sys.argv) > 3:
+				name = sys.argv[3]
+			if generate_key(list_dir, name, comment, mail):
+				sys.exit(0)
+			else:
+				sys.exit(4)
+		else:
+			sys.stderr.write("Unknown action requested: %s\n" % sys.argv[2])
+			sys.exit(2)
+

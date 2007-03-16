@@ -1,0 +1,128 @@
+#!/bin/sh
+#
+# This file is part of gpgpy-ezmlm - an encryption filter for the
+# ezmlm-idx mailinglist manager.
+#
+# Copyright 02007 Sense.Lab e.V. <info@senselab.org>
+#
+# This script is used to decide if we have to call qmail-queue directly
+# or if we should call the gpgpy re-encrypting wrapper instead.
+#
+# Add the following environment setting to qmail-start (e.g. in
+# /var/qmail/rc):
+#  QMAILQUEUE=PATH_TO_THIS_SCRIPT
+#
+# In case you did not install qmail in its default directory (/var/qmail)
+# or if you use a filtering qmail-queue wrapper (e.g. for spam filtering)
+# then you should change the setting ORIG_QMAILQUEUE below accordingly.
+#
+#
+# gpgpy-ezmlm is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# gpgpy-ezmlm is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with the CryptoBox; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+
+##################### configuration #####################
+
+# maybe you have to adjust the following lines according to your setup
+# the following settings can also be overriden by environment settings
+# with the same name
+
+# the original qmail-queue program
+ORIG_QMAILQUEUE=${ORIG_QMAILQUEUE:=/var/qmail/bin/qmail-queue}
+# the python filter of gpgpy-ezmlm-queue
+GPGPY_EZMLMQUEUE=${GPGPY_EZMLMQUEUE:=/usr/local/bin/gpgpy-ezmlm-encrypt}
+# are all encrypted mailinglists handled by a single user?
+# then put its UID here - for all other UIDs the original qmail-queue will be
+# used instead
+GPGPY_RESTRICT_UID=${GPGPY_RESTRICT_UID:=}
+
+# we read our configuration from 'conf-gpgpy'
+GPGPY_EZMLM_CONF_FILE="conf-gpgpy"
+# call the original qmail-queue program without the changed QMAILQUEUE setting
+EXEC_ORIG_QUEUE="exec env --unset=QMAILQUEUE $ORIG_QMAILQUEUE"
+
+
+##################### self-test #########################
+
+# should we do some self-tests?
+if test "$#" -eq 1 -a "$1" = "test"
+  then	error=
+	# check if the original qmail-queue is executable
+	if test -x "$ORIG_QMAILQUEUE"
+	  then	true
+	  else	error=yes
+		echo >&2 "Could not find executable qmail-queue: $ORIG_QMAILQUEUE"
+	 fi
+
+	# check if the gpgpy-ezmlm wrapper for qmail-queue exists
+	# also check if it returns any errors
+	if test -x "$GPGPY_EZMLMQUEUE"
+	  then	if "$GPGPY_EZMLMQUEUE"
+		  then	true
+		  else	error=yes
+		 fi 2>&1 | sed 's/^/[gpg-ezmlm-encrypt] /' >&2
+	  else	error=yes
+	  	echo >&2 "Could not find executable gpgpy-ezmlm-queue: $GPGPY_EZMLMQUEUE"
+	 fi
+
+	# check GPGPY_RESTRICT_UID for invalid values
+	if test -n "$GPGPY_RESTRICT_UID"
+	  then	if test 0 -le "$GPGPY_RESTRICT_UID" 2>/dev/null
+		  then	true
+		  else	error=yes
+			echo >&2 "Invalid value of GPGPY_RESTRICT_UID ($GPGPY_RESTRICT_UID) - only integer values are allowed!"
+		 fi
+	 fi
+
+	# print results to stderr
+	echo >&2
+	if test -z "$error"
+	  then	echo >&2 "Successfully finished self-tests"
+		exit 0
+	  else	echo >&2 "Some self-tests failed - please fix them before deploying gpgpy-ezmlm!"
+	    exit 81
+	 fi
+ fi
+
+
+################### queue selection #####################
+# do some tests to decide, if we should run the gpgpy filter or not
+
+test -n "$GPGPY_RESTRICT_UID" -a "$UID" != "$GPGPY_RESTRICT_UID" && $EXEC_ORIG_QUEUE
+
+# the HOME setting is necessary
+test -z "$HOME" && $EXEC_ORIG_QUEUE
+
+# which dot-qmail file should we check? (see 'man qmail-command' for details)
+if test -z "$EXT"
+  then	DOTQMAIL_FILE=$HOME/.qmail
+  else	DOTQMAIL_FILE=$HOME/.qmail-$EXT
+ fi
+
+# does the dot-qmail file exist?
+test -r "$DOTQMAIL_FILE" || $EXEC_ORIG_QUEUE
+
+# filter the respective mailing list directory of this delivery
+MAILINGLIST_DIR=$(grep "/ezmlm-send '" "$DOTQMAIL_FILE" | sed "s#^.* '\(.*\)'.*\$#\1#")
+
+# is it a mailinglist directory?
+test -e "$MAILINGLIST_DIR/lock" || $EXEC_ORIG_QUEUE
+
+# is this mailinglist configured for gpgpy-ezmlm?
+test -r "$MAILINGLIST_DIR/$GPGPY_EZMLM_CONF_FILE" || $EXEC_ORIG_QUEUE
+
+# ok - it is a delivery of an encrypted mailinglist
+exec env QMAILQUEUE=$ORIG_QMAILQUEUE "$GPGPY_EZMLMQUEUE" "$MAILINGLIST_DIR"
+

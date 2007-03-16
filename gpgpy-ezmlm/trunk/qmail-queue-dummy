@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+#
+# this simple script is a dummy implementation of qmail-queue
+#
+# it simply prints the incoming mail from file descriptor 0
+# and the incoming envelope information from file descriptor 1
+#
+
+import sys, os
+
+
+infile = os.fdopen(1, "r")
+content = infile.read()
+
+sys.stderr.write("Envelope: %s\n" % content)
+sys.stderr.write("\n")
+sys.stderr.write(sys.stdin.read())
+
