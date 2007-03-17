@@ -1,0 +1,89 @@
+.TH conf-gpgpy 5 "March 02007" "gpgpy-ezmlm" "Manual of gpgpy-ezmlm"
+.SH NAME
+conf-gpgpy \- format and available configuration options of the mailing list
+specific configuration file for encryption via gpgpy-ezmlm
+.SH DESCRIPTION
+The file \fBconf-gpgpy\fR is used by the encryption wrapper gpgpy-ezmlm that
+can be integrated into the ezmlm mailing list manager.
+.PP
+If a mailing list directory contains the file \fBconf-gpgpy\fR, then encryption
+support is enabled for the list. The manual of \fIgpgpy-ezmlm-manage\fR(1)
+tells you how to create this file.
+.SH FORMAT
+An entry in \fBconf-gpgpy\fR has the following format:
+.RS
+.sp
+\fIOPTION\fP = \fIVALUE\fP
+.sp
+.RE
+.PP
+.IP \fIOPTION\fP
+the name of a setting
+.br
+surrounding whitespaces are stripped
+.br
+case does not matter
+.IP \fIVALUE\fP
+the value of a setting
+.br
+may be enclosed in double or single quotes
+.br
+surrounding whitespaces are stripped
+.br
+case usually matters
+.br
+boolean values must be `no' or `yes' (case independent)
+.PP
+Lines are ignored if they start with `#', do not contain `=' or are empty.
+.SH AVAILABLE OPTIONS
+.IP \fBplain_without_key\fP
+If there is no valid key available for a recipient, then she should receive the
+message in plaintext. Otherwise a warning message is sent instead of the
+encrypted part.
+.br
+.sp
+Possible values are `no' or `yes'.
+.br
+.sp
+The default value is `no'.
+.IP \fBsign_messages\fP
+Sign all outgoing mails with the key of the mailing list.
+.br
+.sp
+Possible values are `no' or `yes'.
+.br
+.sp
+The default value is `no'.
+.IP \fBgnupg_dir\fP
+The given directory contains the gnupg keyring for this mailing list.
+Values starting with a slash (`/') are interpreted as absolute paths.
+Values starting with a tilde (`~') are subject to user expansion.
+All other paths are interpreted relative to the mailing list directory.
+.br
+.sp
+The default value is `.gnupg', thus each mailing list uses its own keyring by
+default.
+.SH EXAMPLE
+The following is the default content of a \fBconf-gpgpy\fP file, as it is
+created by \fBgpgpy-ezmlm-manage\fP:
+.RS
+.sp
+.nf
+plain_without_key = no
+sign_messages = no
+gnupg_dir = .gnupg
+.SH FILES
+conf-gpgpy
+.SH AUTHOR
+Written by Lars Kruse
+.SH REPORTING BUGS
+Report bugs to <devel@sumpfralle.de>
+.SH COPYRIGHT
+Copyright \(co 02006-02007 Lars Kruse
+.br
+This is free software. You may redistribute copies of it under the terms of the
+GNU General Public License <http://www.gnu.org/licenses/gpl.html>. There is NO
+WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+gpgpy-ezmlm-manage(1), gpgpy-ezmlm-encrypt(1), gpgpy-ezmlm-queue(1)
+

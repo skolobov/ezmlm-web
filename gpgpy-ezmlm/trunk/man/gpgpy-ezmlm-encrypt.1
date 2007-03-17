@@ -1,0 +1,61 @@
+.TH gpgpy-ezmlm-encrypt 1 "March 02007" "gpgpy-ezmlm" "Manual of gpgpy-ezmlm"
+.SH NAME
+gpgpy-ezmlm-encrypt \- the qmail-queue substitue \fIgpgpy-ezmlm-queue\fR
+calls this script to decrypt and reencrypt outgoing mails of the
+ezmlm (or ezmlm-idx) mailing list manager.
+.SH SYNOPSIS
+.B gpgpy-ezmlm-encrypt
+check
+.br
+.B gpgpy-ezmlm-encrypt
+[\fIMAILINGLIST_DIR\fR]
+.SH DESCRIPTION
+gpgpy-ezmlm-encrypt reads a mail from descriptor 0. It then reads the envelope
+information from descriptor 1. It assumes that the given mailing list directory
+is configured to be encrypted. It tries to decrypt the message and to encrypt
+it then for every single recipient given by the envelope information.
+Afterwards it hands the reencrypted mail and the respective envelope
+information over to qmail-queue (or a similar substitute like spamh).
+.PP
+Read the manual of \fIqmail-queue\fR(8) to find out more details about the
+interface of qmail-queue - except for the optional mailing list directory
+argument it is identical to gpgpy-ezmlm-encrypt.
+.PP
+gpgpy-ezmlm-encrypt supports encrypted inline and multipart messages. Only
+parts that had to be decrypted are also encrypted for the recipients. So
+plaintext parts of a message will be delivered as plaintext, too.
+.SH SELF-TESTS
+If you call gpgpy-ezmlm-encrypt without an argument, then it only runs some
+self-tests. This should ensure that the environment of gpgpy-ezmlm-encrypt
+works in a sane way.
+.PP
+If no problems were encountered, then the resulting exit code will be zero.
+A value of 81 indicates a serious problem.
+.SH MAILING LIST DIRECTORY
+Every ezmlm mailing list is stored in a separate directory. It contains all
+subscribers, moderators, the configuration and the archive of sent messages.
+Read the manual of ezmlm(5) for further details.
+.PP
+Encrypted mailing list directories differ from normal ones by the existence of
+the file \fBconf-gpgpy\fR. See the manual of conf-gpgpy(5) for details.
+.PP
+The mailing list directory most likely also contains a gnupg directory for
+storing the private and public keys available to the list. The location of this
+directory is configured via conf-gpgpy(5).
+.SH EXIT CODES
+The exit codes of gpgpy-ezmlm-encrypt are similar to the ones defind in the
+manual of qmail-queue(8). In contrast to qmail-queue, you may also expect some
+error messages at STDERR.
+.SH AUTHOR
+Lars Kruse
+.SH REPORTING BUGS
+Report bugs to <devel@sumpfralle.de>
+.SH COPYRIGHT
+Copyright \(co 02007 Lars Kruse
+.br
+This is free software. You may redistribute copies of it under the terms of the
+GNU General Public License <http://www.gnu.org/licenses/gpl.html>. There is NO
+WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+gpgpy-ezmlm-queue(1), conf-gpgpy(5), qmail-queue(8), ezmlm(5)
+
