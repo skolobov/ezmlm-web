@@ -125,6 +125,10 @@ class MailEncryption:
 			key, value = line.split("=", 1)
 			## turn everything to lower case and remove surrounding whitespace
 			key, value = (key.strip().lower(), value.strip())
+			if (len(value) > 1) and \
+					((value.startswith('"') and value.endswith('"')) \
+					or (value.startswith("'") and value.endswith("'"))):
+				value = value[1:-1]
 			## ignore empty values or keys
 			if not key or not value:
 				continue
@@ -142,7 +146,9 @@ class MailEncryption:
 			## unknown setting - ignore
 			else:
 				continue
-		if not os.path.isabs(result["gnupg_dir"]):
+		if result["gnupg_dir"].startswith('~'):
+			result["gnupg_dir"] = os.path.expanduser(result["gnupg_dir"])
+		elif not os.path.isabs(result["gnupg_dir"]):
 			result["gnupg_dir"] = os.path.abspath(os.path.join(
 					self.list_dir, result["gnupg_dir"]))
 		return result
