@@ -11,5 +11,5 @@ TMP_DIR=/tmp/${PREFIX}-${1}
 [ -e "$TMP_DIR" ] && rm -rf "$TMP_DIR"
 
 svn export "${PREFIX}-${1}" "$TMP_DIR"
-tar czf "packages/${PREFIX}-${1}.tar.gz" -C "$(dirname $TMP_DIR)" --owner=0 --group=0 "$(basename $TMP_DIR)"
+tar czf "packages/${PREFIX}-${1}.tar.gz" -C "$(dirname $TMP_DIR)" --exclude debian --owner=0 --group=0 "$(basename $TMP_DIR)"
 rm -rf "$TMP_DIR"
