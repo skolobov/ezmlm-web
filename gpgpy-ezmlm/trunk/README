@@ -1,5 +1,6 @@
 This file is part of gpgpy-ezmlm - an encryption filter for the
-ezmlm-idx mailinglist manager.
+ezmlm mailinglist manager.
+
 Installation and configuration issues are described.
 
 Copyright 02007 Sense.Lab e.V. <info@senselab.org>
@@ -18,13 +19,14 @@ You should have received a copy of the GNU General Public License
 along with the CryptoBox; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+--------------------------------------------------------------
 
 Table of contents:
 	1) Requirements
 	2) Get the source
 	3) Installation
 	4) Integration with qmail
-	5) Manage encrypted mailing lists
+	5) Managing encrypted mailing lists
 	6) Interoperability issues
 	7) Report bugs / feedback
 
@@ -33,8 +35,8 @@ Table of contents:
 1) Requirements:
  - python2.4
  - python-pyme
- - /var/qmail/bin/qmail-queue or a substitute (e.g. ./qmail-queue-dummy)
- - qmail must contain the QMAILQUEUE patch (e.g. part of qmail-ldap)
+ - qmail
+ - ezmlm-idx (v0.431 or higher)
 
 
 2) Get the source
@@ -46,13 +48,18 @@ Extract the compressed archive and read README.
 
 
 3) Installation
-Copy all files in the ./bin/ directory to /usr/local/bin/.
+This should be trivial for default installations:
+	make
+	make install
+	make test
 
-Check if all dependencies are fulfilled by running the following:
- /usr/local/bin/gpgpy-ezmlm-manage
- /usr/local/bin/gpgpy-ezmlm-queue test
+Please fix any problems, that may occour during the tests.
 
-Please fix any problems, that may occour during these tests.
+Non-default installations can be customized - run "make help" for details.
+
+Afterwards the scripts and man pages are installed to their appropriate
+locations. You still need to follow the instructions of section
+"Integration with qmail" below.
 
 
 4) Integration with qmail
@@ -95,7 +102,7 @@ Now you should import the keys of all recipients of this list to the gnupg
 key directory of the list. You can retrieve the location of this directory by
 running the following command:
 
- /usr/local/bin/gpgpy-ezmlm-manage MAILINGLIST_DIR gnupg_dir
+ /usr/local/bin/gpgpy-ezmlm-manage MAILINGLIST_DIR get_gnupg_dir
 
 For example you could import a new public key by issuing:
 
@@ -103,12 +110,17 @@ For example you could import a new public key by issuing:
 
 
 6) Interoperability issues
-TODO: how to integrate with spam filtering tools
+If you already use the QMAILQUEUE setting to integrate a spam filter into your
+qmail setup (e.g. ifspamh), then you can still use gpgpy-ezmlm, too.
+Simply use GPGPY_QMAILQUEUE instead of QMAILQUEUE for your spam filtering
+program. This tells gpgpy-ezmlm to use the spam filtering program instead
+of qmail-queue for mail queueing.
 
 
 7) Report bugs / feedback
 Please send any reports about problems or successful installations to
 devel@senselab.org. Thanks!
 
-Or report bugs: https://systemausfall.org/trac/gpgpy-ezmlm/newticket
+Or report bugs: 
+  https://systemausfall.org/trac/ezmlm-web/newticket (component: "gpgpy-ezmlm")
 

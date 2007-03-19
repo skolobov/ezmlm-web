@@ -21,7 +21,7 @@
 #    NAME, COMMENT and MAIL_ADDRESS are optional parameters - otherwise
 #      reasonable default values are generated
 #
-#  gpgpy-ezmlm-manage MAILINGLIST_DIRECTORY gnupg_dir
+#  gpgpy-ezmlm-manage MAILINGLIST_DIRECTORY get_gnupg_dir
 #    return the directory containing the keys of this list
 #
 # If no MAILINGLIST_DIRECTORY is given, then it will only run some self-tests.
@@ -225,7 +225,7 @@ def output_help():
 	print "\t%s MAILINGLIST_DIRECTORY [enable|disable]" % prog_name
 	print "\t%s MAILINGLIST_DIRECTORY is_encrypted" % prog_name
 	print "\t%s MAILINGLIST_DIRECTORY genkey [NAME [COMMENT [MAIL]]]" % prog_name
-	print "\t%s MAILINGLIST_DIRECTORY gnupg_dir" % prog_name
+	print "\t%s MAILINGLIST_DIRECTORY get_gnupg_dir" % prog_name
 	print
 
 
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 			else:
 				print "The mailing list in %s is not encrypted." % list_dir
 				sys.exit(100)
-		elif action == "gnupg_dir":
+		elif action == "get_gnupg_dir":
 			print get_gnupg_setting(list_dir)
 		elif action == "genkey":
 			name, comment, mail = None, None, None

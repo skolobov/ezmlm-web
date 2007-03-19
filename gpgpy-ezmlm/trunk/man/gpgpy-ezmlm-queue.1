@@ -1,0 +1,83 @@
+.TH gpgpy-ezmlm-queue 1 "March 02007" "gpgpy-ezmlm" "Manual of gpgpy-ezmlm"
+.SH NAME
+gpgpy-ezmlm-queue \- a wrapper around qmail-queue for handling gpg encrypted
+ezmlm-idx mailing lists
+.SH SYNOPSIS
+.B gpgpy-ezmlm-queue
+.sp
+.B gpgpy-ezmlm-queue
+test
+.SH DESCRIPTION
+gpgpy-ezmlm-queue expects a mail at descriptor 0 and envelope information
+at descriptor 1. It uses the qmail specific environemnt variables (e.g. HOME
+and EXT) to check if the mail was sent by an encrypted ezmlm mailing list.
+Take a look at the manual of \fIqmail-command\fR(8) for more details about
+these environment settings.
+.PP
+If the mail was queued by an encrypted ezmlm mailing list, then
+\fIgpgpy-ezmlm-encrypt\fR(1) is used to process the mail before finally
+queueing the mail. Otherwise \fiqmail-queue\fR(8) is called directly.
+.PP
+gpgpy-ezmlm-queue does not read anything from the file descriptors 0 and 1.
+Instead it just hands over these descriptors to either qmail-queue or
+gpgpy-ezmlm-encrypt.
+.SH SELF-TESTS
+If you call gpgpy-ezmlm-queue with the argument "\fBtest\fR", then it only runs
+self-tests. This should ensure that the environment of gpgpy-ezmlm-queue
+works in a sane way.
+.PP
+If no problems were encountered, then the resulting exit code will be zero.
+A value of 81 indicates a serious problem. A description of the problems is
+written to STDERR.
+.SH INTEGRATION INTO QMAIL
+It is required, that your qmail installation includes the qmailqueue patch.
+It is part of many qmail patchsets - e.g. qmail-ldap or similar.
+.PP
+In order to use the gpgpy-ezmlm-queue wrapper in your mail delivery chain,
+you have to set the QMAILQUEUE environment setting during the startup of
+qmail to the location of gpgpy-ezmlm-queue. By default this should be
+/usr/local/bin/gpgpy-ezmlm-queue.
+.IP "Example for a \fI/var/qmail/rc\fR startup file:"
+.sp
+.nf
+#!/bin/sh
+
+exec env - PATH="/var/qmail/bin:$PATH" \\
+QMAILQUEUE=/usr/local/bin/gpgpy-ezmlm-queue \\
+qmail-start "`cat /var/qmail/control/defaultdelivery`"
+.PP
+If you used to override the QMAILQUEUE setting with another program location
+(e.g. for spam filtering), then you should start to use the setting
+\fBGPGPY_QMAILQUEUE\fR for this value. This tells gpgpy-ezmlm-encrypt to
+run the specified program instead of qmail-queue for the final delivery.
+.SH ENVIRONMENT VARIABLES
+.IP \fBGPGPY_QMAILQUEUE\fR
+Override the default location /var/qmail/bin/qmail-queue for the queueing
+program. This may also be the path to a qmail-queue substitute, e.g.
+\fIifspamh\fR or similar.
+.IP \fBGPGPY_EZMLM_ENCRYPT\fR
+Override the default location /usr/local/bin/gpgpy-ezmlm-encrypt for the
+gpgpy-ezmlm encryption wrapper around qmail-queue.
+.IP \fBGPGPY_RESTRICT_UID\fR
+If all encrypted mailing lists are delivered by the same user account (e.g.
+vlists, vpopmail, ...), then you should consider to set this environment
+variable to the numerical value of its user id. This will skip the
+detection of encrypted lists, if the UID setting given by qmail-command is
+different.
+.SH EXIT CODES
+gpgpy-ezmlm-queue only returns specific exit codes during self-test. For normal
+operations gpgpy-ezmlm-encrypt and qmail-queue are responsible for setting the
+exit code.
+.SH AUTHOR
+Lars Kruse
+.SH REPORTING BUGS
+Report bugs to <devel@sumpfralle.de>
+.SH COPYRIGHT
+Copyright \(co 02007 Lars Kruse
+.br
+This is free software. You may redistribute copies of it under the terms of the
+GNU General Public License <http://www.gnu.org/licenses/gpl.html>. There is NO
+WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+gpgpy-ezmlm(5), gpgpy-ezmlm-encrypt(1), conf-gpgpy(5), qmail-queue(8), ezmlm(5)
+

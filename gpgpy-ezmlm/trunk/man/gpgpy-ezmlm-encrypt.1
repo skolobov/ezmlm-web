@@ -2,7 +2,7 @@
 .SH NAME
 gpgpy-ezmlm-encrypt \- the qmail-queue substitue \fIgpgpy-ezmlm-queue\fR
 calls this script to decrypt and reencrypt outgoing mails of the
-ezmlm (or ezmlm-idx) mailing list manager.
+ezmlm-idx mailing list manager.
 .SH SYNOPSIS
 .B gpgpy-ezmlm-encrypt
 check
@@ -15,7 +15,7 @@ information from descriptor 1. It assumes that the given mailing list directory
 is configured to be encrypted. It tries to decrypt the message and to encrypt
 it then for every single recipient given by the envelope information.
 Afterwards it hands the reencrypted mail and the respective envelope
-information over to qmail-queue (or a similar substitute like spamh).
+information over to qmail-queue (or a similar substitute like ifspamh).
 .PP
 Read the manual of \fIqmail-queue\fR(8) to find out more details about the
 interface of qmail-queue - except for the optional mailing list directory
@@ -57,5 +57,5 @@ This is free software. You may redistribute copies of it under the terms of the
 GNU General Public License <http://www.gnu.org/licenses/gpl.html>. There is NO
 WARRANTY, to the extent permitted by law.
 .SH SEE ALSO
-gpgpy-ezmlm-queue(1), conf-gpgpy(5), qmail-queue(8), ezmlm(5)
+gpgpy-ezmlm(5), gpgpy-ezmlm-queue(1), conf-gpgpy(5), qmail-queue(8), ezmlm(5)
 

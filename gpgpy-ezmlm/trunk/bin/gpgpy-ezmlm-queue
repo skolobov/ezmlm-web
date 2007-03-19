@@ -14,7 +14,8 @@
 #
 # In case you did not install qmail in its default directory (/var/qmail)
 # or if you use a filtering qmail-queue wrapper (e.g. for spam filtering)
-# then you should change the setting ORIG_QMAILQUEUE below accordingly.
+# then you should change the setting GPGPY_QMAILQUEUE so that it contains
+# the path of your qmail-queue program.
 #
 #
 # gpgpy-ezmlm is free software; you can redistribute it and/or modify
@@ -40,9 +41,9 @@
 # with the same name
 
 # the original qmail-queue program
-ORIG_QMAILQUEUE=${ORIG_QMAILQUEUE:=/var/qmail/bin/qmail-queue}
+GPGPY_QMAILQUEUE=${GPGPY_QMAILQUEUE:=/var/qmail/bin/qmail-queue}
 # the python filter of gpgpy-ezmlm-queue
-GPGPY_EZMLMQUEUE=${GPGPY_EZMLMQUEUE:=/usr/local/bin/gpgpy-ezmlm-encrypt}
+GPGPY_EZMLM_ENCRYPT=${GPGPY_EZMLM_ENCRYPT:=/usr/local/bin/gpgpy-ezmlm-encrypt}
 # are all encrypted mailinglists handled by a single user?
 # then put its UID here - for all other UIDs the original qmail-queue will be
 # used instead
@@ -51,7 +52,7 @@ GPGPY_RESTRICT_UID=${GPGPY_RESTRICT_UID:=}
 # we read our configuration from 'conf-gpgpy'
 GPGPY_EZMLM_CONF_FILE="conf-gpgpy"
 # call the original qmail-queue program without the changed QMAILQUEUE setting
-EXEC_ORIG_QUEUE="exec env --unset=QMAILQUEUE $ORIG_QMAILQUEUE"
+EXEC_ORIG_QUEUE="exec env --unset=QMAILQUEUE $GPGPY_QMAILQUEUE"
 
 
 ##################### self-test #########################
@@ -60,21 +61,21 @@ EXEC_ORIG_QUEUE="exec env --unset=QMAILQUEUE $ORIG_QMAILQUEUE"
 if test "$#" -eq 1 -a "$1" = "test"
   then	error=
 	# check if the original qmail-queue is executable
-	if test -x "$ORIG_QMAILQUEUE"
+	if test -x "$GPGPY_QMAILQUEUE"
 	  then	true
 	  else	error=yes
-		echo >&2 "Could not find executable qmail-queue: $ORIG_QMAILQUEUE"
+		echo >&2 "Could not find executable qmail-queue: $GPGPY_QMAILQUEUE"
 	 fi
 
 	# check if the gpgpy-ezmlm wrapper for qmail-queue exists
 	# also check if it returns any errors
-	if test -x "$GPGPY_EZMLMQUEUE"
-	  then	if "$GPGPY_EZMLMQUEUE"
+	if test -x "$GPGPY_EZMLM_ENCRYPT"
+	  then	if "$GPGPY_EZMLM_ENCRYPT"
 		  then	true
 		  else	error=yes
 		 fi 2>&1 | sed 's/^/[gpg-ezmlm-encrypt] /' >&2
 	  else	error=yes
-	  	echo >&2 "Could not find executable gpgpy-ezmlm-queue: $GPGPY_EZMLMQUEUE"
+	  	echo >&2 "Could not find executable gpgpy-ezmlm-queue: $GPGPY_EZMLM_ENCRYPT"
 	 fi
 
 	# check GPGPY_RESTRICT_UID for invalid values
@@ -87,11 +88,11 @@ if test "$#" -eq 1 -a "$1" = "test"
 	 fi
 
 	# print results to stderr
-	echo >&2
 	if test -z "$error"
-	  then	echo >&2 "Successfully finished self-tests"
+	  then	echo "Successfully finished self-tests"
 		exit 0
-	  else	echo >&2 "Some self-tests failed - please fix them before deploying gpgpy-ezmlm!"
+	  else	echo >&2
+		echo >&2 "Some self-tests failed - please fix them before deploying gpgpy-ezmlm!"
 	    exit 81
 	 fi
  fi
@@ -124,5 +125,5 @@ test -e "$MAILINGLIST_DIR/lock" || $EXEC_ORIG_QUEUE
 test -r "$MAILINGLIST_DIR/$GPGPY_EZMLM_CONF_FILE" || $EXEC_ORIG_QUEUE
 
 # ok - it is a delivery of an encrypted mailinglist
-exec env QMAILQUEUE=$ORIG_QMAILQUEUE "$GPGPY_EZMLMQUEUE" "$MAILINGLIST_DIR"
+exec env QMAILQUEUE=$GPGPY_QMAILQUEUE "$GPGPY_EZMLM_ENCRYPT" "$MAILINGLIST_DIR"
 

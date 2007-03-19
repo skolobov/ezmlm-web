@@ -1,0 +1,99 @@
+.TH gpgpy-ezmlm-manage 1 "March 02007" "gpgpy-ezmlm" "Manual of gpgpy-ezmlm"
+.SH NAME
+gpgpy-ezmlm-manage \- manage encrypted ezmlm mailing lists
+.SH SYNOPSIS
+.B gpgpy-ezmlm-manage [\fIMAILINGLIST_DIR\fR] [\fIACTION\fR] [\fIPARAMETER\fR]
+.SH DESCRIPTION
+gpgpy-ezmlm-manage configures the encryption support of your \fBezmlm(5)\fR
+mailing lists.
+.PP
+Call gpgpy-ezmlm-manage without any arguments to run some self-tests. An
+exit code of zero indicate, that no problem was found. Any other exit code is
+accompanied by a description of the detected problem.
+.PP
+Besides these self-tests, gpgpy-ezmlm-manage supports the following actions:
+.IP \fBenable\fR
+Enable encryption for a mailing list. Essentially this just creates the
+file \fBconf-gpgpy\fR(5) in the mailing list directory with default values.
+.br
+Nothing happens, if the mailing list directory already contains this file.
+.br
+Afterwards you will probably want to create a private key for the list
+by using the action \fBgenkey\fR described below.
+.IP \fBdisable\fR
+Disable encryption of a mailing list. This just removes the file
+\fBconf-gpgpy\fR(5) from the mailing list directory.
+.br
+Nothing happens, if this file does not exist.
+.br
+Be aware, that the gnupg keyring of the mailing list
+will not be deleted automatically. This makes it possible to enable encryption
+later again without recreating and importing the previous keys. Remove the
+gnupg directory manually if you know, what you are doing. Check the action
+\fBget_gnupg_dir\fR below for this purpose.
+.IP "\fBgenkey\fR [ NAME [ COMMENT [ MAIL ]]]"
+Generate the private key of this list. Additional arguments may be used to
+change the description of the key (see \fBgpg\fR(1) for details). Empty values
+are guessed automatically - e.g. the mail address of the key is extracted from
+the respective files of the ezmlm-idx mailing list directory.
+.br
+Key generation may take some time.
+.br
+The generated keys do (by default) never expire.
+.br
+Use gpg(1) directly, if you do not like the default assumptions of
+gpgpy-ezmlm-manage. For this purpose you should retrieve the location of the
+gnupg keyring directory by using the action \fBget_gnupg_dir\fR described
+below.
+.IP \fBis_encrypted\fR
+Check if the specified mailing list is currently encrypted. This just checks
+if the file \fBconf-gpgpy\fR(5) exists in the mailing list directory.
+.br
+An exit code of zero indicates an encrypted mailing list. The exit code 100
+is returned for a plaintext mailing list. Any other exit code indicates a
+configuration problem.
+.br
+The current encryption state of the mailing list is also written to STDOUT in
+a humanly readable way.
+.IP \fBget_gnupg_dir\fR
+Return the directory of the gnupg keyring used by this mailinglist. The result
+is written to STDOUT.
+.br
+The location of the directory can be configured in the file \fBconf-gpgpy\fR(5).
+See its manpage for details.
+.br
+Use the gnupg directory to manage the keyring of the list. E.g. the following
+command imports the public key of a recipient into the keyring:
+.RS
+.RS
+.sp
+.nf
+gpg --homedir MAILINGLIST_KEYRING_DIR --import KEYFILE
+.RE
+.RE
+.SH EXIT CODES
+gpgpy-ezmlm-manage returns the following (non-zero) exit codes:
+.IP \fB1\fR
+gpgpy-ezmlm is not installed or configured properly.
+.IP \fB2\fR
+The specified arguments are invalid.
+.IP \fB3\fR
+The specified mailing list directory is invalid.
+.IP \fB4\fR
+The requested action failed.
+.IP \fB100\fR
+The action \fBis_encrypted\fR returns this value for non-encrypted mailing
+lists.
+.SH AUTHOR
+Lars Kruse
+.SH REPORTING BUGS
+Report bugs to <devel@sumpfralle.de>
+.SH COPYRIGHT
+Copyright \(co 02007 Lars Kruse
+.br
+This is free software. You may redistribute copies of it under the terms of the
+GNU General Public License <http://www.gnu.org/licenses/gpl.html>. There is NO
+WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+gpgpy-ezmlm(5), conf-gpgpy(5), ezmlm(5), gpgpy-ezmlm-queue(1)
+

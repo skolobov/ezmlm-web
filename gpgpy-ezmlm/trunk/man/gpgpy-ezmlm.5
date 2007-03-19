@@ -1,0 +1,102 @@
+.TH gpgpy-ezmlm 1 "March 02007" "gpgpy-ezmlm" "Manual of gpgpy-ezmlm"
+.SH NAME
+gpgpy-ezmlm \- overview of the gpgpy-ezmlm encryption filter for ezmlm-idx
+mailing lists
+.SH OVERVIEW
+.PP
+The usual mail delivery of ezmlm-idx:
+.sp
+.nf
+  +---------------+      +------------+      +-------------+
+  | \fBincoming mail\fR |      | \fBezmlm-send\fR |      | \fB$QMAILQUEUE\fR |
+  | for the       | ===> | processing | ===> | queueing    |
+  | mailing list  |      | list setup |      | all mails   |
+  +---------------+      +------------+      +-------------+
+.PP
+Mail delivery for gpgpy-ezmlm encrypted lists:
+.sp
+.nf
+  +---------------+      +------------+      +-------------------+
+  | \fBincoming mail\fR |      | \fBezmlm-send\fR |      | \fBgpgpy-ezmlm-queue\fR |
+  | for the       | ===> | processing | ===> | check if the list | =...
+  | mailing list  |      | list setup |      | is encrypted      |
+  +---------------+      +------------+      +-------------------+
+.sp
+                                            +--------------------+
+                                            | \fB$GPGPY_QMAILQUEUE\fR  |
+      /===================================> |                    |
+      ||                                    | queueing all mails |
+      || plaintext mailing list             +--------------------+
+      ||
+  ...=+|
+      ||
+      || encrypted mailing list
+      ||
+      ||     +---------------------+         +-------------------+
+      ||     | \fBgpgpy-ezmlm-encrypt\fR |         | \fB$GPGPY_QMAILQUEUE\fR |
+      /====> | decrypt and encrypt | ==++==> | queue mail for    |
+             | for each subscriber |   ||    | 1st subscriber    |
+             +---------------------+   ||    +-------------------+
+                                       ||
+                                       ||    +-------------------+
+                                       ||    | \fB$GPGPY_QMAILQUEUE\fR |
+                                       |+==> | queue mail for    |
+                                       ||    | 2nd subscriber    |
+                                       ||    +-------------------+
+                                       ||
+                                       ||
+                                       \+==> ...
+.IP \fINote:\fR
+The environment variables \fB$QMAILQUEUE\fR and \fB$GPGPY_QMAILQUEUE\fR are not
+set in a standard qmail installation. Thus they default to
+/var/qmail/bin/qmail-queue.
+.SH HOW DOES IT WORK
+Since ezmlm-idx v0.431 \fBezmlm-send\fR(1) respects the QMAILQUEUE environment
+setting when queueing a mail. If QMAILQUEUE is not set, then the original
+qmail-queue program is used instead.
+.PP
+gpgpy-ezmlm relies on the QMAILQUEUE setting pointing to
+\fBgpgpy-ezmlm-queue\fR(1). Read its manpage for how to do this easily.
+.PP
+If you used to override the QMAILQUEUE setting with another program location
+(e.g. for spam filtering), then you should start to use the setting
+\fBGPGPY_QMAILQUEUE\fR for this value. This tells gpgpy-ezmlm-encrypt to
+run the specified program instead of qmail-queue for the final delivery.
+.SH ENVIRONMENT VARIABLES
+.IP \fBGPGPY_QMAILQUEUE\fR
+Override the default location /var/qmail/bin/qmail-queue for the queueing
+program. This may also be the path to a qmail-queue substitute, e.g.
+\fIifspamh\fR or similar.
+.IP \fBGPGPY_EZMLM_ENCRYPT\fR
+Override the default location /usr/local/bin/gpgpy-ezmlm-encrypt for the
+gpgpy-ezmlm encryption wrapper around qmail-queue.
+.IP \fBGPGPY_RESTRICT_UID\fR
+If all encrypted mailing lists are delivered by the same user account (e.g.
+vlists, vpopmail, ...), then you should consider to set this environment
+variable to the numerical value of its user id. This will skip the
+detection of encrypted lists, if the UID setting given by qmail-command is
+different.
+.SH WHY DOES GPGPY-EZMLM NEED TWO SCRIPTS FOR QUEUEING?
+The reason is simple: it is all about speed.
+.PP
+gpgpy-ezmlm-queue is a shell script and requires very little overhead for
+execution. Thus it does not have a big impact on the time-critical delivery
+performance of your mailserver.
+.PP
+gpgpy-ezmlm-encrypt is implemented in python, as this language offers the 
+\fIpyme\fR module for easy handling of gnupg encryption. It is only called for
+messages that are sent by encrypted mailing lists, so the impact of the python
+overhead on overall mail delivery should be acceptable.
+.SH AUTHOR
+Lars Kruse
+.SH REPORTING BUGS
+Report bugs to <devel@sumpfralle.de>
+.SH COPYRIGHT
+Copyright \(co 02007 Lars Kruse
+.br
+This is free software. You may redistribute copies of it under the terms of the
+GNU General Public License <http://www.gnu.org/licenses/gpl.html>. There is NO
+WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+gpgpy-ezmlm-queue(1), gpgpy-ezmlm-encrypt(1), qmail-queue(8), ezmlm(5), ezmlm-send(1)
+
