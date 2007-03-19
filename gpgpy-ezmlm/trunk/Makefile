@@ -1,13 +1,13 @@
-## improve this: there is surely a "Makefile-way" how to use default values
-PREFIX = $(shell echo $${PREFIX:-/usr/local})
-QMAILQUEUE = $(shell echo $${QMAILQUEUE:-/var/qmail/bin/qmail-queue})
+
+PREFIX ?= /usr/local
+QMAILQUEUE ?= /var/qmail/bin/qmail-queue
 
 # man pages are compressed by default
-COMPR_BIN = gzip
-COMPR_EXT = .gz
+COMPR_BIN ?= gzip
+COMPR_EXT ?= .gz
 
 # we need to replace some paths within the scripts and man pages
-SED_BIN = sed
+SED_BIN ?= sed
 SED_PARAMS = s\#/usr/local/\#${PREFIX}/\#g; s\#/var/qmail/bin/qmail-queue\#${QMAILQUEUE}\#g
 
 SCRIPTS = gpgpy-ezmlm-manage gpgpy-ezmlm-queue gpgpy-ezmlm-encrypt
