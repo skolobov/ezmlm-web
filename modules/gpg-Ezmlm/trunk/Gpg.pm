@@ -31,15 +31,6 @@ use vars qw(@GPG_LIST_OPTIONS);
 use Carp;
 use Crypt::GPG;
 
-require Exporter;
-
-@ISA = qw(Exporter);
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-@EXPORT = qw(
-   
-);
 $VERSION = '0.1';
 
 require 5.005;
@@ -58,29 +49,15 @@ The rest is a bit complicated for a Synopsis, see the description.
 =head1 DESCRIPTION
 
 Mail::Ezmlm::Gpg is a Perl module that is designed to provide an object
-interface to encrypted mailing lists based upon gpg-ezmlm.
-See the ezmlm web page (http://www.synacklabs.net/projects/crypt-ml/) for
-a this software.
+interface to encrypted mailing lists based upon gpgpy-ezmlm.
+See the gpgpy-ezmlm web page (https://systemausfall.org/toolforge/gpgpy-ezmlm/)
+for a this software.
 
 =cut
 
 # == Begin site dependant variables ==
-$GPG_EZMLM_BASE = '/usr/bin';	# Autoinserted by Makefile.PL
 $GPG_BIN = '/usr/bin/gpg';	# Autoinserted by Makefile.PL
 
-# == check the ezmlm-make path ==
-$GPG_EZMLM_BASE = '/usr/local/bin/ezmlm'
-	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/local/bin/ezmlm-idx'
-	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/local/bin'
-	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/bin/ezmlm'
-	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/bin/ezmlm-idx'
-	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
-$GPG_EZMLM_BASE = '/usr/bin'
-	unless (-e "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl");
 
 # == check the gpg path ==
 $GPG_BIN = '/usr/local/bin/gpg'
@@ -101,18 +78,15 @@ $GPG_BIN = '/bin/gpg'
 	unless (-e "$GPG_BIN");
 
 # == clean up the path for taint checking ==
-local $ENV{'PATH'} = $GPG_EZMLM_BASE;
+local $ENV{'PATH'} = "/bin";
 
 # == define the available (supported) GPG_LIST_OPTIONS ==
-@GPG_LIST_OPTIONS = (
-		"RequireSub",
-		"requireSigs",
-		"NokeyNocrypt",
-		"signMessages",
-		"encryptToAll",
-		"VerifiedKeyReq",
-		"allowKeySubmission");
+my %GPGPY_DEFAULT_OPTIONS = (
+		"plain_without_key" => 0,
+		"sign_messages" => 0,
+		"gnupg_dir" => ".gnupg" );
 
+my $GPGPY_CONF_FILE = 'conf-gpgpy';
 
 # == Initialiser - Returns a reference to the object ==
 
@@ -143,106 +117,97 @@ sub new {
 You have to create a normal list before you can convert it.
 Use Mail::Ezmlm to do this.
 
-   $list->convert_to_encrypted();
+   $list->enable_encryption();
 
 =cut
 
-sub convert_to_encrypted {
+sub enable_encryption {
 	my($self) = @_;
+	my $errorstring;
 
 	my $list_dir = $self->{'LIST_NAME'};
-	($self->_seterror(-1, 'must define directory in convert_to_encrypted()') && return 0)
-		unless(defined($list_dir));
-	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0)
-		unless(-d $list_dir);
-	my $tlist = new Mail::Ezmlm::Gpg($list_dir);
-	($self->_seterror(-1, 'list is already encrypted: ' . $list_dir) && return 0)
-		if ($tlist->is_gpg());
 
-	# retrieve location of dotqmail-files
-	my $dot_loc;
-	if (-r "$list_dir/dot") {
-		open DOT, "<$list_dir/dot";
-		$dot_loc = <DOT>;
-		close DOC;
-	} elsif (-r "$list_dir/config") {
-		open CONFIG, "<$list_dir/config";
-		my @lines = <CONFIG>;
-		my $one_line;
-		foreach $one_line (@lines) {
-			$dot_loc = $1 if( $one_line =~ m/^T:(.*)$/);
-		}
-		close CONFIG;
-	} else {
-		$self->_seterror(-1, 'list configuration file not found: ' . $list_dir);
-		return 0;
+	unless (defined($list_dir)) {
+		$errorstring = 'must define directory in enable_encrypted()';
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
 	}
-		
-	chomp($dot_loc);
-	$dot_loc =~ m/^([\w\._\/-]*)$/;
-	$dot_loc = $1;
 
-	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0)
-		unless(($dot_loc ne '') && (-e $dot_loc));
+	unless(-d $list_dir) {
+		$errorstring = 'directory does not exist: ' . $list_dir;
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
 
-	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--skip-keygen", $list_dir, $dot_loc) == 0
-		|| ($self->_seterror($?) && return undef);
+	if ($self->is_encrypted()) {
+		$errorstring = 'list is already encrypted: ' . $list_dir;
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
+
+	# create config file - this enables encryption support
+	unless (open(CONFIG_FILE, ">$list_dir/$GPGPY_CONF_FILE")) { 
+		$errorstring = "failed to create config file: $list_dir/$GPGPY_CONF_FILE";
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
+	close(CONFIG_FILE);
+
+	# we write the default values to the file - this is easier to read for humans
+	return (1==0) unless ($self->update(%GPGPY_DEFAULT_OPTIONS));
 
 	$self->_seterror(undef);
-	return $self->setlist($list_dir);
+	return (0==0);
 }
 
 # == convert an encrypted list back to plaintext ==
 
 =head2 Converting an encryted mailing list to a plaintext list:
 
-   $list->convert_to_plaintext();
+   $list->disable_encryption();
 
 =cut
 
-sub convert_to_plaintext {
+sub disable_encryption {
 	my($self) = @_;
+	my $errorstring;
 
 	my $list_dir = $self->{'LIST_NAME'};
-	($self->_seterror(-1, 'must define directory in convert_to_plaintext()') && return 0)
-		unless(defined($list_dir));
-	($self->_seterror(-1, 'directory does not exist: ' . $list_dir) && return 0)
-		unless(-d $list_dir);
-	my $tlist = new Mail::Ezmlm::Gpg($list_dir);
-	($self->_seterror(-1, 'list is not encrypted: ' . $list_dir) && return 0)
-		unless ($tlist->is_gpg());
 
-
-	# retrieve location of dotqmail-files
-	my $dot_loc;
-	if (-r "$list_dir/dot") {
-		open DOT, "<$list_dir/dot";
-		$dot_loc = <DOT>;
-		close DOC;
-	} elsif (-r "$list_dir/config.no-gpg") {
-		open CONFIG, "<$list_dir/config.no-gpg";
-		my @lines = <CONFIG>;
-		my $one_line;
-		foreach $one_line (@lines) {
-			$dot_loc = $1 if( $one_line =~ m/^T:(.*)$/);
-		}
-		close CONFIG;
-	} else {
-		$self->_seterror(-1, 'list configuration file not found: ' . $list_dir);
-		return 0;
+	unless (defined($list_dir)) {
+		$errorstring = 'must define directory in disable_encrypted()';
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
 	}
-	chomp($dot_loc);
-	$dot_loc =~ m/^([\w\._\/-]*)$/;
-	$dot_loc = $1;
 
-	($self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc) && return 0)
-		unless(($dot_loc ne '') && (-e $dot_loc));
+	unless(-d $list_dir) {
+		$errorstring = 'directory does not exist: ' . $list_dir;
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
 
-	system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--revert", $list_dir, $dot_loc) == 0
-		|| ($self->_seterror($?) && return undef);
+	unless ($self->is_encrypted()) {
+		$errorstring = 'list is not encrypted: ' . $list_dir;
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
+
+	unless (unlink("$list_dir/$GPGPY_CONF_FILE")) {
+		$errorstring = "failed to remove config file: $list_dir/$GPGPY_CONF_FILE";
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (1==0);
+	}
 
 	$self->_seterror(undef);
-	return $self->setlist($list_dir);
+	return (0==0);
 }
 
 # == Update the current list ==
@@ -256,16 +221,20 @@ sub convert_to_plaintext {
 sub update {
 	my($self, %switches) = @_;
 	my %ok_switches;
+	my ($one_key, $ok_key, $errorstring);
 	   
-	# check for important files: 'config'
-	($self->_seterror(-1, "$self->{'LIST_NAME'} does not appear to be a valid list in update()") && return 0) unless((-e "$self->{'LIST_NAME'}/config") || (-e "$self->{'LIST_NAME'}/flags"));
+	# check for important files: 'conf-gpgpy'
+	unless ((-e "$self->{'LIST_NAME'}/config") || (-e "$self->{'LIST_NAME'}/lock")) {
+		$errorstring = "$self->{'LIST_NAME'} does not appear to be a valid list in     update()";
+		$self->_seterror(-1, $errorstring);
+		warn $errorstring;
+		return (0==1);
+	}
 
 	# check if all supplied settings are supported
 	# btw we change the case (upper/lower) of the setting to the default one
-	my $one_key;
 	foreach $one_key (keys %switches) {
-		my $ok_key;
-		foreach $ok_key (@GPG_LIST_OPTIONS) {
+		foreach $ok_key (keys %GPGPY_DEFAULT_OPTIONS) {
 			if ($ok_key =~ /^$one_key$/i) {
 				$ok_switches{$ok_key} = $switches{$one_key};
 				delete $switches{$one_key};
@@ -279,9 +248,8 @@ sub update {
 		}
 	}
 
-	my $errorstring;
-	my $config_file_old = "$self->{'LIST_NAME'}/config";
-	my $config_file_new = "$self->{'LIST_NAME'}/config.new";
+	my $config_file_old = "$self->{'LIST_NAME'}/$GPGPY_CONF_FILE";
+	my $config_file_new = "$self->{'LIST_NAME'}/$GPGPY_CONF_FILE.new";
 	if(open(CONFIG_OLD, "<$config_file_old")) { 
 		if(open(CONFIG_NEW, ">$config_file_new")) { 
 			my ($in_line, $one_opt, $one_val, $new_setting);
@@ -292,8 +260,12 @@ sub update {
 					while (($one_opt, $one_val) = each(%ok_switches)) {
 						# is this the right line (maybe commented out)?
 						if ($in_line =~ m/^#?\w*$one_opt/i) {
-							print CONFIG_NEW "$one_opt ";
-							print CONFIG_NEW ($one_val)? "yes" : "no";
+							print CONFIG_NEW "$one_opt = ";
+							if ($one_opt eq "gnupg_dir") {
+								print CONFIG_NEW $one_val;
+							} else {
+								print CONFIG_NEW ($one_val)? "yes" : "no";
+							}
 							print CONFIG_NEW "\n";
 							delete $ok_switches{$one_opt};
 							$found = 1;
@@ -307,8 +279,13 @@ sub update {
 			}
 			# write the remaining settings to the end of the file
 			while (($one_opt, $one_val) = each(%ok_switches)) {
-				print CONFIG_NEW "\n$one_opt ";
-				print CONFIG_NEW ($one_val)? "yes" : "no";
+				print CONFIG_NEW "\n$one_opt = ";
+				# is this a non-boolean setting?
+				if ($one_opt eq "gnupg_dir") {
+					print CONFIG_NEW $one_val;
+				} else {
+					print CONFIG_NEW ($one_val)? "yes" : "no";
+				}
 				print CONFIG_NEW "\n";
 			}
 		} else {
@@ -325,6 +302,7 @@ sub update {
 		warn $errorstring;
 		return (1==0);
 	}
+
 	close CONFIG_OLD;
 	unless (rename($config_file_new, $config_file_old)) {
 		$errorstring = "failed to move new config file ($config_file_new) " 
@@ -333,6 +311,7 @@ sub update {
 		warn $errorstring;
 		return (1==0);
 	}
+
 	$self->_seterror(undef);
 	return (0==0);
 }
@@ -351,32 +330,29 @@ getconfig() returns a hash including all available settings
 
 sub getconfig {
 	my($self) = @_;
-	my(%options);
+	my(%options, $key);
 
-	# define defaults
-	$options{signMessages} = 1;
-	$options{NokeyNocrypt} = 0;
-	$options{allowKeySubmission} = 1;
-	$options{encryptToAll} = 0;
-	$options{VerifiedKeyReq} = 0;
-	$options{RequireSub} = 0;
-	$options{requireSigs} = 0;
-
+	foreach $key (keys %GPGPY_DEFAULT_OPTIONS) {
+		$options{$key} = $GPGPY_DEFAULT_OPTIONS{$key};
+	}
 
 	# Read the config file
-	if(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
-		# 'config' contains the authorative information
+	if(open(CONFIG, "<$self->{'LIST_NAME'}/$GPGPY_CONF_FILE")) { 
+		# 'conf-gpgpy' contains the authorative information
 		while(<CONFIG>) {
-			if (/^(\w+)\s(.*)$/) {
+			if (/^(\w+)\s*=\s*(.*)$/) {
 				my $optname = $1;
 				my $optvalue = $2;
 				my $one_opt;
-				foreach $one_opt (@GPG_LIST_OPTIONS) {
+				foreach $one_opt (keys %GPGPY_DEFAULT_OPTIONS) {
 					if ($one_opt =~ m/^$optname$/i) {
-						if ($optvalue =~ /^yes$/i) {
-							$options{$one_opt} = 1;
-						} else {
-							$options{$one_opt} = 0;
+						if ($optname ne 'gnupg_dir') {
+							# 'gnupg_dir' is the only non-boolean setting
+							if ($optvalue =~ /^yes$/i) {
+								$options{$one_opt} = 1;
+							} else {
+								$options{$one_opt} = 0;
+							}
 						}
 					}
 				}
@@ -389,6 +365,34 @@ sub getconfig {
 
 	$self->_seterror(undef);
 	return %options;
+}
+
+# == Return the directory of the gnupg keyring of the current list ==
+
+=head2 Retrieving the directory of the gnupg keyring of the current list
+
+   $print $list->get_gnupg_dir();
+
+=cut
+
+sub get_gnupg_dir {
+	my ($self) = shift;
+
+	my %config = $self->getconfig();
+	my $setting = $config{"gnupg_dir"};
+
+	$self->_seterror(undef);
+
+	# prefix the directory with the list directory if the directory is not absolute
+	if (substr($setting, 0, 1) eq "~") {
+		# nothing to be done - the "system" call for gpg will expand it via shell
+		return $setting;
+	} elsif (substr($setting, 0, 1) eq "/") {
+		# absolute path - this is ok, too
+		return $setting;
+	} else {
+		return $self->{'LIST_NAME'} . '/' . $setting;
+	}
 }
 
 
@@ -421,13 +425,17 @@ sub setlist {
 	if ($list =~ m/^([\w\d\_\-\.\/]+)$/) {
 		$list = $1;
 		if (-e "$list/lock") {
+			# it is an ezmlm list
+			# it is not necessary, that it is an encrypted list
 			$self->_seterror(undef);
 			return $self->{'LIST_NAME'} = $list;
 		} else {
+			# not an ezmlm list
 			$self->_seterror(-1, "$list does not appear to be a valid list in setlist()");
 			return undef;
 		}
 	} else {
+		# invalid characters
 		$self->_seterror(-1, "$list contains tainted data in setlist()");
 		return undef;
 	}
@@ -438,54 +446,21 @@ sub setlist {
 
 =head2 Checking the state of a list:
 
-To determine, if a list is encrypted or not, call is_gpg().
+To determine, if a list is encrypted or not, call is_encrypted().
 
-	$list->is_gpg();
+	$list->is_encrypted();
 
 =cut
 
-sub is_gpg {
+sub is_encrypted {
 	my($self) = @_;
-	($self->_seterror(-1, 'must setlist() before is_gpg()') && return 0) unless(defined($self->{'LIST_NAME'}));
+	($self->_seterror(-1, 'must setlist() before is_encrypted()') && return 0) unless(defined($self->{'LIST_NAME'}));
 	$self->_seterror(undef);
-	return (0==1) unless (-e "$self->{'LIST_NAME'}/config");
-	my $content = $self->getpart("config");
-	# return false if we encounter the usual ezmlm-idx-v0.4-header
-	return (0==1) if ($content =~ /^F:/m);
-	return (0==0);
-}
-
-
-# == retrieve file contents ==
-
-=head2 Getting the content of file in a mailing list directory:
-
-   @part = $list->getpart('headeradd');
-   $part = $list->getpart('headeradd');
-
-getpart() can be used to retrieve the contents of various text files such as
-headeradd, headerremove, mimeremove, etc.
-
-=cut
-
-sub getpart {
-	my($self, $part) = @_;
-	my(@contents, $content);
-	my $filename = $self->{'LIST_NAME'} . "/$part";
-	if (open(PART, "<$filename")) {
-		while(<PART>) {
-			unless ( /^#/ ) {
-				chomp($contents[$#contents++] = $_);
-				$content .= $_;
-			}
-		}
-		close PART;
-		if(wantarray) {
-			return @contents;
-		} else {
-			return $content;
-		}
-	} ($self->_seterror($?) && return undef);
+	if (-e "$self->{'LIST_NAME'}/$GPGPY_CONF_FILE") {
+		return (0==0);
+	} else {
+		return (1==0);
+	}
 }
 
 
@@ -642,7 +617,7 @@ sub get_secret_keys {
 
 
 # == check version of gpg-ezmlm ==
-sub check_gpg_ezmlm_version {
+sub check_gpgpy_ezmlm_version {
 	my $ret_value = system("'$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl' --version &>/dev/null"); 
 	# for now we do not need a specific version of gpg-ezmlm - it just has to
 	# know the "--version" argument (available since gpg-ezmlm 0.3.4)
@@ -656,7 +631,7 @@ sub check_gpg_ezmlm_version {
 sub _get_gpg_object() {
 	my ($self) = @_;
 	my $gpg = new Crypt::GPG();
-	my $dirname = $self->{'LIST_NAME'} . '/.gnupg';
+	my $dirname = $self->get_gnupg_dir();
 	# fix spaces in filename
 	$dirname =~ s/ /\\ /g;
 	$gpg->gpgbin($GPG_BIN);
