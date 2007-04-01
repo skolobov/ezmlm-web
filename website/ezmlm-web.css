@@ -85,10 +85,14 @@ font.feature {
 	font-size: 110%;
 	}
 
-#news ul.changes {
+#news .changes {
 	font-size: 90%;
 	margin-top: 0px;
 	padding-top: 0px;
+	}
+
+#news p.changes {
+	padding-left: 2em;
 	}
 
 a:visited {
