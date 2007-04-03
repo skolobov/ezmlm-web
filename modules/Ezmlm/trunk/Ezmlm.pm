@@ -721,10 +721,12 @@ sub check_version {
 
 # == get the major ezmlm version ==
 # return values:
-#	0 => unknown version
-# 	3 => ezmlm v0.53
-# 	4 => ezmlm-idx v0.4*
-# 	5 => ezmlm-idx v5.*
+#	0	=> unknown version
+# 	3	=> ezmlm v0.53
+# 	4	=> ezmlm-idx v0.4*
+# 	5	=> ezmlm-idx v5.0
+# 	5.1	=> ezmlm-idx v5.1
+# 	6	=> ezmlm-idx v6.*
 sub get_version {
 	my ($ezmlm, $idx);
 	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
@@ -733,14 +735,20 @@ sub get_version {
 	$ezmlm = $1 if ($version =~ m/ezmlm-([\d\.]+)$/);
 	$idx = $1 if ($version =~ m/ezmlm-idx-([\d\.]+)$/);
 
-	if(defined($ezmlm)) {
+	if (defined($ezmlm)) {
 		return 3;
 	} elsif (defined($idx)) {
-		if (($idx =~ m/^(\d)/) && ($1 >= 5)) {
-			# version 5.0 or higher
+		if (($idx =~ m/^(\d)/) && ($1 >= 6)) {
+			# version 6.0 or higher
+			return 6;
+		} elsif (($idx =~ m/^(\d)\.(\d)/) && ($1 >= 5) && ($2 == 1)) {
+			# version 5.1
+			return 5.1;
+		} elsif (($idx =~ m/^(\d)/) && ($1 >= 5)) {
+			# version 5.0
 			return 5;
 		} elsif (($idx =~ m/^0\.(\d)/) && ($1 >= 0)) {
-			# version 0.4 or higher
+			# version 0.4xx
 			return 4;
 		} else {
 			return 0;
@@ -817,25 +825,28 @@ sub _getconfig_idx5 {
 	chomp($options = $self->getpart('flags'));
 	# remove prefixed '-'
 	$options =~ s/^-//;
-   
+
 	# since ezmlm-idx v5, we have to read the config
 	# values from different files
 	# first: preset a array with "filename" and "option_number"
 	%optionfiles = (
-		'sublist', '0',
-		'fromheader', '3',
-		'tstdigopts', '4',
-		'owner', '5',
-		'sql', '6',
-		'modpost', '7',
-		'modsub', '8',
-		'remote', '9');
+		'sublist', 0,
+		'fromheader', 3,
+		'tstdigopts', 4,
+		'owner', 5,
+		'sql', 6,
+		'modpost', 7,
+		'modsub', 8,
+		'remote', 9);
 	while (($file, $opt_num) = each(%optionfiles)) {
 		if (-e "$self->{'LIST_NAME'}/$file") {
 			chomp($temp = $self->getpart($file));
 			$temp =~ m/^(.*)$/m;	# take only the first line
 			$temp = $1;
-			$options .= " -$opt_num '$temp'" if ($temp =~ /\S/);
+			# the 'owner' setting can be ignored if it is a path (starts with '/')
+			unless (($opt_num == 5) && ($temp =~ m#^/#)) {
+				$options .= " -$opt_num '$temp'" if ($temp =~ /\S/);
+			}
 		}
 	}
 
