@@ -26,7 +26,7 @@
 package Mail::Ezmlm::Gpg;
 
 use strict;
-use vars qw($GPG_EZMLM_BASE $GPG_BIN $VERSION @ISA @EXPORT @EXPORT_OK);
+use vars qw($GPG_BIN $VERSION @ISA @EXPORT @EXPORT_OK);
 use vars qw(@GPG_LIST_OPTIONS);
 use Carp;
 use Crypt::GPG;
@@ -613,15 +613,6 @@ sub get_secret_keys {
 	my ($self) = @_;
 	my @keys = $self->_get_keys("sec");
 	return @keys;
-}
-
-
-# == check version of gpg-ezmlm ==
-sub check_gpgpy_ezmlm_version {
-	my $ret_value = system("'$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl' --version &>/dev/null"); 
-	# for now we do not need a specific version of gpg-ezmlm - it just has to
-	# know the "--version" argument (available since gpg-ezmlm 0.3.4)
-	return ($ret_value == 0);
 }
 
 
