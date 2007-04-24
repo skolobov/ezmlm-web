@@ -37,7 +37,9 @@
 #
 
 
-# TODO: implement 'sign_messages' setting
+# TODO:
+#	implement 'sign_messages'
+#	implement 'hide_subject'
 
 
 import sys, os, re
@@ -304,6 +306,8 @@ def check_for_errors():
 
 
 if __name__ == '__main__':
+	# reduce priority
+	os.nice(5)
 	if not check_for_errors():
 		internal_error()
 	if len(sys.argv) == 1:

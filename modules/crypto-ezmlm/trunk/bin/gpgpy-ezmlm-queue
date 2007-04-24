@@ -116,7 +116,7 @@ if test -z "$EXT"
 test -r "$DOTQMAIL_FILE" || $EXEC_ORIG_QUEUE
 
 # filter the respective mailing list directory of this delivery
-MAILINGLIST_DIR=$(grep "/ezmlm-send '" "$DOTQMAIL_FILE" | sed "s#^.* '\(.*\)'.*\$#\1#")
+MAILINGLIST_DIR=$(grep "/ezmlm-send '" "$DOTQMAIL_FILE" | cut -d "'" -f 2)
 
 # is it a mailinglist directory?
 test -e "$MAILINGLIST_DIR/lock" || $EXEC_ORIG_QUEUE
