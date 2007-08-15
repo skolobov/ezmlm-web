@@ -1,0 +1,140 @@
+UI	{
+
+	Top {
+		Language	= 1
+		Interface	= 1
+	  }
+
+	Navigation	{
+		DomainSelect = 1
+		ListSelect	= 1
+		ListCreate	= 1
+		Subscribers	{
+			Subscribers	= 1
+			Digest		= 1
+			Allow		= 1
+			Deny		= 1
+			Moderators	= 1
+		  }
+
+		Config	{
+			Main		= 1
+			Subscription	= 1
+			Posting		= 1
+			Processing	= 1
+			GnupgOptions	= 1
+			Archive		= 1
+			Admin		= 1
+		  }
+
+		Gnupg	{
+			PublicKeys	= 1
+			SecretKeys	= 1
+			GenerateKey	= 1
+		  }
+
+		TextEdit	= 1
+		ListDelete	= 1
+		SubscribeLog	= 1
+		GnupgConvert	= 1
+		Help	= 1
+	  }
+
+
+	Options	{
+		
+		Create {
+			Listname	= create_listname
+			Listaddress	= create_listaddress
+			Listlanguage	= lang_select
+			Webuser		= webusers
+		  }
+
+
+		Subscribers	{
+			Subscribers	= {}
+			Digest	{
+				Enabled	= digest_enabled
+			  }
+
+			Deny	{
+				Enabled	= block_deny
+			  }
+			
+			Moderators	{
+				Posting	{
+					Self	= mod_post
+				  }
+				Subscription	{
+					Self	= mod_sub
+				  }
+				Administration	{
+					Self	= admin_enabled
+				  }
+			  }
+		  }
+
+		GenerateKey {
+			KeyName		= gnupg_keyname
+			KeyComment	= gnupg_keycomment
+			KeySize		= gnupg_keysize
+			KeyExpiration	= gnupg_keyexpires
+		  }
+
+		Config	{
+			Main	{
+				Language	= lang_select
+				Owner		= owner_address
+				WebUsers	= webusers
+			  }
+
+			Archive {
+				Enabled		= archive_enabled
+				Access		= archive_access
+				RemovePrivateHeader	= archive_remove_private_header
+			  }
+			
+			Subscription {
+				Rules		= subscribe_selection
+				ConfirmSub	= confirm_sub
+				ConfirmUnsub	= confirm_unsub
+			  }
+
+			Admin	{
+				Enabled		{
+					Self		= admin_enabled
+					RequestSubscribers	= admin_get_subscribers
+					EditText	= admin_edit_text
+				  }
+			  }
+
+			Posting	{
+				Moderate	= posting_selection
+				UseDeny		= block_deny
+				Confirm		= confirm_post
+				SizeMax		= msgsize_max
+				SizeMin		= msgsize_min
+				MimeReject	= mimereject
+			  }
+
+			GnupgOptions {
+				SignMessages	= gnupg_sign_messages
+				PlainWithoutKey	= gnupg_plain_without_key
+			  }
+
+			Processing {
+				Prefix		= prefix
+				ReplyToSelf	= reply_to_self
+				Trailer		= trailer
+				From		= from_address
+				MimeFilter	= mimefilter
+				HeaderFilter	= headerfilter
+				HeaderAdd	= headeradd
+			  }
+
+		  }
+
+	  }
+
+  }
+

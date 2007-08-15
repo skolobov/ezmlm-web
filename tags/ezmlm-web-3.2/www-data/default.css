@@ -1,0 +1,238 @@
+/* ezmlm-web css stylesheet for positioning
+ *
+ * all changes regarding the color scheme can be found in the
+ * respective 'color-*.css' file */
+
+body {
+	margin: 0;
+	padding: 0;
+	font: normal 100% sans-serif;
+	}
+
+a { text-decoration: none; }
+
+button, select { cursor: pointer; }
+
+/***************** navgation bar *************************/
+
+#nav_bar {
+	clear: left;
+	float: left;
+	width: 20%;
+	margin: 1%;
+	padding: 1.5% 0;
+	}
+
+#nav_bar hr {
+	margin: 10px 30px 10px 10px;
+	font-size: 0%;	/* otherwise IE6 adds a huge gap above */
+	}
+
+#nav_bar ul {
+	margin: 0;
+	padding-left: 7%;
+	list-style: none;
+	}
+
+#nav_bar ul li {
+	margin-top: 0px;
+	/* small space between highest level entries */
+	margin-bottom: 5px;
+	}
+
+#nav_bar ul li ul {
+	/* small space between middle level entries */
+	margin-bottom: 4px;
+	}
+
+#nav_bar ul li ul li {
+	/* no space between lower level entries */
+	margin-bottom: 0;
+	}
+
+#nav_bar font.no_link {
+	font-style: italic;
+	}
+
+
+/***************************** header **************************/
+
+#top {
+	width: 100%;
+	margin: 0;
+	padding: 2px 7px 2px 3px;
+	}
+
+#title {
+	text-align: left;
+	}
+
+#title * {
+	padding: 0;
+	margin: 0;
+	}
+
+#title h1 {
+	font-weight: bold;
+	letter-spacing: -1px;
+	}
+
+#perm_nav {
+	padding: 0;
+	margin: 0;
+	text-align: right;
+	}
+
+#perm_nav * {
+	padding: 0;
+	margin: 0;
+	}
+
+#perm_nav p {
+	padding: 1px 0 2px 0;
+	}
+
+#perm_nav a {
+	font-weight: bold;
+	}
+
+#top form {
+	font-size: 85%;
+	margin: 2px 0 2px 0;
+	}
+
+#top form select {
+	margin-right: 4px;
+	}
+
+#top form button {
+	border-style: groove;
+	margin-left: 3px;
+	}
+
+
+/******************************* content ************************/
+
+#main_content {
+	padding-left: 3%;
+	padding-right: 1%;
+	}
+
+#main_content #info_title {
+	margin-left: 20%;	/* no background coloring behind the nav bar */
+	margin-top: 0.5%;
+	margin-right: 0.2%;
+	margin-bottom: 0.2%;
+	text-align: center;
+	font-size: 125%;
+	font-style: italic;
+	}
+
+#main_content li { list-style: none; }
+
+#main_content button { margin-top: 12px; }
+
+#main_content ul {
+	line-height: 1.8em;
+	list-style: none;
+	margin-left: 5px;
+	}
+
+#main_content ul li {
+	padding-top: 2px;
+	padding-bottom: 2px;
+	}
+
+#main_content ul li ul { font-size: 85%; }
+
+#main_content ul li ul li {
+	padding-top: 0px;
+	padding-bottom: 0px;
+	}
+
+#main_content > fieldset {	/* sub-fieldsets do not need margin/padding */
+	padding: 5px 5px 10px 5px;	/* IE6 acts weird for %-values */
+	}
+
+#main_content fieldset p {
+	margin-left: 10px;
+	}
+
+#main_content fieldset form ul { padding-left: 10px; }
+
+#main_content fieldset form ul li ul { padding-left: 25px; }
+
+#main_content table.list_select {
+	table-layout: fixed;
+	width: 100%;
+	text-align: left;
+	line-height: 1.2em;
+	border-width: 0;
+	padding-right: 0;
+	}
+
+#main_content table.list_select td {
+	padding-left: 5px;
+	}
+
+#main_content table.subscribe_log {
+	border-collapse: separate;
+	border-spacing: 10px 3px;
+	}
+
+#main_content div.introduction {
+	font-size: 80%;
+	}
+
+#main_content div.warning,
+#main_content div.error,
+#main_content div.success {
+	margin-left: 30%;	/* we have to include the width of the nav-bar */
+	margin-right: 10%;
+	margin-top: 2%;
+	margin-bottom: 3%;
+	padding: 2%;
+	text-align: center;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 90%;
+	}
+
+#main_content table.gnupg_keys td {
+	padding-right: 10px;
+	}
+
+#main_content table.subscribers {
+	border-width: 0;
+	margin: 0;
+	padding: 1%;
+	width: 100%;
+	}
+
+#main_content table.subscribers tr, #main_content table.subscribers td {
+	margin: 0;
+	padding: 0;
+	}
+
+#main_content button {
+	border-width: 1px;
+    border-style: dotted;
+	font-size: 90%;
+	}
+
+#main_content button:hover {
+	border-width: 1px;
+    border-style: dotted;
+	font-size: 90%;
+	}
+
+/************************** footer ******************************/
+
+#footer {
+	clear: left;	/* do not overlap with left navigation bar */
+	text-align: center;
+	font-size: 90%;
+	margin: 10px 0 0 0;
+	padding: 3px;
+	}
+

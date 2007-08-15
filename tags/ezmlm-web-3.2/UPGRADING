@@ -1,0 +1,107 @@
+This file contains some useful hints for upgrading from a previous version.
+
+##############################################################################
+
+UPGRADING ezmlm-web 3.1 to ezmlm-web 3.2
+
+1) the following dependency was added:
+	- File::Path
+
+2) CSS stylesheet file
+	The css stylesheet file changed significantly. Please update your copy.
+	Additionally the stylesheet file was splitted into a common and a color
+	scheme part. Thus you need to specify the location of your color scheme
+	CSS file (a URL) in your ezmlmwebrc as HTML_CSS_COLOR. Otherwise your web
+	interface will be plain black and white. Read 'man ezmlmwebrc' for details.
+
+	Be aware that at least one of the supplied color schemes requires some
+	images to be available in the directory of the stylesheet file.
+	The easiest approach would be to publish the 'www-data' directory via an
+	'Alias' (or something similar) with your favourite web server.
+	Take a look at examples/apache.conf.dist for an example.
+
+3) possible locations of ezmlmwebrc
+	ezmlm-web does no longer search for a configuration file (ezmlmwebrc) in
+	the current directory, as this can be a security risk.
+	If you relied on this behavior (should be rare), then you have two options:
+	A) move your configuration file to one of the other possible locations
+	B) patch the source of ezmlm-web.cgi to include the deprecated
+		configuration file location. Do this on your own risk!
+
+4) renamed configuration setting
+	The configuration setting 'HTML_CSS_FILE' is replaced by 'HTML_CSS_COMMON'
+	for clarity. 'HTML_CSS_COMMON' falls back to the value of 'HTML_CSS_FILE'
+	if it is undefined. Thus your setup should work as before. But you are
+	encouraged to replace the setting, as it might break your setup in a
+	future version of ezmlm-web.
+
+------------------------------------------------------------------------------
+
+UPGRADING ezmlm-web 3.0 to ezmlm-web 3.1
+
+1) update the perl module Mail::Ezmlm to v0.07
+
+------------------------------------------------------------------------------
+
+UPGRADING ezmlm-web 2.3 to ezmlm-web 3.0
+
+1) install clearsilver (see INSTALL for details)
+
+2) copy the "template" directory somewhere (see INSTALL again)
+
+3) set "TEMPLATE_DIR" in your ezmlmwebrc file to this directory
+
+4) copy the languge directory somewhere and adjust the "LANGUAGE_DIR" setting
+
+4) maybe you want to define "MAIL_DOMAIN" in your ezmlmwebrc
+
+5) the search order for ezmlmwebrc has changed
+from	HOME -> SYSTEM -> CGI_DIR
+to	HOME -> CGI_DIR -> SYSTEM
+
+------------------------------------------------------------------------------
+
+UPGRADING ezmlm-web 2.2 to ezmlm-web 2.3
+
+1) set the location (URL) of the css file in ezmlmwebrc
+
+------------------------------------------------------------------------------
+
+UPGRADING ezmlm-web 2.1 to ezmlm-web 2.2
+
+1) Creating of new lists is now controlled by a line in the webusers file instead
+of a commandline switch for ezmlm-web.cgi.
+
+necessary changes:
+ - optional: remove switch "-c" when calling ezmlm-web.cgi (take a look at index.c)
+ - optional: add a line like "ALLOW_CREATE: john, myra" to the webusers file
+
+2) The location of the webusers file is now defined in ezmlmwebrc. (default: $LIST_DIR/webusers)
+
+necessary changes:
+ - optional: add a line like "$WEBUSERS_FILE = /home/ml/webusers" to ezmlmwebrc
+
+3) A german translation is available.
+
+ - optional: include "lang/de.pm" in ezmlmwebrc (there you can also remove the english definitions)
+	     or copy the new ezmlmwebrc :)
+
+------------------------------------------------------------------------------
+
+UPGRADING ezmlm-web 2.0 to ezmlm-web 2.1
+
+There are no major changes that need to be made in order to upgrade. All
+that is necessary is to add two new lines to your ezmlmwebrc ... In the top
+section of the file add
+
+$FILE_UPLOAD = 1;
+
+and in the %HELPER section, you need to add
+
+addaddressfile   => 'or you may enter the filename of a plain text file containing multiple RFC822 email addresses, one per line',
+
+(or just copy the new ezmlmwebrc :)
+
+Have a look for these two lines in the new ezmlmwebrc included in this
+distribution if you are unsure of how/where to put these.
+
