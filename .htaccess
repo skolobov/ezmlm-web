@@ -1,6 +1,6 @@
 Options +Indexes
 IndexOptions	FancyIndexing	NameWidth=*
 IndexOptions	FancyIndexing	FoldersFirst
-IndexOrderDefault	Ascending	Name
+IndexOrderDefault	Descending	Name
 ReadmeName	README.html
 IndexIgnore README.html .htaccess
