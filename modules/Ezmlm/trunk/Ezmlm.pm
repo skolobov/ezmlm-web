@@ -52,7 +52,7 @@ require Exporter;
 @EXPORT = qw(
    
 );
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 require 5.005;
 
@@ -242,7 +242,7 @@ sub thislist {
 # == Set the current mailing list ==
 sub setlist {
 	my($self, $list) = @_;
-	if ($list =~ m/^([\w\d\_\-\.\/]+)$/) {
+	if ($list =~ m/^([\w\d\_\-\.\/\@]+)$/) {
 		$list = $1;
 		if (-e "$list/lock") {
           $self->_seterror(undef);
