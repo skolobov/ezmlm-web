@@ -51,4 +51,7 @@ Revision history for Perl extension Mail::Ezmlm.
    - fixed 'get_charset' and 'set_charset' for idx < 5.0
 
 0.08
+   - fixed handling of the 'owner' setting for ezmlm-idx > v5
+   - better ezmlm-idx version detection
    - admit "@" in the path of a mailing list
+

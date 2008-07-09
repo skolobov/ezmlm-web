@@ -727,6 +727,7 @@ sub check_version {
 # 	5	=> ezmlm-idx v5.0
 # 	5.1	=> ezmlm-idx v5.1
 # 	6	=> ezmlm-idx v6.*
+# 	7	=> ezmlm-idx v7.*
 sub get_version {
 	my ($ezmlm, $idx);
 	my $version = `$EZMLM_BASE/ezmlm-make -V 2>&1`;
@@ -738,9 +739,11 @@ sub get_version {
 	if (defined($ezmlm)) {
 		return 3;
 	} elsif (defined($idx)) {
-		if (($idx =~ m/^(\d)/) && ($1 >= 6)) {
+		if (($idx =~ m/^(\d)/) && ($1 >= 7)) {
 			# version 6.0 or higher
-			return 6;
+			return 7;
+		} elsif (($idx =~ m/^(\d)/) && ($1 == 6)){
+		    return 6;
 		} elsif (($idx =~ m/^(\d)\.(\d)/) && ($1 >= 5) && ($2 == 1)) {
 			# version 5.1
 			return 5.1;
@@ -1147,10 +1150,13 @@ Empty strings for set_lang() and set_charset() reset the setting to its default 
    Mail::Ezmlm->get_version;
 
 The result is one of the following:
- 0 - unknown
- 3 - ezmlm 0.53
- 4 - ezmlm-idx 0.4xx
- 5 - ezmlm-idx 5.x
+ 0   - unknown
+ 3   - ezmlm 0.53
+ 4   - ezmlm-idx 0.4xx
+ 5   - ezmlm-idx 5.x
+ 5.1 - ezmlm-idx 5.1
+ 6   - ezmlm-idx 6.x
+ 7   - ezmlm-idx 7.x
 
 =head2 Creating MySQL tables:
 
