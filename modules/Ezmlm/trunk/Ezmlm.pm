@@ -52,7 +52,7 @@ require Exporter;
 @EXPORT = qw(
    
 );
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 require 5.005;
 
@@ -148,7 +148,7 @@ sub make {
 sub update {
 	my($self, $switches) = @_;
 	my($outhost, $inlocal);
-	   
+
 	# Do we have the command line switches
 	($self->_seterror(-1, 'nothing to update()') && return 0) unless(defined($switches));
 	$switches = '-e' . $switches;
@@ -204,11 +204,11 @@ sub getconfig {
 	my($options);
 
 	# Read the config file
-	if(-e "$self->{'LIST_NAME'}/flags") { 
+	if(-e $self->{LIST_NAME} . "/flags") { 
 		# this file exists since ezmlm-idx-5.0.0
 		# 'config' is not authorative anymore since that version
 		$options = $self->_getconfig_idx5();
-	} elsif(open(CONFIG, "<$self->{'LIST_NAME'}/config")) { 
+	} elsif(open(CONFIG, "<" . $self->{LIST_NAME} . "/config")) { 
 		# 'config' contains the authorative information
 		while(<CONFIG>) {
 			if (/^F:-(\w+)/) {
@@ -245,7 +245,7 @@ sub setlist {
 	if ($list =~ m/^([\w\d\_\-\.\/\@]+)$/) {
 		$list = $1;
 		if (-e "$list/lock") {
-          $self->_seterror(undef);
+			$self->_seterror(undef);
 			return $self->{'LIST_NAME'} = $list;
 		} else {
 			$self->_seterror(-1, "$list does not appear to be a valid list in setlist()");
@@ -551,7 +551,8 @@ sub set_lang {
 sub get_charset {
 	my ($self) = shift;
 	my $charset;
-	chomp($charset = $self->getpart('charset'));
+	$charset = $self->getpart('charset');
+	$charset = '' unless defined($charset);
 	# default if no 'charset' file exists
 	$charset = 'us-ascii' if ($charset eq '');
 	return $charset;
