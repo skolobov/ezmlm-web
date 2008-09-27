@@ -74,7 +74,7 @@ $GPG_BIN = '/usr/local/bin/gpg'
 $GPG_BIN = '/bin/gpg'
 	unless (-e "$GPG_BIN");
 
-# == clean up the path for taint checking ==
+# == clean up the path ==
 local $ENV{'PATH'} = "/bin";
 
 # == Initialiser - Returns a reference to the object ==
@@ -129,11 +129,6 @@ sub set_location {
 		if (-x "$keyring_dir") {
 			# at least it is a directory - so it looks ok
 			$self->{'KEYRING_DIR'} = $keyring_dir;
-			unless ((-e "$keyring_dir/random_seed")
-					|| (-e "$keyring_dir/pubring.gpg")) {
-				warn "GPG keyring directory seems to be invalid or empty: "
-						. $keyring_dir;
-			}
 		} else {
 			# it seems to be a file or something else - we complain
 			warn "GPG keyring location must be a directory: $keyring_dir";
@@ -166,10 +161,14 @@ The return value is a string containing the ascii armored key data.
 
 sub export_key {
 	my ($self, $keyid) = @_;
-	my $gpg = $self->_get_gpg_object();
-	my $gpgoption = "--armor --export $keyid";
-	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
-	my $output = `$gpgcommand 2>/dev/null`;
+	my ($gpg, $gpgoption, $gpgcommand, $output);
+
+	# return immediately - this avoids creating an empty keyring unintentionally
+	return () unless (-e $self->{'KEYRING_DIR'});
+	$gpg = $self->_get_gpg_object();
+	$gpgoption = "--armor --export $keyid";
+	$gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
+	$output = `$gpgcommand 2>/dev/null`;
 	if ($output) {
 		return $output;
 	} else {
@@ -305,9 +304,11 @@ sub get_secret_keys {
 sub _get_gpg_object() {
 	my ($self) = @_;
 	my $gpg = new Crypt::GPG();
-	my $dirname = $self->{'KEYRING_DIR'};
+	my $dirname = $self->get_location();
+	# replace whitespace characters in the keyring directory name
+	$dirname =~ s/(\s)/\\\1/g;
 	$gpg->gpgbin($GPG_BIN);
-	$gpg->gpgopts("--lock-multiple --no-tty --no-secmem-warning --batch --quiet --homedir '$dirname'");
+	$gpg->gpgopts("--lock-multiple --no-tty --no-secmem-warning --batch --quiet --homedir $dirname");
 	return $gpg;
 }
 
@@ -316,8 +317,11 @@ sub _get_gpg_object() {
 sub _get_keys() {
 	# type can be "pub" or "sec"
 	my ($self, $keyType) = @_;
-	my $gpg = $self->_get_gpg_object();
-	my ($flag, $gpgoption, @keys, $key);
+	my ($gpg, $flag, $gpgoption, @keys, $key);
+
+	# return immediately - this avoids creating an empty keyring unintentionally
+	return () unless (-r $self->{'KEYRING_DIR'});
+	$gpg = $self->_get_gpg_object();
 	if ($keyType eq "pub") {
 		$flag = "pub";
 		$gpgoption = "--list-keys";
@@ -358,7 +362,7 @@ sub _get_fingerprint()
 	
 	my @fingerprints = grep /^fpr:/, `$gpgcommand`;
 	if (@fingerprints > 1) {
-		warn "[Mail::Ezmlm::Gpg] more than one key matched ($key_id)!";
+		warn "[Mail::Ezmlm::GpgKeyRing] more than one key matched ($key_id)!";
 		return undef;
 	}
 	return undef if (@fingerprints < 1);
