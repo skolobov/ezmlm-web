@@ -29,6 +29,8 @@ use strict;
 use warnings;
 use diagnostics;
 use vars qw($GPG_EZMLM_BASE $VERSION @ISA @EXPORT @EXPORT_OK);
+use File::Copy;
+use File::Path;
 use Carp;
 
 use Mail::Ezmlm;
@@ -158,7 +160,7 @@ sub convert_to_encrypted {
 	}
 
 	# the backup directory will contain the old config file and the dotqmails
-	$backup_dir = $list_dir . '/gpg-ezmlm.bak';
+	$backup_dir = $list_dir . '/.gpg-ezmlm.backup';
 	if ((! -e $backup_dir) && (!mkdir($backup_dir))) {
 		warn "failed to create gpg-ezmlm conversion backup dir: $backup_dir";
 		return undef;
@@ -253,8 +255,8 @@ sub convert_to_encrypted {
 	}
 
 	# create the (empty) gnupg keyring directory - this enables the keyring
-	# management interface
-	unless (mkdir("$list_dir/.gnupg", 0700)) {
+	# management interface. Don't create it, if it already exists.
+	if ((!-e "$list_dir/.gnupg") && (!mkdir("$list_dir/.gnupg", 0700))) {
 		warn "failed to create the gnupg keyring directory: $!";
 		return undef;
 	}
@@ -300,9 +302,20 @@ object of the plaintext mailing list is returned.
 
 sub convert_to_plaintext {
 	my $self = shift;
-	my ($dot_loc, $list_dir);
+	my ($dot_loc, $list_dir, $dot_prefix, $backup_dir);
 
 	$list_dir = $self->thislist();
+	# untaint the input
+	$list_dir =~ m/^([\w\d\_\-\.\/\@]+)$/;
+	unless (defined($1)) {
+		# sanitize directory name (it must be safe to put the warn message)
+		$list_dir =~ s/\W/_/g;
+		warn "[GpgEzmlm] the list directory contains invalid characters: '"
+				. $list_dir . "' (special characters are escaped)";
+		return undef;
+	}
+	$list_dir = $1;
+
 	# check if a directory was given
 	unless (defined($list_dir)) {
 		$self->_seterror(-1, 'must define directory in convert_to_plaintext()');
@@ -313,8 +326,8 @@ sub convert_to_plaintext {
 		$self->_seterror(-1, 'directory does not exist: ' . $list_dir);
 		return undef;
 	}
-	# check if the current object is still encrypted by opening it again
-	if (Mail::Ezmlm::GpgEzmlm->new($list_dir)) {
+	# check if the current object is still encrypted
+	unless (_is_encrypted($list_dir)) {
 		$self->_seterror(-1, 'list is not encrypted: ' . $list_dir);
 		return undef;
 	}
@@ -322,20 +335,78 @@ sub convert_to_plaintext {
 	# retrieve location of dotqmail-files
 	$dot_loc = _get_dotqmail_location($list_dir);
 
+	# untaint "dot_loc"
+	$dot_loc =~ m/^([\w\d\_\-\.\@ \/]+)$/;
+	if (defined($1)) {
+		$dot_loc = $1;
+	} else {
+		$dot_loc =~ s/\W/_/g;
+		warn "[GpgEzmlm] directory name of dotqmail files contains invalid "
+				. "characters: $dot_loc (special characters are escaped)";
+		return undef;
+	}
+
+	# the backup directory should contain the old config file (if it existed)
+	# and the original dotqmail files
+	$backup_dir = $list_dir . '/.gpg-ezmlm.backup';
+	unless (-r $backup_dir) {
+		warn "[GpgEzmlm] failed to revert conversion - the backup directory "
+				. "is missing: $backup_dir";
+		return undef;
+	}
+
+	# the "dot_prefix" is the basename of the main dotqmail file
+	# (e.g. '.qmail-list-foo')
+	$dot_loc =~ m/\/([^\/]+)$/;
+	if (defined($1)) {
+		$dot_prefix = $1;
+	} else {
+		warn 'invalid location of dotqmail file: ' . $dot_loc;
+		return undef;
+	}
+
 	# the "dotqmail" location must be valid
 	unless (defined($dot_loc) && ($dot_loc ne '') && (-e $dot_loc)) {
 		$self->_seterror(-1, 'dotqmail files not found: ' . $dot_loc);
 		return undef;
 	}
 
-	# TODO: implement the custom backward conversion
-	if (system("$GPG_EZMLM_BASE/gpg-ezmlm-convert.pl", "--quiet", "--revert", $list_dir, $dot_loc) != 0) {
-		$self->_seterror($?, "failed to undo list encryption: " . $list_dir);
+	# start reverting the gpg-ezmlm conversion:
+	# - restore old dotqmail files
+	# - restore old config file (if it existed before)
+	
+
+	# replace the config file with the original one (if it exists)
+	if (-e "$backup_dir/config") {
+		unless (File::Copy::copy("$backup_dir/config", "$list_dir/config")) {
+			warn "[GpgEzmlm] failed to restore the original config file '"
+					. "$backup_dir/config' to '$list_dir/config': $!";
+			return undef;
+		}
+	} else {
+		unless (unlink("$list_dir/config")) {
+			warn "[GpgEzmlm] failed to remove the gpg-ezmlm config file ('"
+					. "$list_dir/config'): $!";
+			return undef;
+		}
+	}
+
+	# replace the dotqmail files with the ones from the backup
+	unless ((File::Copy::copy("$backup_dir/$dot_prefix", "$dot_loc"))
+			&& (File::Copy::copy("$backup_dir/$dot_prefix-default",
+					"$dot_loc-default",))) {
+		warn "[GpgEzmlm] failed to restore dotqmail files: $!";
 		return undef;
 	}
 
-	$self->_seterror(undef);
-	$self = $self->SUPER->new($list_dir);
+	# remove the original directory
+	unless (File::Path::rmtree($backup_dir)) {
+		warn "[GpgEzmlm] failed to remove configuration backup directory ('"
+				. $backup_dir . "'): $!";
+		# just warn - don't fail
+	}
+
+	$self = Mail::Ezmlm->new($list_dir);
 	return $self;
 }
 
