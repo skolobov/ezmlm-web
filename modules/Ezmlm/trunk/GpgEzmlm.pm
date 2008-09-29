@@ -73,6 +73,11 @@ $ENV{SHELL} = '/bin/sh' if exists $ENV{SHELL};
 delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
 
 
+# check, if gpg-ezmlm is installed
+unless (-x "$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl") {
+	die("Warning: gpg-ezmlm does not seem to be installed - "
+			. "executable '$GPG_EZMLM_BASE/gpg-ezmlm-manage.pl' not found!");
+}
 
 
 # == Initialiser - Returns a reference to the object ==

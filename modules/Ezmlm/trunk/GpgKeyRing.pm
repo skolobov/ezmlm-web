@@ -77,6 +77,13 @@ $GPG_BIN = '/bin/gpg'
 # == clean up the path ==
 local $ENV{'PATH'} = "/bin";
 
+# check, if gpg is installed
+unless (-x "$GPG_BIN") {
+	die("Warning: gnupg does not seem to be installed - none of the "
+			. "executables 'gpg' or 'gpg2' were found at the usual locations!");
+}
+
+
 # == Initialiser - Returns a reference to the object ==
 
 =head2 Setting up a new Mail::Ezmlm::GpgKeyRing object:
@@ -306,7 +313,7 @@ sub _get_gpg_object() {
 	my $gpg = new Crypt::GPG();
 	my $dirname = $self->get_location();
 	# replace whitespace characters in the keyring directory name
-	$dirname =~ s/(\s)/\\\1/g;
+	$dirname =~ s/(\s)/\\$1/g;
 	$gpg->gpgbin($GPG_BIN);
 	$gpg->gpgopts("--lock-multiple --no-tty --no-secmem-warning --batch --quiet --homedir $dirname");
 	return $gpg;
