@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   sodipodi:docbase="/home/lars/subversion/ezmlm-web/trunk/www-data"
+   sodipodi:docname="graphics-template.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3680">
+      <stop
+         style="stop-color:#729fcf;stop-opacity:1;"
+         offset="0"
+         id="stop3682" />
+      <stop
+         id="stop4573"
+         offset="0.30065361"
+         style="stop-color:#3465a4;stop-opacity:1;" />
+      <stop
+         style="stop-color:#729fcf;stop-opacity:1;"
+         offset="1"
+         id="stop3686" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3681">
+      <stop
+         style="stop-color:#a40000;stop-opacity:1;"
+         offset="0"
+         id="stop3683" />
+      <stop
+         id="stop2786"
+         offset="0.38"
+         style="stop-color:#a40000;stop-opacity:1;" />
+      <stop
+         id="stop5459"
+         offset="0.63"
+         style="stop-color:#ef2929;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ef2929;stop-opacity:1;"
+         offset="1"
+         id="stop3685" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2788">
+      <stop
+         id="stop2790"
+         offset="0"
+         style="stop-color:#3465a4;stop-opacity:1;" />
+      <stop
+         style="stop-color:#729fcf;stop-opacity:1;"
+         offset="0.25"
+         id="stop2794" />
+      <stop
+         id="stop2792"
+         offset="1"
+         style="stop-color:#729fcf;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2788"
+       id="linearGradient2786"
+       x1="50.083374"
+       y1="624.87115"
+       x2="450.08337"
+       y2="624.87115"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(2,0,0,1,-65.36665,-117.8995)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3681"
+       id="linearGradient3687"
+       x1="47.053432"
+       y1="123.98675"
+       x2="147.06433"
+       y2="123.98675"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(4,0,0,1.25,270.9353,58.25642)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3680"
+       id="linearGradient2793"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(2,0,0,1,-65.36662,159.3826)"
+       x1="50.083374"
+       y1="624.87115"
+       x2="450.08337"
+       y2="624.87115" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.84666115"
+     inkscape:cx="287.3556"
+     inkscape:cy="380.3422"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1014"
+     inkscape:window-height="688"
+     inkscape:window-x="0"
+     inkscape:window-y="26" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/2.5/" />
+        <dc:title>ezmlm-web graphics</dc:title>
+        <dc:date>2007-04-09</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Lars Kruse &lt;devel@sumpfralle.de&gt;</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Lars Kruse &lt;devel@sumpfralle.de&gt;</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Lars Kruse &lt;devel@sumpfralle.de&gt;</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:identifier>https://svn.systemausfall.org/svn/ezmlm-web/trunk/www-data/graphics-template.svg</dc:identifier>
+        <dc:source>https://svn.systemausfall.org/svn/ezmlm-web/trunk/www-data/graphics-template.svg</dc:source>
+        <dc:language>en</dc:language>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>ezmlm-web graphics</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:description>some web interface graphics for ezmlm-web</dc:description>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/2.5/">
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/Reproduction" />
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/Distribution" />
+        <cc:requires
+           rdf:resource="http://web.resource.org/cc/Notice" />
+        <cc:requires
+           rdf:resource="http://web.resource.org/cc/Attribution" />
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://web.resource.org/cc/ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="opacity:1;fill:url(#linearGradient3687);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1890"
+       width="400"
+       height="100"
+       x="459.19263"
+       y="157.3343"
+       transform="matrix(0,1,-1,0,0,0)"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"
+       inkscape:export-filename="/home/lars/subversion/ezmlm-web/trunk/www-data/vert_grad_red.png" />
+    <rect
+       y="466.97165"
+       x="34.800106"
+       height="80"
+       width="800"
+       id="rect1892"
+       style="opacity:1;fill:url(#linearGradient2786);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       inkscape:export-filename="/home/lars/subversion/ezmlm-web/trunk/www-data/horiz_grad_blue.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Charter"
+       x="-255.44891"
+       y="901.71283"
+       id="text6346"><tspan
+         sodipodi:role="line"
+         id="tspan6348"
+         x="-255.44891"
+         y="901.71283">1x400px</tspan><tspan
+         sodipodi:role="line"
+         x="-255.44891"
+         y="941.71283"
+         id="tspan6360">90dpi</tspan><tspan
+         sodipodi:role="line"
+         x="-255.44891"
+         y="981.71283"
+         id="tspan6350">vert_grad_red.png</tspan></text>
+    <text
+       id="text6352"
+       y="604.78076"
+       x="38.566536"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Charter"
+       xml:space="preserve"><tspan
+         y="604.78076"
+         x="38.566536"
+         id="tspan6354"
+         sodipodi:role="line">800x1px</tspan><tspan
+         y="644.78076"
+         x="38.566536"
+         sodipodi:role="line"
+         id="tspan6358">90dpi</tspan><tspan
+         id="tspan6356"
+         y="684.78076"
+         x="38.566536"
+         sodipodi:role="line">horiz_grad_blue.png</tspan></text>
+    <rect
+       inkscape:export-ydpi="90"
+       inkscape:export-xdpi="90"
+       inkscape:export-filename="/home/lars/subversion/ezmlm-web/trunk/www-data/horiz_grad_blue_long.png"
+       style="opacity:1;fill:url(#linearGradient2793);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2783"
+       width="800"
+       height="80"
+       x="34.800106"
+       y="744.25378" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Charter"
+       x="38.566536"
+       y="882.06287"
+       id="text2785"><tspan
+         sodipodi:role="line"
+         id="tspan2787"
+         x="38.566536"
+         y="882.06287">800x1px</tspan><tspan
+         id="tspan2789"
+         sodipodi:role="line"
+         x="38.566536"
+         y="922.06287">90dpi</tspan><tspan
+         sodipodi:role="line"
+         x="38.566536"
+         y="962.06287"
+         id="tspan2791">horiz_grad_blue_long.png</tspan></text>
+  </g>
+</svg>
