@@ -52,7 +52,7 @@ require Exporter;
 @EXPORT = qw(
    
 );
-$VERSION = '0.09';
+$VERSION = '0.08';
 
 require 5.005;
 
