@@ -200,6 +200,7 @@ EOM
 		   or die "Unable to read temp file: $!";
 	   while(<TMP>) {
 		  s{^\$GPG_EZMLM_BASE\s*=\s*['"].+?['"]\s*;\s*(#.*|)$}{\$GPG_EZMLM_BASE = '$gpg_ezmlm_path';	# Autoinserted by Makefile.PL};
+		  s{^\$GPG_BIN\s*=\s*['"].+?['"]\s*;\s*(#.*|)$}{\$GPG_BIN = '$gpg_bin';	# Autoinserted by Makefile.PL} if ($gpg_bin_requested);
 		 print GPGEZMLM;
 	   }
 	   close TMP; close GPGEZMLM;
@@ -228,3 +229,4 @@ EOM
    return {};
 
 }
+

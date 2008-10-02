@@ -65,6 +65,7 @@ The Mail::Ezmlm::GpgEzmlm class is inherited from the Mail::Ezmlm class.
 
 # == Begin site dependant variables ==
 $GPG_EZMLM_BASE = '/usr/bin';	# Autoinserted by Makefile.PL
+$GPG_BIN = '/usr/bin/gpg'	# Autoinserted by Makefile.PL
 
 # == clean up the path for taint checking ==
 local $ENV{PATH};
@@ -101,6 +102,7 @@ sub new {
 	bless $self, ref $class || $class || 'Mail::Ezmlm::GpgEzmlm';
 	# define the available (supported) options for gpg-ezmlm ==
 	@{$self->{SUPPORTED_OPTIONS}} = (
+			"GnupG",
 			"KeyDir",
 			"RequireSub",
 			"RequireSigs",
@@ -321,14 +323,16 @@ sub update {
 	my ($result);
 
 	
+	# restore the ususal ezmlm-idx config file (for v0.4xx)
 	&_enable_plaintext_config_file($self->thislist());
+	# let ezmlm-make do the setup
 	$result = $self->SUPER::update($options);
+	# restore the gpg-ezmlm config file
 	&_enable_encryption_config_file($self->thislist());
-	# "repair" the dotqmail files
+	# "repair" the dotqmail files (use "gpg-ezmlm-send" instead of "ezmlm-send")
 	&_cleanup_dotqmail_files($self->thislist());
 
-	# the normal configuration via "ezmlm-make" may not happen, since
-	# this would overwrite the dotqmail files. Thus we just do nothing.
+	return the result of the ezmlm-make run
 	return $result;
 }
 
@@ -351,6 +355,11 @@ sub update_special {
 				. "' does not appear to be a valid list");
 		return undef;
 	}
+
+	# always set the default value for the "gpg" setting explicitely - otherwise
+	# gpg-ezmlm breaks on most systems (its default location is
+	# /usr/local/bin/gpg)
+	$ok_switches{GnuPG} = $GPG_BIN;
 
 	@delete_switches = ();
 	# check if all supplied settings are supported
