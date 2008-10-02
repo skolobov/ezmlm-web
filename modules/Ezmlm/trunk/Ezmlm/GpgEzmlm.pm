@@ -28,7 +28,7 @@ package Mail::Ezmlm::GpgEzmlm;
 use strict;
 use warnings;
 use diagnostics;
-use vars qw($GPG_EZMLM_BASE $VERSION @ISA @EXPORT @EXPORT_OK);
+use vars qw($GPG_EZMLM_BASE $GPG_BIN $VERSION @ISA @EXPORT @EXPORT_OK);
 use File::Copy;
 use Carp;
 
@@ -65,7 +65,7 @@ The Mail::Ezmlm::GpgEzmlm class is inherited from the Mail::Ezmlm class.
 
 # == Begin site dependant variables ==
 $GPG_EZMLM_BASE = '/usr/bin';	# Autoinserted by Makefile.PL
-$GPG_BIN = '/usr/bin/gpg'	# Autoinserted by Makefile.PL
+$GPG_BIN = '/usr/bin/gpg';	# Autoinserted by Makefile.PL
 
 # == clean up the path for taint checking ==
 local $ENV{PATH};
@@ -102,7 +102,7 @@ sub new {
 	bless $self, ref $class || $class || 'Mail::Ezmlm::GpgEzmlm';
 	# define the available (supported) options for gpg-ezmlm ==
 	@{$self->{SUPPORTED_OPTIONS}} = (
-			"GnupG",
+			"GnuPG",
 			"KeyDir",
 			"RequireSub",
 			"RequireSigs",
@@ -332,7 +332,7 @@ sub update {
 	# "repair" the dotqmail files (use "gpg-ezmlm-send" instead of "ezmlm-send")
 	&_cleanup_dotqmail_files($self->thislist());
 
-	return the result of the ezmlm-make run
+	# return the result of the ezmlm-make run
 	return $result;
 }
 
@@ -355,11 +355,6 @@ sub update_special {
 				. "' does not appear to be a valid list");
 		return undef;
 	}
-
-	# always set the default value for the "gpg" setting explicitely - otherwise
-	# gpg-ezmlm breaks on most systems (its default location is
-	# /usr/local/bin/gpg)
-	$ok_switches{GnuPG} = $GPG_BIN;
 
 	@delete_switches = ();
 	# check if all supplied settings are supported
@@ -391,19 +386,19 @@ sub update_special {
 	my $errorstring;
 	my $config_file_old = $self->thislist() . "/config";
 	my $config_file_new = $self->thislist() . "/config.new";
+	my $gnupg_setting_found = (0==1);
 	if (open(CONFIG_OLD, "<$config_file_old")) { 
 		if (open(CONFIG_NEW, ">$config_file_new")) { 
 			my ($in_line, $one_opt, $one_val, $new_setting);
 			while (<CONFIG_OLD>) {
 				$in_line = $_;
+				$gnupg_setting_found = (0==0) if ($in_line =~ m/^\s*GnuPG\s+/i);
 				if (%ok_switches) {
 					my $found = 0;
 					while (($one_opt, $one_val) = each(%ok_switches)) {
 						# is this the right line (maybe commented out)?
-						if ($in_line =~ m/^#?\w*$one_opt/i) {
-							print CONFIG_NEW "$one_opt ";
-							print CONFIG_NEW ($one_val)? "yes" : "no";
-							print CONFIG_NEW "\n";
+						if ($in_line =~ m/^#?\s*$one_opt\s+/i) {
+							print CONFIG_NEW _get_config_line($one_opt, $one_val);
 							delete $ok_switches{$one_opt};
 							$found = 1;
 						}
@@ -416,9 +411,13 @@ sub update_special {
 			}
 			# write the remaining settings to the end of the file
 			while (($one_opt, $one_val) = each(%ok_switches)) {
-				print CONFIG_NEW "\n$one_opt ";
-				print CONFIG_NEW ($one_val)? "yes" : "no";
-				print CONFIG_NEW "\n";
+				print CONFIG_NEW _get_config_line($one_opt, $one_val);
+			}
+			# always set the default value for the "gpg" setting explicitely,
+			# if it was not overriden - otherwise gpg-ezmlm breaks on most
+			# systems (its default location is /usr/local/bin/gpg)
+			unless ($gnupg_setting_found) {
+				print CONFIG_NEW _get_config_line("GnuPG", $GPG_BIN);
 			}
 		} else {
 			$errorstring = "failed to write to temporary config file: $config_file_new";
@@ -446,6 +445,24 @@ sub update_special {
 	return (0==0);
 }
 
+
+# return the configuration file string for a key/value combination
+sub _get_config_line {
+		my $key = shift;
+		my $value = shift;
+
+		my $result = "$key ";
+		if (($key eq "GnuPG") || ($key eq "keyDir")) {
+			# these are the only settings with string values
+			# escape special characters
+			$value =~ s/[^\w\.\/\-]/_/g;
+			$result .= $value;
+		} else {
+			$result .= ($value)? "yes" : "no";
+		}
+		$result .= "\n";
+		return $result;
+}
 
 # == Get a list of options for the current list ==
 
