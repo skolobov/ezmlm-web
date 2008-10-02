@@ -58,21 +58,17 @@ $GPG_BIN = '/usr/bin/gpg';	# Autoinserted by Makefile.PL
 
 # == check the gpg path ==
 $GPG_BIN = '/usr/local/bin/gpg'
-	unless (-e "$GPG_BIN");
+	unless (-x "$GPG_BIN");
 $GPG_BIN = '/usr/bin/gpg'
-	unless (-e "$GPG_BIN");
+	unless (-x "$GPG_BIN");
 $GPG_BIN = '/bin/gpg'
-	unless (-e "$GPG_BIN");
+	unless (-x "$GPG_BIN");
 $GPG_BIN = '/usr/local/bin/gpg2'
-	unless (-e "$GPG_BIN");
+	unless (-x "$GPG_BIN");
 $GPG_BIN = '/usr/bin/gpg2'
-	unless (-e "$GPG_BIN");
+	unless (-x "$GPG_BIN");
 $GPG_BIN = '/bin/gpg2'
-	unless (-e "$GPG_BIN");
-$GPG_BIN = '/usr/local/bin/gpg'
-	unless (-e "$GPG_BIN");
-$GPG_BIN = '/bin/gpg'
-	unless (-e "$GPG_BIN");
+	unless (-x "$GPG_BIN");
 
 # == clean up the path ==
 local $ENV{'PATH'} = "/bin";
