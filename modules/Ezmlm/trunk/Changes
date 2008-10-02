@@ -50,8 +50,9 @@ Revision history for Perl extension Mail::Ezmlm.
 0.07.2 Tue Jun 20 01:05:56 UTC 2006
    - fixed 'get_charset' and 'set_charset' for idx < 5.0
 
-0.08
+0.08 Thu Oct  2 03:23:06 CEST 2008
    - fixed handling of the 'owner' setting for ezmlm-idx > v5
-   - better ezmlm-idx version detection
-   - admit "@" in the path of a mailing list
+   - updated ezmlm-idx version detection
+   - allow "@" in the path of a mailing list
+   - add modules Mail::Ezmlm::GpgKeyRing and Mail::Ezmlm::GpgEzmlm
 
