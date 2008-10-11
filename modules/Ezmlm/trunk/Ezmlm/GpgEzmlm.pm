@@ -475,6 +475,20 @@ getconfig() returns a hash including all available settings
 
 =cut
 
+# call the original 'getconfig' function after restoring the "normal" config
+# file (necessary only for ezmlm-idx < 0.4x)
+sub getconfig {
+	my $self = shift;
+
+	my ($result);
+
+	&_enable_plaintext_config_file($self->thislist());
+	$result = $self->SUPER::getconfig();
+	&_enable_encryption_config_file($self->thislist());
+
+	return $result;
+}
+
 # retrieve the specific configuration of the list
 sub getconfig_special {
 	my ($self) = @_;
