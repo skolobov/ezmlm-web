@@ -9,7 +9,7 @@ Homepage: https://systemausfall.org/toolforge/ezmlm-web
 Package: libemail-ezmlm-perl
 Section: perl
 Architecture: all
-Depends: ${perl:Depends}
+Depends: ${perl:Depends}, libcrypt-gpg-perl
 Description: access ezmlm-idx mailig lists with perl's object methods
  The support for ezmlm-idx 6.0 is complete.
  The module still works fine with ezmlm-idx 0.4xx, too.
