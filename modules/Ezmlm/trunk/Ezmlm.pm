@@ -1,5 +1,5 @@
 # ===========================================================================
-# Ezmlm.pm - version 0.08 - 10/12/2008
+# Ezmlm.pm - version 0.08.1 - 10/12/2008
 # $Id$
 #
 # Object methods for ezmlm mailing lists
@@ -53,7 +53,7 @@ require Exporter;
 @EXPORT = qw(
    
 );
-$VERSION = '0.08';
+$VERSION = '0.08.1';
 
 require 5.005;
 
