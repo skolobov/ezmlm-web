@@ -1,11 +1,12 @@
 # ===========================================================================
-# Ezmlm.pm - version 0.04 - 26/05/2003
-# $Id: Ezmlm.pm,v 1.10 2005/03/05 14:11:11 guy Exp $
+# Ezmlm.pm - version 0.08 - 10/12/2008
+# $Id$
 #
 # Object methods for ezmlm mailing lists
 #
 # Copyright (C) 1999-2005, Guy Antony Halse, All Rights Reserved.
-# Please send bug reports and comments to guy@rucus.ru.ac.za
+# Copyright (C) 2005-2008, Lars Kruse, All Rights Reserved.
+# Please send bug reports and comments to ezmlm-web@sumpfralle.de.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
