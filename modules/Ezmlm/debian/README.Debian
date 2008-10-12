@@ -1,0 +1,2 @@
+Maybe you have to change the ezmlm- and qmail-paths in /usr/lib/perl5/..../Ezmlm.pm.
+

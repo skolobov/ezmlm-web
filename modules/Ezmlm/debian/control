@@ -1,0 +1,20 @@
+Source: libemail-ezmlm-perl
+Priority: extra
+Maintainer: Lars Kruse <devel@sumpfralle.de>
+Build-Depends-Indep: debhelper (>= 4.0.0), perl-modules
+Standards-Version: 3.8.0.0
+Section: perl
+Homepage: https://systemausfall.org/toolforge/ezmlm-web
+
+Package: libemail-ezmlm-perl
+Section: perl
+Architecture: all
+Depends: ${perl:Depends}
+Description: access ezmlm-idx mailig lists with perl's object methods
+ The support for ezmlm-idx 6.0 is complete.
+ The module still works fine with ezmlm-idx 0.4xx, too.
+ The following modules are included:
+   Mail::Ezmlm - basic support for ezmlm mailing lists
+   Mail::Ezmlm::GpgEzmlm - support for encrypted gpg-ezmlm lists
+   Mail::Ezmlm::GpgKeyRing - support for gnupg keyrings for encrypted lists
+

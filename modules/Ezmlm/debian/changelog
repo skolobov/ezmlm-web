@@ -1,0 +1,30 @@
+libemail-ezmlm-perl (0.08.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Lars Kruse <devel@sumpfralle.de>  Sun, 12 Oct 2008 04:41:22 +0200
+
+libemail-ezmlm-perl (0.08-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Lars Kruse <devel@sumpfralle.de>  Thu, 02 Oct 2008 03:57:44 +0200
+
+libemail-ezmlm-perl (0.07.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Lars Kruse <devel@sumpfralle.de>  Tue, 20 Jun 2006 03:34:41 +0200
+
+libemail-ezmlm-perl (0.07.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Lars Kruse <lars@systemausfall.org>  Mon, 23 Jan 2006 22:21:21 +0100
+
+libemail-ezmlm-perl (0.07-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Lars Kruse <lars@systemausfall.org>  Sun, 15 Jan 2006 19:26:55 +0100
+
