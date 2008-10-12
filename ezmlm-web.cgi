@@ -70,7 +70,7 @@ $UID = $EUID;
 $GID = $EGID;
 
 my $VERSION;
-$VERSION = '3.3~rc1';
+$VERSION = '3.3';
 
 my $q = new CGI;
 $q->import_names('Q');
