@@ -552,7 +552,7 @@ sub _get_dotqmail_location {
 			chomp($dot_loc);
 		} elsif (-r "$list_dir/config") {
 			# the "config" file was used before ezmlm-idx v5
-			$dot_loc = $1 if ($plain_list->getpart("config") =~ m/^T:(.*)$/);
+			$dot_loc = $1 if ($plain_list->getpart("config") =~ /^T:(.*)$/m);
 		} else {
 			warn '[GpgEzmlm] list configuration file not found: ' . $list_dir;
 			$dot_loc = undef;
