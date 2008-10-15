@@ -2,6 +2,8 @@
 
 set -eu
 
+DEBIAN_URL=https://svn.systemausfall.org/svn/ezmlm-web/debian
+
 PRJ_ROOT=$(dirname $(cd "$(dirname $0)"; pwd))
 #ARCHITECTURES="i386 ia64 alpha amd64 armeb arm hppa m32r m68k mips mipsel powerpc ppc64 s390 s390x sh3 sh3eb sh4 sh4eb sparc"
 ARCHITECTURES="i386"
@@ -51,7 +53,7 @@ NEW_TAR_FILE=${PREFIX}_${1}.orig.tar.gz
 cp "$TAR_FILE" "$NEW_TAR_FILE"
 tar xzf "$TAR_FILE"
 cd "$PREFIX-$1"
-svn export "$SRC_DIR/debian" debian
+svn export $DEBIAN_URL" debian
 
 # problem: the orig tarball is being rebuild again and again - so it is always different
 for arch in $ARCHITECTURES
