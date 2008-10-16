@@ -1,0 +1,40 @@
+subscribers
+	list
+	[part]
+address_add
+	list
+	[part]
+	[mailaddress_add]
+	[mailaddressfile]
+address_del
+	list
+	[part]
+	mailaddress_del
+list_select
+list_delete_ask
+	list
+list_delete_do
+	list
+list_create_ask
+list_create_do
+	list
+	inlocal
+	inhost
+	[options]
+	[sql]
+config_ask
+	list
+	[config_subset]
+config_do
+	list
+	[config_subset]
+	[options]
+textfiles
+	list
+textfile_edit
+	list
+	file
+textfile_save
+	list
+	file
+	content

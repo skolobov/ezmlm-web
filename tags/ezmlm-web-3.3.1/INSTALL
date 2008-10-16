@@ -1,0 +1,185 @@
+The following notes will guide you through the installation of ezmlm-web:
+
+$Id$
+
+OVERVIEW:
+  0 - important notes
+  1 - get it
+  2 - install executable and shared files
+  3 - configuration file
+  4 - create a suid cgi wrapper
+  5 - [optional] configure access control (http authentication)
+  6 - [optional] configure multi domain support
+  7 - css stylesheet file
+  8 - final test
+  9 - troubleshooting
+ 10 - report problems
+
+
+------------------------------------------------------------------------------
+
+
+0.	IMPORTANT: you need the perl module Mail::Ezmlm and others to use 
+	ezmlm-web! The file README contains the complete list of necessary
+	modules.
+
+
+1.	Choose a distribution form
+
+1a)	source installation
+	Get ezmlm-web and extract the archive:
+		tar xzf ezmlm-web-3.x.tar.gz
+	 (for source installation continue with step 2)
+
+1b)	debian package
+	This is the (by far) most convenient way to install ezmlm-web.
+	Add the following line to your /etc/apt/sources.list file:
+		deb http://systemausfall.org/toolforge/debian/ testing main contrib
+	Now you can install it:
+		aptitude update
+		aptitude install ezmlm-web
+
+	(debian users may stop reading here)
+
+
+2.	Execute the following lines to install the cgi script and the shared data
+	files to the appropriate locations.
+		perl Makefile.PL
+		make
+		make install
+
+
+3.	Edit the examples/ezmlmwebrc.dist file and alter the variables to suit
+	your particular system.
+     
+	Be careful about the $LIST_DIR variable. This script assumes that
+	all users store their mailing lists in the same sub directory of the
+	home directory (eg ~/lists). You can override this for an individual
+	user by recompiling the C wrapper to call ezmlm-web.cgi with a -d
+	option.
+
+	Other configurable options are documented in the ezmlmwebrc file
+	itself. I have tried to keep the amount of information that you need to
+	supply to a minimum and also make reasonable guesses about default
+	values.
+
+	Finally, copy the ezmlmwebrc file to one of
+	the following places:
+		1) the home directory of the user that runs ezmlm-web.cgi (~/.ezmlmwebrc)
+		2) /etc/ezmlm-web/ezmlmwebrc
+		3) /etc/ezmlm/ezmlmwebrc [deprecated]
+	 (ezmlm-web will look for it in these places in the given order)
+	
+	See the manpage of ezmlmwebrc (5) for a complete description of all
+	configuration settings.
+
+
+4.	For every user/virtual host that needs to manage mailing lists, you
+	need to create a suid wrapper owned by the user whom the mailing lists
+	belong to. This wrapper needs to reside somewhere accessible by 
+	the web server. I suggest that you put it in a sub directory 
+	of each user/virtual host's home directory (eg.
+	/home/luser/public_html/ezmlm for Apache). 
+
+	Create a suid wrapper by issuing the following command:
+		ezmlm-web-make-suid 
+
+	The copies don't actually have to be called index.cgi, but it is nice
+	for web servers that can resolve a cgi script as an index page. It is
+	important to make sure that whichever directory you choose to put them can
+		i:	Execute CGI Scripts and
+		ii:	Be access controlled (here I mean both web and user access) by
+			some method (eg .htaccess for Apache).
+	
+	Alternatively you can also manage multiple domains/users/virtual hosts
+	with a single suid-wrapper. Take a look at examples/multidomain.conf for
+	details.
+
+
+5.	Install some method of securing access to the page. The following
+	information is applicable to Apache web servers ... Detailed
+	information on user authentication can be obtained from the Apache
+	documentation (http://www.apache.org) and ApacheWeek
+	(http://www.apacheweek.com/features/userauth).
+
+5.1	Ensure that your Apache setup will allow .htaccess file to control
+	access in the directory that contains. This is controlled by the
+	AllowOverride tag in access.conf. (Also ensure you have the
+	necessary Apache modules installed)
+
+5.2	Create a htpasswd file. This is done using the htpasswd command that
+	comes with Apache. Its command line syntax is;
+		htpasswd [-c] passwordfile username
+   
+	You need to put the passwordfile somewhere that is not accessible by
+	people through the web, and create an entry for each user you want
+	to have access ... See the ApacheWeek article for more details.
+
+5.3	Create a .htaccess file in the directory that contains index.cgi.
+	Note that using Apache's built in access control, you can only control
+	access to directories, not individual files, hence the need for a
+	sub-directory in step 5.
+
+	The format of the .htaccess file should be along the lines of this;
+
+		AuthName EZ Mailing List Manager
+		AuthType Basic
+		AuthUserFile /path/to/passwordfile
+		require valid-user      # or require user username
+	
+	You may use examples/htaccess.dist as a template.
+
+	Again, see the ApacheWeek article for details.
+
+
+6.	You may skip this step if you manage only one directory containing mailing
+	lists. For more than one domain or multiple user directories you should
+	follow the instructions below. BEWARE: this is an advanced setting.
+
+	1) copy examples/multidomain.conf.dist to /etc/ezmlm-web/multidomain.conf
+	2) add your mailing list parent directories to this file
+	3) uncomment the respective line in your ezmlmwebrc file
+
+	The web interface should now show a "Change domain" link in the navigation
+	bar to the left.
+
+	Direct links to a specifc domain use the following format:
+		http://BASE_URL/ezmlm-web?domain=foo
+	
+	Note that since version 3.3 webusers file has to explictly let users create 
+	and manage lists. If you are relying on the user beeing able to create lists 
+	if no webusers file exists, then you will have to explicitly create one with
+	the appropiate permissions.
+
+7.	Copy the stylesheet files (/usr/local/share/ezmlm-web/www-data/*.css)
+	to a location of your choice. It has to be accessible by an URL - maybe
+	a place like "/var/www/ezmlm-web/" could be appropriate.
+	Now you may have to adapt the "HTML_CSS_COMMON" and "HTML_CSS_COLOR"
+	settings in your ezmlmwebrc file.
+
+	Alternatively you can also use the mapping feature of your web server.
+	Take a look at examples/apache.conf.dist for an example.
+
+
+8.  Test the installation with your favourite web browser. You should be
+	asked for a username and password (supplied in 6.2) and then be presented
+	with a screen entitled "ezmlm-web". You can then try to create and edit
+	mailing lists ... Have Fun :)
+
+	If you see a slightly disordered screen, the you probably did not set the
+	HTML_CSS_COMMON option correctly. Check it again.
+
+	If you do not see a colorful screen, then you probably did not set the
+	HTML_CSS_COLOR option correctly. Check it again.
+
+
+9.	If anything failes - take a look at the web server's error log
+	(e.g. /var/log/apache/error.log).
+
+
+10.	If the error log of your web server does not to solve your problem:
+	- take a look at https://systemausfall.org/toolforge/ezmlm-web
+	- subscribe to the mailinglist: ezmlm-web-subscribe@lists.systemausfall.org
+	- send me an email: ezmlm-web@sumpfralle.de
+	- report a bug at https://systemausfall.org/trac/ezmlm-web
+

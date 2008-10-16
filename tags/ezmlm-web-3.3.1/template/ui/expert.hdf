@@ -1,0 +1,201 @@
+UI	{
+
+	Top {
+		Language	= 1
+		Interface	= 1
+	  }
+
+	Navigation	{
+		DomainSelect = 1
+		ListSelect	= 1
+		ListCreate	= 1
+		Subscribers	{
+			Subscribers	= 1
+			Digest		= 1
+			Allow		= 1
+			Deny		= 1
+			Moderators	= 1
+		  }
+
+		Config	{
+			Main		= 1
+			Subscription	= 1
+			Posting		= 1
+			Processing	= 1
+			GpgEzmlmOptions	= 1
+			Archive		= 1
+			Admin		= 1
+			All			= 1
+		  }
+
+		Gnupg	{
+			PublicKeys	= 1
+			SecretKeys	= 1
+			GenerateKey	= 1
+		  }
+
+		TextEdit	= 1
+		ListDelete	= 1
+		SubscribeLog	= 1
+		GpgEzmlmConvert	= 1
+		Help	= 1
+	  }
+
+
+	Options	{
+		
+		Create {
+			Listname	= create_listname
+			Listaddress	= create_listaddress
+			Listlanguage	= lang_select
+			Mysql		= mysql
+			Webuser		= webusers
+		  }
+
+
+		Subscribers	{
+			Subscribers	= {}
+			Digest	{
+				Enabled	= digest_enabled
+				Settings	= digest_settings
+			  }
+
+			Deny	{
+				Enabled	= block_deny
+			  }
+			
+			Moderators	{
+				Posting	{
+					Self	= mod_post
+					Path	= mod_post_path
+				  }
+				Subscription	{
+					Self	= mod_sub
+					Path	= mod_sub_path
+				  }
+				Administration	{
+					Self	= admin_enabled
+					Path	= admin_path
+				  }
+			  }
+		  }
+
+		GenerateKey {
+			KeyName		= gnupg_keyname
+			KeyComment	= gnupg_keycomment
+			KeySize		= gnupg_keysize
+			KeyExpiration	= gnupg_keyexpires
+		  }
+
+		Config	{
+			Main	{
+				Language	= lang_select
+				Charset		= charset_select
+				Owner		= owner_address
+				MainList	= mainlist
+				MailmanRequests	= mailman_requests
+				RemoveWarn	= warn_remove
+				SQL			= mysql
+				WebUsers	= webusers
+			  }
+
+			Archive {
+				Enabled		= archive_enabled
+				Access		= archive_access
+				RemovePrivateHeader	= archive_remove_private_header
+			  }
+			
+			Subscription {
+				Rules		= subscribe_selection
+				ConfirmSub	= confirm_sub
+				ConfirmUnsub	= confirm_unsub
+				Path		= mod_sub_path
+			  }
+
+			Admin	{
+				Enabled		{
+					Self		= admin_enabled
+					RequestSubscribers	= admin_get_subscribers
+					EditText	= admin_edit_text
+					Path		= admin_path
+				  }
+			  }
+
+			Posting	{
+				Rules		= posting_selection
+				UseDeny		= block_deny
+				Confirm		= confirm_post
+				SizeMax		= msgsize_max
+				SizeMin		= msgsize_min
+				MimeReject	= mimereject
+				Path		= mod_post_path
+			  }
+
+			GpgEzmlmOptions {
+				SignMessages	= gpgezmlm_signmessages
+				PlainWithoutKey	= gpgezmlm_plainwithoutkey
+				RequireSigs	= gpgezmlm_requiresigs
+				AllowKeySubmission	= gpgezmlm_allowkeysubmission
+				EncryptToAll	= gpgezmlm_encrypttoall
+				VerifiedKeyReq	= gpgezmlm_verifiedkeyreq
+			  }
+
+			Processing {
+				Prefix		= prefix
+				ReplyToSelf	= reply_to_self
+				Trailer		= trailer
+				From		= from_address
+				MimeFilter	= mimefilter
+				HeaderFilter	= headerfilter
+				HeaderAdd	= headeradd
+				CopyLines	= copylines
+			  }
+
+			Overview {
+				Public		= public
+				ConfirmSub	= confirm_sub
+				ConfirmUnsub	= confirm_unsub
+				ModSubEnable	= mod_sub
+				UseDeny		= block_deny
+				BlockOthers	= block_others_post
+				ConfirmPosting		= confirm_post
+				ModPosting	= mod_post
+				NonModPosting	= block_nonmod_post
+				MailmanRequests	= mailman_requests
+				RemoveWarn	= warn_remove
+				DigestEnabled	= digest_enabled
+				DigestSettings	= digest_settings
+				ArchiveEnabled	= archive_enabled
+				ArchiveModOnly	= archive_mod_only
+				ArchiveGuard	= archive_deny_unknown
+				RemovePrivateHeader	= archive_remove_private_header
+				AdminEnabled	= admin_enabled
+				AdminRequestSubscribers	= admin_get_subscribers
+				AdminEditText	= admin_edit_text
+				FromAddress		= from_address
+				Owner		= owner_address
+				SQL			= mysql
+				MainList	= mainlist
+				ModPostPath	= mod_post_path
+				ModSubPath	= mod_sub_path
+				AdminPath	= admin_path
+				Prefix		= prefix
+				Trailer		= trailer
+				SizeMax		= msgsize_max
+				SizeMin		= msgsize_min
+				MimeFilter	= mimefilter
+				MimeReject	= mimereject
+				HeaderFilter	= headerfilter
+				HeaderAdd	= headeradd
+				CopyLines	= copylines
+				Language	= lang_select
+				Charset		= charset_select
+				WebUsers	= webusers
+				
+			  }
+		  }
+
+	  }
+
+  }
+
