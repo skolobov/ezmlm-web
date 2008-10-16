@@ -31,7 +31,7 @@
 <li><a href="download/">download</a></li>
 <li><a href="https://systemausfall.org/trac/ezmlm-web/wiki/ScreenShots/ezmlm-web-3.0">screenshots</a></li>
 <li><a href="http://demo.systemausfall.org/ezmlm-web" title="use 'test' as username and password">online demo</a></li>
-<li><a href="https://systemausfall.org/mail-archive/">mailing list archive</a></li>
+<li><a href="https://systemausfall.org/mail-archive/?2">mailing list archive</a></li>
 </ul>
 </div>
 
@@ -49,7 +49,7 @@
 <ul>
 <li><a href="http://cr.yp.to/qmail.html">qmail</a></li>
 <li><a href="http://ezmlm.org">ezmlm-idx</a></li>
-<li><a href="http://www.synacklabs.net/projects/crypt-ml/">list encryption</a></li>
+<li><a href="http://www.synacklabs.net/projects/crypt-ml/">gpg-ezmlm (encryption)</a></li>
 </ul>
 </div>
 
@@ -80,12 +80,13 @@
     <li>hide domains without accessible lists for improved privacy</li>
     <li>various bug fixes</li>
     <li>complete translations:
+        <a title="contributed by Lars Kruse">English</a>,
         <a title="contributed by Lars Kruse">German</a>,
-        <a title="contributed by Carlinhos Cecconi">Portugues do Brasil</a>
-        <a title="contributed by Anton Ponkratov">Russian</a>
-        <a title="contributed by Jose Luis Martinez">Spanish</a>
-        <a title="contributed by kinneko">Japanese</a>
-        <a title="Clavdia Horvat">Slovenian</a></li>
+        <a title="contributed by kinneko">Japanese</a>,
+        <a title="contributed by Carlinhos Cecconi">Portugues do Brasil</a>,
+        <a title="contributed by Anton Ponkratov">Russian</a>,
+        <a title="contributed by Clavdia Horvat">Slovenian</a> and
+        <a title="contributed by Jose Luis Martinez">Spanish</a></li>
 </ul></p>
 
 <p><font class="title">02007/08/16 - <font class="ez">ezmlm-web</font>
@@ -105,13 +106,13 @@
     <li>complete translations:
         <a title="contributed by Lars Kruse">German</a>,
         <a title="contributed by Carlinhos Cecconi">Portugues do Brasil</a> and
-        <a title="Clavdia Horvat">Slovenian</a></li>
+        <a title="contributed by Clavdia Horvat">Slovenian</a></li>
 </ul></p>
 
 <p><font class="title">02007/03/21 - translations made easy</font></p>
 <p class="changes">
 The translations of <font class="ez">ezmlm-web</font> are now managed via
-a comfortable <a href="http://translate.systemausfall.org/projects/ezmlm_web/">web interface</a> (powered by <a href="http://pootle.wordforge.org">pootle</a>). Just register and contribute some translated strings in your favourite language for the upcoming v3.2 release. Thanks!
+a comfortable <a href="http://translate.systemausfall.org/projects/ezmlm_web/">web interface</a> (powered by <a href="http://translate.sourceforge.net/wiki/pootle" title="Pootle - a translation web interface">pootle</a>). Just register and contribute some translated strings in your favourite language for the upcoming v3.2 release. Thanks!
 </p>
 
 <p><font class="title">02006/03/26 - <font class="ez">ezmlm-web</font> <a href="download/ezmlm-web-3.1/" title="download ezmlm-web 3.1.4">Version 3.1.4 released</a></font>
@@ -205,12 +206,6 @@ a comfortable <a href="http://translate.systemausfall.org/projects/ezmlm_web/">w
 
 <div class="push">
 <h2>How can <font class="ez">ezmlm-web</font> help you?</h2>
-<p><font class="ez"><a href="http://www.ezmlm.org">ezmlm</a></font> uses a mainly
-command line interface for the creation and maintenance
-of mailing lists. While this is very convenient for the average systems 
-administrator who is used to such interfaces, it restrains him from transferring
-administrative work to users who want to manage a community on their own.</p>
-
 <p><font class="ez">ezmlm-web</font> is an attempt to hide the complexities of
 managing a mailing list behind an intuative, easy to use web based interface. Thus
 it makes easy remote administration real.</p>
@@ -227,32 +222,29 @@ user to do everything without the assistance of the systems administrators.</p>
 <h2>Features</h2>
 Some of the important features that <font class="ez">ezmlm-web</font> offers are;
 <ul>
-<li><font class="feature">Full Virtual Host Support</font>
-- <font class="hint"><font class="ez">ezmlm-web</font> hides the complexities of setting up virtually hosted mailing lists from your users.</font></li>
+<li><font class="feature">Multi-Domain Support</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> Can manage multiple mailing list domains within one web interface without harming privacy.</font></li>
 
 <li><font class="feature">Multi-Level Access</font>
-- <font class="hint">You can control who has access to different mailing lists.</font></li>
+- <font class="hint">You can control who has access to different mailing lists or domains.</font></li>
+
+<li><font class="feature">Support for encrypted mailing lists</font>
+- <font class="hint"><font class="ez">ezmlm-web</font> allows you to configure your encrypted mailing list (<a href="http://www.synacklabs.net/projects/crypt-ml/" title="project website">gpg-ezmlm</a>) and the associated gnupg keyring through its user friendly web interface.</font></li>
 
 <li><font class="feature">Name Association</font>
 - <font class="hint">You can enter any RFC 822 email address, and it will display the nice name while refering to the email address.</font></li>
 
 <li><font class="feature">Configurable Design</font>
-- <font class="hint">Most of the &quot;look &amp; feel&quot; of <font class="ez">ezmlm-web</font> is configured through templates, allowing you to easily integrate it into your existing website.</font></li>
+- <font class="hint">The &quot;look &amp; feel&quot; of <font class="ez">ezmlm-web</font> is configured through templates, allowing you to easily integrate it into your existing website.</font></li>
 
 <li><font class="feature">Multiple Subscribes/Unsubscribes</font>
-- <font class="hint"><font class="ez">ezmlm-web</font> supports file uploads for bulk subscription of email addresses, and multiple selects for bulk deletes.</font></li>
+- <font class="hint"><font class="ez">ezmlm-web</font> supports file uploads for bulk subscription of email addresses, and multiple selects for bulk deletes. Downloading the mail addresses of the subscribers to a plaintext file is also possible.</font></li>
 
 <li><font class="feature">Full support for all command line options</font>
-- <font class="hint"><font class="ez">ezmlm-web</font> has been updated to take advantage of all the command line features of ezmlm-idx v5.0. It should be compatible with any further releases :-)</font></li>
+- <font class="hint"><font class="ez">ezmlm-web</font> has been updated to take advantage of all the command line features of ezmlm-idx v6.0. It should be compatible with any further releases :-)</font></li>
 
 <li><font class="feature">Language Independence</font>
-- <font class="hint"><font class="ez">ezmlm-web</font> can be easily reconfigured for different locales and languages. For now you can only choose between english and german - your contribution for other languages is welcome.</font></li>
-
-<li><font class="feature">Browser Independence</font>
-- <font class="hint"><font class="ez">ezmlm-web</font> has been tested with <a href="http://mozilla.org">Mozilla</a> 1.73, <a href="http://mozilla.org">Firefox</a> 2.0, <a href="http://www.netscape.com/">Netscape Navigator</a> 4.7, <a href="http://lynx.browser.org/">Lynx</a> 2.8.3, <a href="http://ei5nazha.yz.yamagata-u.ac.jp/~aito/w3m/eng">w3m</a> 0.1.11-pre and <a href="http://www.microsoft.com">Internet Explorer</a> 6.0</font></li>
-
-<li><font class="feature">Platform Independence</font>
-- <font class="hint"><font class="ez">ezmlm-web</font> should run on any platform that can run <a href="http://www.ezmlm.org/">ezmlm</a>, <a href="http://www.perl.org/">Perl</a> and <a href="http://clearsilver.net">clearsilver</a></font></li>
+- <font class="hint"><font class="ez">ezmlm-web</font> is available in seven languages (English, German, Japanese, Portugues do Brasil, Russian, Slovenian and Spanish - your <a href="http://translate.systemausfall.org/projects/ezmlm_web/" title="translation web interface">contribution</a> for other languages is welcome.</font></li>
 
 </ul>
 </div>
@@ -284,27 +276,26 @@ file in the distribution.</p>
 <h2>How you can contribute</h2>
 <p>You can help to improve <font class="ez">ezmlm-web</font> in many ways. Some of them are:</p>
 <ul>
-	<li>translate it to another language (this takes about two hours) - for now English, German, Portugues do Brasil and Slovenian are available</li>
+	<li><a href="http://translate.systemausfall.org/projects/ezmlm_web/" title="translation web interface">translate it</a> to another language (this takes about two hours) - for now English, German, Japanes, Portugues do Brasil, Russian, Slovenian and Spanish are available</li>
 	<li>create a nice stylesheet to improve its appearance</li>
 	<li>send me patches you would like to see incorporated</li>
 	<li>tell me if you find evidences of my poor english tongue on this page</li>
 </ul>
-<p>If you are interested in the development code of <font class="ez">ezmlm-web</font>, then you may
-anonymously checkout the subversion repository at
+<p>If you are interested in the code of <font class="ez">ezmlm-web</font>, then you can anonymously checkout the subversion repository at
 <a href="https://svn.systemausfall.org/svn/ezmlm-web/">
 https://svn.systemausfall.org/svn/ezmlm-web</a>.</p>
-<p>You are also invited to use the project's <a href="https://systemausfall.org/trac/ezmlm-web" title="trac - our issue tracker">bug tracking system</a>.</p>
-<p>You may join the project's mailinglist by sending an email to <font class="mail"><a href="mailto:ezmlm-web-subscribe@lists.systemausfall.org" name="mailing list subscription">ezmlm-web-subscribe@lists.systemausfall.org</a></font>.</p>
+<p>You are also invited to use the project's <a href="https://systemausfall.org/trac/ezmlm-web" title="trac - an issue tracker">bug tracking system</a>.</p>
+<p>Please join the project's mailinglist by sending an email to <font class="mail"><a href="mailto:ezmlm-web-subscribe@lists.systemausfall.org" name="mailing list subscription">ezmlm-web-subscribe@lists.systemausfall.org</a> or through a <a href="https://systemausfall.org/admin/list-subscribe?list_address=ezmlm-web@lists.systemausfall.org" title="subscribe to the mailing list">web interface</a></font>.</p>
 </div>
 
 
 <div class="push">
 <h2>History</h2>
-<p>The original author of <font class="ez">ezmlm-web</font> is Guy Antony Halse. He maintained it up to
+<p>The original author of <font class="ez">ezmlm-web</font> is Guy Antony Halse. He developed it up to
 version 2.1. By then it was functionally complete and convenient.</p>
 <p>Since September 02000 no new releases were published.</p>
 <p>In January 02005 Guy handed the project over to me (Lars Kruse). I incorporated the suggestions 
-that were sent to Guy so far. Additional security improvements and translations were integrated, too.</p>
+that were sent to Guy so far. Additional design and security improvements, as well as translations and loads of new features were integrated, too.</p>
 <p>Your suggestions are welcome and will improve <font class="ez">ezmlm-web</font> whenever possible.</p>
 </div>
 
@@ -312,14 +303,14 @@ that were sent to Guy so far. Additional security improvements and translations 
 <div class="push">
 <h2>Some final words ...</h2>
 <p>As I am no native english speaker, I will gladly accept every hint to improve the appearance of this website.</p>
-<p>Most of the code of <font class="ez">ezmlm-web</font> was written by <a href="http://rucus.ru.ac.za/~guy/ezmlm/">Guy Antony Halse</a> - thanks a lot for this work!</p>
+<p>A large amount of the code of <font class="ez">ezmlm-web</font> was written by <a href="http://rucus.ru.ac.za/~guy/ezmlm/">Guy Antony Halse</a> - thanks a lot for this work!</p>
 <p>If you have any suggestions regarding <font class="ez">ezmlm-web</font>, please send a mail to <font class="mail">ezmlm-web[AT]sumpfralle.de</font>.</p>
 </div>
 
 </div> <!-- content -->
 
 
-<div id="footer">ezmlm-web was originally developed by <a href="http://rucus.ru.ac.za/~guy/ezmlm/">Guy Antony Halse</a></div>
+<div id="footer">ezmlm-web was originally developed by <a href="http://rucus.ru.ac.za/~guy/ezmlm/" style="color:gray">Guy Antony Halse</a></div>
 
 </div>
 
