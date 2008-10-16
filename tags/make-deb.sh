@@ -2,9 +2,8 @@
 
 set -eu
 
-DEBIAN_URL=https://svn.systemausfall.org/svn/ezmlm-web/debian
-
 PRJ_ROOT=$(dirname $(cd "$(dirname $0)"; pwd))
+DEBIAN_DIR="$PRJ_ROOT/debian"
 #ARCHITECTURES="i386 ia64 alpha amd64 armeb arm hppa m32r m68k mips mipsel powerpc ppc64 s390 s390x sh3 sh3eb sh4 sh4eb sparc"
 ARCHITECTURES="i386"
 PREFIX=ezmlm-web
@@ -13,7 +12,7 @@ PREFIX=ezmlm-web
 get_debian_version()
 # compare the given version with the one from debian/changelog
 {
-	head -1 "$SRC_DIR/debian/changelog" | cut -f 2 -d "(" | cut -f 1 -d "-"
+	head -1 "$DEBIAN_DIR/changelog" | cut -f 2 -d "(" | cut -f 1 -d "-"
 }
 
 set_package_version()
@@ -53,7 +52,7 @@ NEW_TAR_FILE=${PREFIX}_${1}.orig.tar.gz
 cp "$TAR_FILE" "$NEW_TAR_FILE"
 tar xzf "$TAR_FILE"
 cd "$PREFIX-$1"
-svn export $DEBIAN_URL" debian
+svn export "$DEBIAN_DIR" debian
 
 # problem: the orig tarball is being rebuild again and again - so it is always different
 for arch in $ARCHITECTURES
