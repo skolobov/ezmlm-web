@@ -1,5 +1,4 @@
 Options +Indexes
 IndexOptions	FancyIndexing	NameWidth=*
-IndexOrderDefault	Ascending	Date
 ReadmeName	README.html
 IndexIgnore README.html .htaccess
