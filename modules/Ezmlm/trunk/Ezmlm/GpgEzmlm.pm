@@ -614,6 +614,7 @@ sub _is_encrypted {
 # 1) as part of the plaintext->encryption conversion of a list
 # 2) after calling ezmlm-make for an encrypted list (since the dotqmail files
 #    are overwritten by ezmlm-make)
+# This function may safely assume, that the backup_dir exists already.
 sub _cleanup_dotqmail_files {
 	my $list_dir = shift;
 	my ($backup_dir, $dot_loc, $dot_prefix);
@@ -745,11 +746,25 @@ sub _enable_encryption_config_file {
 	}
 
 	# store the current original config file
-	if ((-e "$list_dir/config") && (!File::Copy::copy("$list_dir/config",
-				"$backup_dir/config.original"))) {
-		warn "[GpgEzmlm] failed to save the current ezmlm-idx config file ('"
-				. "$list_dir/config') to '$backup_dir/config.original': $!";
-		return undef;
+	if (-e "$list_dir/config") {
+		if ((! -d $backup_dir) && !mkdir($backup_dir)) {
+			warn "[GpgEzmlm] failed to create gpg-ezmlm conversion "
+					. "backup dir ($backup_dir): $!";
+			return undef;
+		}
+		if (!File::Copy::copy("$list_dir/config",
+				"$backup_dir/config.original")) {
+			warn "[GpgEzmlm] failed to save the current ezmlm-idx "
+					. "config file ('$list_dir/config') to "
+					. "'$backup_dir/config.original': $!";
+			return undef;
+		{
+	} else {
+		# the current config file is missing - but we need to restore
+		# the original anyway.
+		# This should not happen.
+		warn "[GpgEzmlm] the original config file ('$list_dir/config') "
+				. "is missing - continuing anyway.";
 	}
 
 	# copy the encryption config file to the list directory
@@ -775,6 +790,13 @@ sub _enable_plaintext_config_file {
 	unless (_is_encrypted($list_dir)) {
 		warn "[GpgEzmlm] I expected a config file for gpg-ezmlm: "
 				. "$list_dir/config";
+		return undef;
+	}
+
+	# create the encryption backup dir if necessary
+	if ((! -e $backup_dir) && (!mkdir($backup_dir))) {
+		warn "[GpgEzmlm] failed to create gpg-ezmlm conversion backup dir ("
+				. "$backup_dir): $!";
 		return undef;
 	}
 
