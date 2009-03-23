@@ -758,7 +758,7 @@ sub _enable_encryption_config_file {
 					. "config file ('$list_dir/config') to "
 					. "'$backup_dir/config.original': $!";
 			return undef;
-		{
+		}
 	} else {
 		# the current config file is missing - but we need to restore
 		# the original anyway.
