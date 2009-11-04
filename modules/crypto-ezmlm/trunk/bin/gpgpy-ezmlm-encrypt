@@ -317,7 +317,7 @@ if __name__ == '__main__':
 	if len(sys.argv) != 2:
 		internal_error("More than one parameter (the mailinglist directory) given!")
 	## print some help if it was requested
-	if sys.argv[0] == '--help':
+	if sys.argv[1] == '--help':
 		sys.stderr.write("Syntax: %s [MAILINGLIST_DIRECTORY]\n\n" % \
 				os.path.basename(sys.argv[0]))
 		sys.stderr.write("If you omit the MAILINGLIST_DIRECTORY, " \
