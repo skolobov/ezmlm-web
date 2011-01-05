@@ -58,7 +58,7 @@ $VERSION = '0.08.2';
 require 5.005;
 
 # == Begin site dependant variables ==
-$EZMLM_BASE = '/usr/local/bin'; #Autoinserted by Makefile.PL
+$EZMLM_BASE = '/usr/local/bin/ezmlm'; #Autoinserted by Makefile.PL
 $QMAIL_BASE = '/var/qmail'; #Autoinserted by Makefile.PL
 $MYSQL_BASE = ''; #Autoinserted by Makefile.PL
 # == End site dependant variables ==
@@ -537,13 +537,49 @@ sub get_lang {
 # return without error for idx < 5.0
 sub set_lang {
 	my ($self, $lang) = @_;
+
 	return (0==0) if (get_version() < 5);
-	if (($lang eq 'default') || ($lang eq '')) {
-		return 1 if (unlink "$self->{'LIST_NAME'}/conf-lang");
-	} else {
-		return 1 if ($self->setpart('conf-lang', "$lang"));
-	}
-	return 0;
+
+	my ($old_lang);
+	$old_lang = $self->get_lang();
+
+   # users doesn't know about default (server) settings. Setting language explizit,
+   # they can see the language settings at the web-interface
+   if (($lang eq 'default') || ($lang eq '')) {
+      $lang = File::Basename::basename(Cwd::realpath($self->get_config_dir .'/default'));
+   } 
+   return 0 if (!$self->setpart('conf-lang', "$lang"));
+
+	# Nothing to do if language settings was not changed
+   if ($lang ne $old_lang) {
+
+      my $dir = "$self->{'LIST_NAME'}/text";
+      my $name;
+      opendir(DIR, $dir);
+         while (defined($name = readdir(DIR))) {
+            # untaint 'name'
+            $name =~ m/^(.*)$/;
+            $name = $1;
+            unlink("$dir/$name"); 
+         }
+      closedir (DIR);
+
+      # this copies all textfiles into DIR/text. So all textfiles will be
+      # handled from the list directory. That makes the list also
+      # robust against changing server default settings. 
+      my (@files, $item);
+      @files = $self->get_available_text_files();
+      mkdir "$self->{'LIST_NAME'}/text" unless (-e "$self->{'LIST_NAME'}/text");
+      foreach $item (@files) {
+         # untaint 'item'
+         $item =~ m/^(.*)$/s;
+         $item = $1;
+         $self->setpart("text/$item", $self->get_text_default_content($item));
+      }
+
+   }
+
+	return 1;
 }
 
 
@@ -632,27 +668,34 @@ sub get_text_content {
 	if (-e "$self->{'LIST_NAME'}/text/$textfile") {
 		return $self->getpart("text/$textfile");
 	} elsif (get_version() >= 5) {
-		my $filename = $self->get_config_dir() . '/' . $self->get_lang() . "/text/$textfile";
-		$filename = "/etc/ezmlm/default/$textfile" unless (-e "$filename");
-		my @contents;
-		my $content;
-		if (open(PART, "<$filename")) {
-			while(<PART>) {
-				chomp($contents[$#contents++] = $_);
-				$content .= $_;
-			}
-			close PART;
-			if(wantarray) {
-				return @contents;
-			} else {
-				return $content;
-			}
-		} else {
-			$self->_seterror($?, "could not open $filename");
-			return undef;
-		}
+		return $self->get_text_default_content("$textfile");
 	} else {
 		$self->_seterror(-1, "could not get the text file ($textfile)");
+		return undef;
+	}
+}
+
+
+# == get text file default content
+sub get_text_default_content {
+	my ($self, $textfile) = @_;
+	
+	my $filename = $self->get_config_dir() . '/' . $self->get_lang() . "/text/$textfile";
+	$filename = "/etc/ezmlm/default/$textfile" unless (-e "$filename");
+	my ( @contents, $content );
+	if (open(PART, "<$filename")) {
+		while(<PART>) {
+			chomp($contents[$#contents++] = $_);
+			$content .= $_;
+		}
+		close PART;
+		if(wantarray) {
+			return @contents;
+		} else {
+			return $content;
+		}
+	} else {
+		$self->_seterror($?, "could not open $filename");
 		return undef;
 	}
 }
@@ -668,20 +711,41 @@ sub set_text_content {
 
 
 # == check if specified text file is customized or default (for idx >= 5.0) ==
-# return whether the text file exists in the list's directory (false) or not (true)
-# empty filename returns false
 sub is_text_default {
 	my ($self, $textfile) = @_;
 	return (0==1) if ($textfile eq '');
 	if (-e "$self->{'LIST_NAME'}/text/$textfile") {
-		return (1==0);
+      my ($_path, $_content, @_contents);
+      $_path = $self->get_config_dir() . '/' . $self->get_lang() . "/text/$textfile";
+      $_path = "/etc/ezmlm/default/$textfile" unless (-e "$_path");
+
+      if (open(PART, "<$_path")) {
+         while(<PART>) {
+            unless ( /^#/ ) {
+               chomp($_contents[$#_contents++] = $_);
+               $_content .= $_;
+            }
+         }
+         $_content .= "\n";
+         close PART;
+      } else {
+		   $self->_seterror($?, "could not open $_path");
+		   return undef;
+      }
+
+      if ( $self->getpart("text/$textfile") eq $_content ) {
+         return (0==0);
+      } else {
+         return (1==0);
+      }
+
 	} else {
 		return (0==0);
 	}
 }
 
 
-# == remove non-default text file (for idx >= 5.0) ==
+# == reset customized text file (for idx >= 5.0) ==
 # return without error for idx < 5
 # otherwise: remove customized text file from the list's directory
 sub reset_text {
@@ -690,9 +754,9 @@ sub reset_text {
 	return if ($textfile eq '');
 	return if ($textfile =~ /[^\w_\.-]/);
 	return if ($self->is_text_default($textfile));
-	($self->_seterror(-1, "could not remove customized text file ($textfile)") && return 0)
-		unless unlink("$self->{'LIST_NAME'}/text/$textfile");
-	return 1;
+	return 1 if ($self->setpart("text/$textfile", $self->get_text_default_content($textfile)));
+	$self->_seterror(-1, "could not reset customized text file ($textfile)");
+	return 0;
 }
 
 
