@@ -253,7 +253,7 @@ sub convert_to_plaintext {
 	$dot_loc = _get_dotqmail_location($list_dir);
 
 	# untaint "dot_loc"
-	$dot_loc =~ m/^([\w\d\_\-\.\@ \/]+)$/;
+	$dot_loc =~ m/^([\w\d\_\-\.\@ \/\:]+)$/;
 	if (defined($1)) {
 		$dot_loc = $1;
 	} else {
@@ -626,7 +626,7 @@ sub _cleanup_dotqmail_files {
 	$dot_loc = _get_dotqmail_location($list_dir);
 
 	# untaint "dot_loc"
-	$dot_loc =~ m/^([\w\d\_\-\.\@ \/]+)$/;
+	$dot_loc =~ m/^([\w\d\_\-\.\@ \/\:]+)$/;
 	if (defined($1)) {
 		$dot_loc = $1;
 	} else {
