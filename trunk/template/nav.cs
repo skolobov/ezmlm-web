@@ -191,7 +191,7 @@
 <?cs /if ?>
 
 	<?cs if:UI.Navigation.Help
-		?><li><a href="http://www.ezmlm.org/ezman/index.html#toc1" target="_blank"
+		?><li><a href="http://untroubled.org/ezmlm/ezman/index.html#toc1" target="_blank"
 		title="<?cs var:html_escape(Lang.Misc.HelpLink) ?>"><?cs
 		var:html_escape(Lang.Menue.Help) ?></a></li><?cs /if ?>
 
