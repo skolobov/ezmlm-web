@@ -3076,7 +3076,7 @@ L<ezmlm-web-make-suid(1)>, L<ezmlm(5)>, L<ezmlm-cgi(1)>, L<Mail::Ezmlm(3)>
 
 =item L<http://rucus.ru.ac.za/~guy/ezmlm/>
 
-=item L<http://www.ezmlm.org/>
+=item L<http://untroubled.org/ezmlm/>
 
 =item L<http://www.qmail.org/>
 
