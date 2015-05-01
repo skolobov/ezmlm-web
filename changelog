@@ -1,5 +1,6 @@
-Version 3.3.2 - ?
+Version 3.3.2 - 05/01/02015
  * fixed editing of multi-line text files (Closes: #62)
+ * generate stronger gpg keys with default algorithm
 
 Version 3.3.1 - 10/14/02008
  * generate gnupg keys in the background to avoid timeouts
