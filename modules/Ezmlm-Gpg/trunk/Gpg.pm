@@ -552,6 +552,7 @@ sub delete_key {
 	$list->generate_key($name, $comment, $email_address, $keysize, $expire);
 
 Refer to the documentation of gnupg for the format of the arguments.
+https://www.gnupg.org/documentation/manuals/gnupg-devel/Unattended-GPG-key-generation.html
 
 =cut
 
@@ -561,9 +562,9 @@ sub generate_private_key {
 	my $gpgoption = "--gen-key";
 	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
 	my $pid = open(INPUT, "| $gpgcommand");
-	print INPUT "Key-Type: DSA\n";
-	print INPUT "Key-Length: 1024\n";
-	print INPUT "Subkey-Type: ELG-E\n";
+	print INPUT "Key-Type: default\n";
+	print INPUT "Key-Length: 4096\n";
+	print INPUT "Subkey-Type: default\n";
 	print INPUT "Subkey-Length: $keysize\n";
 	print INPUT "Name-Real: $name\n";
 	print INPUT "Name-Comment: $comment\n" if ($comment);
