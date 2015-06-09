@@ -562,9 +562,9 @@ sub generate_private_key {
 	my $gpgoption = "--gen-key";
 	my $gpgcommand = $gpg->gpgbin() . " " . $gpg->gpgopts() . " $gpgoption";
 	my $pid = open(INPUT, "| $gpgcommand");
-	print INPUT "Key-Type: default\n";
+	print INPUT "Key-Type: RSA\n";
 	print INPUT "Key-Length: 4096\n";
-	print INPUT "Subkey-Type: default\n";
+	print INPUT "Subkey-Type: RSA\n";
 	print INPUT "Subkey-Length: $keysize\n";
 	print INPUT "Name-Real: $name\n";
 	print INPUT "Name-Comment: $comment\n" if ($comment);
